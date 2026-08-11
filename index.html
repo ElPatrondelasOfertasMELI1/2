@@ -2,491 +2,854 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-  >
-  <meta name="theme-color" content="#ffe600">
-  <meta
-    name="description"
-    content="El Patrón de las Ofertas - Cupones, ofertas y descuentos de Mercado Libre México."
-  >
-  <title>⚡ El Patrón de las Ofertas</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<meta
+name=“viewport”
+content=“width=device-width, initial-scale=1.0”
+
+<meta
+name=“theme-color”
+content=”#0b0b0f”
+
+  <title>Admin PRO | El Patrón de las Ofertas</title>
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet"
+    href="./admin.css"
   >
-<link rel="stylesheet" href="./style.css">
 </head>
 <body>
   <!-- =====================================================
-       HEADER
+       PANTALLA DE CARGA
   ====================================================== -->
-  <header class="main-header">
-    <div class="header-inner">
-      <a href="./index.html" class="logo">
-        <span class="logo-icon">⚡</span>
-        <span class="logo-text">
-          EL PATRÓN
-          <small>DE LAS OFERTAS</small>
-        </span>
-      </a>
-      <nav class="desktop-nav">
-        <a href="#ofertas">🔥 Ofertas</a>
-        <a href="#relampago">⚡ Cupones</a>
-        <a href="#categorias">🏷️ Categorías</a>
-        <a href="#comprador">🏆 Comprador del mes</a>
-      </nav>
-      <div class="header-actions">
-        <a
-          href="./login.html"
-          id="loginButton"
-          class="header-login"
-        >
-          👤 Iniciar sesión
-        </a>
-        <a
-          href="./perfil.html"
-          id="profileButton"
-          class="header-profile hidden"
-        >
-          👤 Mi perfil
-        </a>
+  <div
+    id="loadingScreen"
+    class="loading-screen"
+  >
+<div class="loading-box">
+  <div class="loading-logo">
+    ⚡
+  </div>
+  <h2>
+    Admin PRO
+  </h2>
+  <p>
+    Verificando acceso...
+  </p>
+  <div class="spinner"></div>
+</div>
+  </div>
+  <!-- =====================================================
+       APLICACIÓN ADMIN
+  ====================================================== -->
+  <div
+    id="adminApp"
+    class="admin-app hidden"
+  >
+<!-- ===================================================
+     SIDEBAR
+==================================================== -->
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-icon">
+      ⚡
+    </div>
+    <div class="brand-text">
+      <strong>
+        EL PATRÓN
+      </strong>
+      <span>
+        ADMIN PRO
+      </span>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <button
+      class="nav-button active"
+      data-section="dashboard"
+      type="button"
+    >
+      <span class="nav-icon">📊</span>
+      <span>Dashboard</span>
+    </button>
+    <button
+      class="nav-button"
+      data-section="usuarios"
+      type="button"
+    >
+      <span class="nav-icon">👥</span>
+      <span>Usuarios</span>
+    </button>
+    <button
+      class="nav-button"
+      data-section="cupones"
+      type="button"
+    >
+      <span class="nav-icon">🎟️</span>
+      <span>Cupones</span>
+    </button>
+    <button
+      class="nav-button"
+      data-section="ofertas"
+      type="button"
+    >
+      <span class="nav-icon">🔥</span>
+      <span>Ofertas</span>
+    </button>
+    <button
+      class="nav-button"
+      data-section="compras"
+      type="button"
+    >
+      <span class="nav-icon">🛒</span>
+      <span>Compras</span>
+    </button>
+    <button
+      class="nav-button"
+      data-section="estadisticas"
+      type="button"
+    >
+      <span class="nav-icon">📈</span>
+      <span>Estadísticas</span>
+    </button>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="admin-profile">
+      <div class="admin-avatar">
+        👑
       </div>
+      <div class="admin-profile-info">
+        <strong>
+          Administrador
+        </strong>
+        <span id="adminEmail">
+          Cargando...
+        </span>
+      </div>
+    </div>
+    <button
+      id="logoutButton"
+      class="logout-button"
+      type="button"
+    >
+      <span>🚪</span>
+      <span>Cerrar sesión</span>
+    </button>
+  </div>
+</aside>
+<!-- ===================================================
+     CONTENIDO PRINCIPAL
+==================================================== -->
+<main class="main-content">
+  <header class="topbar">
+    <div class="topbar-title">
+      <div class="mobile-brand">
+        ⚡ EL PATRÓN
+      </div>
+      <h1 id="pageTitle">
+        Dashboard
+      </h1>
+      <p>
+        Panel de administración
+      </p>
+    </div>
+    <div class="topbar-actions">
+      <button
+        id="refreshButton"
+        class="refresh-button"
+        type="button"
+      >
+        🔄
+        <span>Actualizar</span>
+      </button>
     </div>
   </header>
-  <!-- =====================================================
-       HERO
-  ====================================================== -->
-  <main>
-    <section class="hero-section">
-      <div class="hero-content">
-        <div class="hero-badge">
-          ⚡ DESCUENTOS TODOS LOS DÍAS
-        </div>
-        <h1>
-          Encuentra las mejores
-          <span>ofertas y cupones</span>
-        </h1>
-        <p>
-          Ahorra más en tus compras de Mercado Libre
-          con nuestros cupones, promociones y ofertas.
-        </p>
-        <div class="hero-buttons">
-          <a href="#relampago" class="primary-button">
-            🎟️ Ver cupones
-          </a>
-          <a href="#ofertas" class="secondary-button">
-            🔥 Ver ofertas
-          </a>
-        </div>
-      </div>
-    </section>
-    <!-- =====================================================
-         BENEFICIO MERCADO PAGO
-    ====================================================== -->
-    <section class="new-user-section">
-      <div class="new-user-card">
-        <div class="new-user-icon">
-          🎁
-        </div>
-        <div class="new-user-content">
-          <span class="new-user-label">
-            BENEFICIO PARA NUEVOS USUARIOS
-          </span>
-          <h2>
-            $100 GRATIS
-          </h2>
-          <p>
-            Si eres nuevo en Mercado Pago,
-            aprovecha este beneficio.
-          </p>
-        </div>
-        <a
-          id="mercadoPagoButton"
-          href="#"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="new-user-button"
-        >
-          OBTENER $100
-        </a>
-      </div>
-    </section>
-    <!-- =====================================================
-         CATEGORÍAS
-    ====================================================== -->
-    <section
-      id="categorias"
-      class="content-section"
-    >
-      <div class="section-heading">
-        <div>
-          <span class="section-label">
-            EXPLORA
-          </span>
-          <h2>
-            🏷️ Categorías
-          </h2>
-        </div>
-        <div class="slider-controls">
-          <button
-            class="slider-button"
-            data-slider-prev="categoriesSlider"
-            aria-label="Anterior"
-          >
-            ‹
-          </button>
-          <button
-            class="slider-button"
-            data-slider-next="categoriesSlider"
-            aria-label="Siguiente"
-          >
-            ›
-          </button>
-        </div>
-      </div>
-      <div
-        id="categoriesSlider"
-        class="horizontal-slider categories-slider"
-      >
-        <a href="#" class="category-card">
-          <span>📱</span>
-          <strong>Tecnología</strong>
-        </a>
-        <a href="#" class="category-card">
-          <span>👟</span>
-          <strong>Moda</strong>
-        </a>
-        <a href="#" class="category-card">
-          <span>🏠</span>
-          <strong>Hogar</strong>
-        </a>
-        <a href="#" class="category-card">
-          <span>🎮</span>
-          <strong>Videojuegos</strong>
-        </a>
-        <a href="#" class="category-card">
-          <span>🎒</span>
-          <strong>Escolar</strong>
-        </a>
-        <a href="#" class="category-card">
-          <span>🍳</span>
-          <strong>Cocina</strong>
-        </a>
-        <a href="#" class="category-card">
-          <span>🚗</span>
-          <strong>Automotriz</strong>
-        </a>
-        <a href="#" class="category-card">
-          <span>💄</span>
-          <strong>Belleza</strong>
-        </a>
-      </div>
-    </section>
-    <!-- =====================================================
-         OFERTAS
-    ====================================================== -->
-    <section
-      id="ofertas"
-      class="content-section"
-    >
-      <div class="section-heading">
-        <div>
-          <span class="section-label">
-            LAS MEJORES
-          </span>
-          <h2>
-            🔥 Ofertas
-          </h2>
-        </div>
-        <div class="slider-controls">
-          <button
-            class="slider-button"
-            data-slider-prev="offersSlider"
-            aria-label="Anterior"
-          >
-            ‹
-          </button>
-          <button
-            class="slider-button"
-            data-slider-next="offersSlider"
-            aria-label="Siguiente"
-          >
-            ›
-          </button>
-        </div>
-      </div>
-      <div
-        id="offersSlider"
-        class="horizontal-slider offers-slider"
-      >
-        <div class="loading-card">
-          <div class="loading-spinner"></div>
-          <p>Cargando ofertas...</p>
-        </div>
-      </div>
-    </section>
-    <!-- =====================================================
-         CUPONES RELÁMPAGO
-    ====================================================== -->
-    <section
-      id="relampago"
-      class="content-section coupon-section"
-    >
-      <div class="section-heading">
-        <div>
-          <span class="section-label">
-            POR TIEMPO LIMITADO
-          </span>
-          <h2>
-            ⚡ Cupones Relámpago
-          </h2>
-        </div>
-        <div class="slider-controls">
-          <button
-            class="slider-button"
-            data-slider-prev="flashCouponsSlider"
-            aria-label="Anterior"
-          >
-            ‹
-          </button>
-          <button
-            class="slider-button"
-            data-slider-next="flashCouponsSlider"
-            aria-label="Siguiente"
-          >
-            ›
-          </button>
-        </div>
-      </div>
-      <div
-        id="flashCouponsSlider"
-        class="horizontal-slider coupon-slider"
-      >
-        <div class="loading-card">
-          <div class="loading-spinner"></div>
-          <p>Cargando cupones...</p>
-        </div>
-      </div>
-    </section>
-    <!-- =====================================================
-         CUPONES EXCLUSIVOS
-    ====================================================== -->
-    <section
-      id="exclusivos"
-      class="content-section"
-    >
-      <div class="section-heading">
-        <div>
-          <span class="section-label">
-            PARA APROVECHAR
-          </span>
-          <h2>
-            👑 Cupones Exclusivos
-          </h2>
-        </div>
-        <div class="slider-controls">
-          <button
-            class="slider-button"
-            data-slider-prev="exclusiveCouponsSlider"
-            aria-label="Anterior"
-          >
-            ‹
-          </button>
-          <button
-            class="slider-button"
-            data-slider-next="exclusiveCouponsSlider"
-            aria-label="Siguiente"
-          >
-            ›
-          </button>
-        </div>
-      </div>
-      <div
-        id="exclusiveCouponsSlider"
-        class="horizontal-slider coupon-slider"
-      >
-        <div class="loading-card">
-          <div class="loading-spinner"></div>
-          <p>Cargando cupones...</p>
-        </div>
-      </div>
-    </section>
-    <!-- =====================================================
-         CUPONES BANCARIOS
-    ====================================================== -->
-    <section
-      id="bancarios"
-      class="content-section"
-    >
-      <div class="section-heading">
-        <div>
-          <span class="section-label">
-            PAGA MENOS
-          </span>
-          <h2>
-            🏦 Cupones Bancarios
-          </h2>
-        </div>
-        <div class="slider-controls">
-          <button
-            class="slider-button"
-            data-slider-prev="bankCouponsSlider"
-            aria-label="Anterior"
-          >
-            ‹
-          </button>
-          <button
-            class="slider-button"
-            data-slider-next="bankCouponsSlider"
-            aria-label="Siguiente"
-          >
-            ›
-          </button>
-        </div>
-      </div>
-      <div
-        id="bankCouponsSlider"
-        class="horizontal-slider coupon-slider"
-      >
-        <div class="loading-card">
-          <div class="loading-spinner"></div>
-          <p>Cargando cupones...</p>
-        </div>
-      </div>
-    </section>
-    <!-- =====================================================
-         COMPRADOR DEL MES
-    ====================================================== -->
-    <section
-      id="comprador"
-      class="buyer-month-section"
-    >
-      <div class="buyer-month-card">
-        <div class="buyer-decoration">
-          🏆
-        </div>
-        <div class="buyer-content">
-          <span class="section-label">
-            RECONOCIMIENTO
-          </span>
-          <h2>
-            👑 Comprador del Mes
-          </h2>
-          <p>
-            El usuario que más ahorro consiguió
-            utilizando nuestras ofertas y cupones.
-          </p>
-          <a
-            href="./comprador.html"
-            class="buyer-button"
-          >
-            🏆 Ver ganador
-          </a>
-        </div>
-        <div
-          id="buyerMonthPreview"
-          class="buyer-preview"
-        >
-          <div class="buyer-placeholder">
-            👤
-          </div>
-          <strong>
-            Próximamente
-          </strong>
-          <span>
-            El ganador aparecerá aquí
-          </span>
-        </div>
-      </div>
-    </section>
-    <!-- =====================================================
-         REGISTRO
-    ====================================================== -->
-    <section class="join-section">
-      <div class="join-card">
-        <div class="join-icon">
-          🚀
-        </div>
+  <!-- =================================================
+       DASHBOARD
+  ================================================== -->
+  <section
+    id="section-dashboard"
+    class="admin-section active-section"
+  >
+    <div class="section-heading">
+      <div>
         <h2>
-          Únete a nuestra comunidad
+          📊 Dashboard
         </h2>
         <p>
-          Regístrate gratis, guarda tus compras,
-          registra tus ahorros y participa por premios.
+          Resumen general de la plataforma.
         </p>
-        <div class="join-buttons">
-          <a
-            href="./registro.html"
-            class="primary-button"
-          >
-            👤 Crear cuenta
-          </a>
-          <a
-            href="./login.html"
-            class="secondary-button"
-          >
-            🔐 Iniciar sesión
-          </a>
-        </div>
-      </div>
-    </section>
-  </main>
-  <!-- =====================================================
-       FOOTER
-  ====================================================== -->
-  <footer class="main-footer">
-    <div class="footer-inner">
-      <div class="footer-brand">
-        <div class="logo">
-          <span class="logo-icon">⚡</span>
-          <span class="logo-text">
-            EL PATRÓN
-            <small>DE LAS OFERTAS</small>
-          </span>
-        </div>
-        <p>
-          Las mejores ofertas y cupones
-          de Mercado Libre México.
-        </p>
-      </div>
-      <div class="footer-links">
-        <a href="./registro.html">
-          Crear cuenta
-        </a>
-        <a href="./login.html">
-          Iniciar sesión
-        </a>
-        <a href="./comprador.html">
-          Comprador del mes
-        </a>
-      </div>
-      <div class="footer-copy">
-        © <span id="currentYear"></span>
-        El Patrón de las Ofertas
       </div>
     </div>
-  </footer>
-  <!-- =====================================================
-       BOTÓN FLOTANTE WHATSAPP
-  ====================================================== -->
-  <a
-    id="whatsappButton"
-    class="whatsapp-floating"
-    href="#"
-    target="_blank"
-    rel="noopener noreferrer"
-    aria-label="WhatsApp"
+    <!-- ESTADÍSTICAS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          👥
+        </div>
+        <div class="stat-content">
+          <span>
+            Usuarios
+          </span>
+          <strong id="statUsers">
+            0
+          </strong>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          🎟️
+        </div>
+        <div class="stat-content">
+          <span>
+            Cupones
+          </span>
+          <strong id="statCoupons">
+            0
+          </strong>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          🔥
+        </div>
+        <div class="stat-content">
+          <span>
+            Ofertas
+          </span>
+          <strong id="statOffers">
+            0
+          </strong>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          🛒
+        </div>
+        <div class="stat-content">
+          <span>
+            Compras
+          </span>
+          <strong id="statPurchases">
+            0
+          </strong>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          ⏳
+        </div>
+        <div class="stat-content">
+          <span>
+            Pendientes
+          </span>
+          <strong id="statPending">
+            0
+          </strong>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          💰
+        </div>
+        <div class="stat-content">
+          <span>
+            Ahorro generado
+          </span>
+          <strong id="statSavings">
+            $0.00
+          </strong>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          📋
+        </div>
+        <div class="stat-content">
+          <span>
+            Copias de cupones
+          </span>
+          <strong id="statCopies">
+            0
+          </strong>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          👆
+        </div>
+        <div class="stat-content">
+          <span>
+            Clics
+          </span>
+          <strong id="statClicks">
+            0
+          </strong>
+        </div>
+      </div>
+    </div>
+    <!-- CLICS + TOP CUPONES -->
+    <div class="dashboard-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>
+              📈 Clics por día
+            </h3>
+            <p>
+              Actividad de las ofertas
+            </p>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas
+            id="clicksChart"
+            width="900"
+            height="350"
+          ></canvas>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>
+              🏆 Top cupones
+            </h3>
+            <p>
+              Cupones más copiados
+            </p>
+          </div>
+        </div>
+        <div id="topCouponsDashboard">
+          Cargando...
+        </div>
+      </div>
+    </div>
+    <!-- RANKING + ESTADOS -->
+    <div class="dashboard-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>
+              👑 Ranking de usuarios
+            </h3>
+            <p>
+              Usuarios con mayor ahorro
+            </p>
+          </div>
+        </div>
+        <div id="topUsersDashboard">
+          Cargando...
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>
+              🇲🇽 Usuarios por estado
+            </h3>
+            <p>
+              Distribución nacional
+            </p>
+          </div>
+        </div>
+        <div id="statesDashboard">
+          Cargando...
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- =================================================
+       USUARIOS
+  ================================================== -->
+  <section
+    id="section-usuarios"
+    class="admin-section"
   >
-    <span>💬</span>
-  </a>
+    <div class="section-heading">
+      <div>
+        <h2>
+          👥 Usuarios
+        </h2>
+        <p>
+          Usuarios registrados y ranking.
+        </p>
+      </div>
+      <input
+        id="userSearch"
+        class="search-input"
+        type="search"
+        placeholder="🔎 Buscar usuario..."
+        autocomplete="off"
+      >
+    </div>
+    <div class="panel table-panel">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Usuario</th>
+              <th>Email</th>
+              <th>Estado</th>
+              <th>Ahorro</th>
+              <th>Compras</th>
+              <th>Cupones</th>
+              <th>Ranking</th>
+            </tr>
+          </thead>
+          <tbody id="usersTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+  <!-- =================================================
+       CUPONES
+  ================================================== -->
+  <section
+    id="section-cupones"
+    class="admin-section"
+  >
+    <div class="section-heading">
+      <div>
+        <h2>
+          🎟️ Cupones
+        </h2>
+        <p>
+          Crear, editar y controlar cupones.
+        </p>
+      </div>
+      <button
+        id="newCouponButton"
+        class="primary-button"
+        type="button"
+      >
+        ➕ Nuevo cupón
+      </button>
+    </div>
+    <div
+      id="couponFormPanel"
+      class="panel form-panel hidden"
+    >
+      <div class="panel-header">
+        <div>
+          <h3>
+            🎟️ Datos del cupón
+          </h3>
+          <p>
+            Configura la información del cupón.
+          </p>
+        </div>
+      </div>
+      <form id="couponForm">
+        <input
+          id="couponId"
+          type="hidden"
+        >
+        <div class="form-grid">
+          <label>
+            Código
+            <input
+              id="couponCode"
+              type="text"
+              required
+              placeholder="EJEMPLO500"
+              autocomplete="off"
+            >
+          </label>
+          <label>
+            Tipo
+            <select
+              id="couponType"
+              required
+            >
+              <option value="relampago">
+                ⚡ Relámpago
+              </option>
+              <option value="bancario">
+                🏦 Bancario
+              </option>
+              <option value="exclusivo">
+                👑 Meli+ Exclusive
+              </option>
+            </select>
+          </label>
+          <label>
+            Descuento
+            <input
+              id="couponDiscount"
+              type="text"
+              placeholder="$500 OFF / 10%"
+            >
+          </label>
+          <label>
+            Compra mínima
+            <input
+              id="couponMinimum"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="0"
+            >
+          </label>
+          <label>
+            Tope máximo
+            <input
+              id="couponMaximum"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="0"
+            >
+          </label>
+          <label>
+            Enlace Mercado Libre
+            <input
+              id="couponLink"
+              type="url"
+              placeholder="https://meli.la/..."
+            >
+          </label>
+        </div>
+        <div class="checkbox-row">
+          <label class="check-card">
+            <input
+              id="couponActive"
+              type="checkbox"
+              checked
+            >
+            <span>
+              🟢 Activo
+            </span>
+          </label>
+          <label class="check-card">
+            <input
+              id="couponWarning"
+              type="checkbox"
+            >
+            <span>
+              🟠 Por agotarse
+            </span>
+          </label>
+        </div>
+        <div class="form-actions">
+          <button
+            type="submit"
+            class="primary-button"
+          >
+            💾 Guardar cupón
+          </button>
+          <button
+            type="button"
+            id="cancelCouponButton"
+            class="secondary-button"
+          >
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+    <div class="panel table-panel">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Tipo</th>
+              <th>Descuento</th>
+              <th>Mínimo</th>
+              <th>Tope</th>
+              <th>Copias</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="couponsTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+  <!-- =================================================
+       OFERTAS
+  ================================================== -->
+  <section
+    id="section-ofertas"
+    class="admin-section"
+  >
+    <div class="section-heading">
+      <div>
+        <h2>
+          🔥 Ofertas
+        </h2>
+        <p>
+          Administrar ofertas publicadas.
+        </p>
+      </div>
+      <button
+        id="newOfferButton"
+        class="primary-button"
+        type="button"
+      >
+        ➕ Nueva oferta
+      </button>
+    </div>
+    <div
+      id="offerFormPanel"
+      class="panel form-panel hidden"
+    >
+      <div class="panel-header">
+        <div>
+          <h3>
+            🔥 Datos de la oferta
+          </h3>
+          <p>
+            Configura la oferta que aparecerá en la página.
+          </p>
+        </div>
+      </div>
+      <form id="offerForm">
+        <input
+          id="offerId"
+          type="hidden"
+        >
+        <div class="form-grid">
+          <label>
+            Título
+            <input
+              id="offerTitle"
+              type="text"
+              required
+              placeholder="Nombre del producto"
+            >
+          </label>
+          <label>
+            Precio anterior
+            <input
+              id="offerOldPrice"
+              type="number"
+              min="0"
+              step="0.01"
+              required
+            >
+          </label>
+          <label>
+            Precio actual
+            <input
+              id="offerCurrentPrice"
+              type="number"
+              min="0"
+              step="0.01"
+              required
+            >
+          </label>
+          <label>
+            Imagen
+            <input
+              id="offerImage"
+              type="url"
+              placeholder="https://..."
+            >
+          </label>
+          <label class="full-width">
+            Enlace Mercado Libre
+            <input
+              id="offerLink"
+              type="url"
+              required
+              placeholder="https://meli.la/..."
+            >
+          </label>
+        </div>
+        <div class="form-actions">
+          <button
+            type="submit"
+            class="primary-button"
+          >
+            💾 Guardar oferta
+          </button>
+          <button
+            type="button"
+            id="cancelOfferButton"
+            class="secondary-button"
+          >
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+    <div class="panel table-panel">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Imagen</th>
+              <th>Oferta</th>
+              <th>Antes</th>
+              <th>Actual</th>
+              <th>Ahorro</th>
+              <th>Clics</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="offersTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+  <!-- =================================================
+       COMPRAS
+  ================================================== -->
+  <section
+    id="section-compras"
+    class="admin-section"
+  >
+    <div class="section-heading">
+      <div>
+        <h2>
+          🛒 Verificación de compras
+        </h2>
+        <p>
+          Revisa capturas y aprueba o rechaza compras.
+        </p>
+      </div>
+      <select
+        id="purchaseFilter"
+        class="filter-select"
+      >
+        <option value="todas">
+          Todas
+        </option>
+        <option value="pendiente">
+          Pendientes
+        </option>
+        <option value="aprobada">
+          Aprobadas
+        </option>
+        <option value="rechazada">
+          Rechazadas
+        </option>
+      </select>
+    </div>
+    <div
+      id="purchasesContainer"
+      class="purchases-grid"
+    ></div>
+  </section>
+  <!-- =================================================
+       ESTADÍSTICAS
+  ================================================== -->
+  <section
+    id="section-estadisticas"
+    class="admin-section"
+  >
+    <div class="section-heading">
+      <div>
+        <h2>
+          📈 Estadísticas
+        </h2>
+        <p>
+          Datos completos de actividad.
+        </p>
+      </div>
+    </div>
+    <div class="dashboard-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>
+              📈 Clics por día
+            </h3>
+            <p>
+              Rendimiento diario.
+            </p>
+          </div>
+        </div>
+        <div class="chart-container large">
+          <canvas
+            id="clicksChartLarge"
+            width="1000"
+            height="400"
+          ></canvas>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>
+              📋 Copias por cupón
+            </h3>
+            <p>
+              Cupones ordenados por copias.
+            </p>
+          </div>
+        </div>
+        <div id="couponCopiesStats"></div>
+      </div>
+    </div>
+    <div class="dashboard-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>
+              🏆 Usuarios con más ahorro
+            </h3>
+            <p>
+              Ranking general.
+            </p>
+          </div>
+        </div>
+        <div id="rankingStats"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>
+              🇲🇽 Usuarios por estado
+            </h3>
+            <p>
+              Distribución de usuarios.
+            </p>
+          </div>
+        </div>
+        <div id="statesStats"></div>
+      </div>
+    </div>
+  </section>
+</main>
+  </div>
   <!-- =====================================================
-       FIREBASE
+       MODAL DE CAPTURA
   ====================================================== -->
- <script type="module" src="./firebase.js"></script>
-<script type="module" src="./app.js"></script>
+  <div
+    id="imageModal"
+    class="modal hidden"
+  >
+<div class="modal-content">
+  <button
+    id="closeModal"
+    class="modal-close"
+    type="button"
+  >
+    ×
+  </button>
+  <img
+    id="modalImage"
+    src=""
+    alt="Captura de compra"
+  >
+</div>
+  </div>
+  <!-- =====================================================
+       TOAST
+  ====================================================== -->
+  <div
+    id="toast"
+    class="toast"
+  ></div>
+  <!-- =====================================================
+       JAVASCRIPT
+  ====================================================== -->
+  <script
+    type="module"
+    src="./admin.js"
+  ></script>
 </body>
 </html>
