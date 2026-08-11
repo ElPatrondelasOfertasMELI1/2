@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <meta name="theme-color" content="#ffe600">
+
+  <title>Iniciar sesión | El Patrón de las Ofertas</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  >
+
+  <link rel="stylesheet" href="./css/auth.css">
+</head>
+
+<body>
+
+  <header class="auth-header">
+
+    <a href="./index.html" class="auth-logo">
+      <span>⚡</span>
+
+      <div>
+        EL PATRÓN
+        <small>DE LAS OFERTAS</small>
+      </div>
+    </a>
+
+  </header>
+
+
+  <main class="auth-page">
+
+    <section class="auth-card">
+
+      <div class="auth-icon">
+        👤
+      </div>
+
+      <span class="auth-label">
+        BIENVENIDO DE NUEVO
+      </span>
+
+      <h1>
+        Iniciar sesión
+      </h1>
+
+      <p class="auth-description">
+        Entra a tu cuenta para consultar tus
+        compras, ahorro y cupones utilizados.
+      </p>
+
+
+      <form id="loginForm">
+
+        <div class="input-group">
+
+          <label for="loginEmail">
+            📧 Correo electrónico
+          </label>
+
+          <input
+            id="loginEmail"
+            type="email"
+            autocomplete="email"
+            placeholder="tu@correo.com"
+            required
+          >
+
+        </div>
+
+
+        <div class="input-group">
+
+          <label for="loginPassword">
+            🔐 Contraseña
+          </label>
+
+          <div class="password-wrapper">
+
+            <input
+              id="loginPassword"
+              type="password"
+              autocomplete="current-password"
+              placeholder="Tu contraseña"
+              required
+            >
+
+            <button
+              type="button"
+              class="password-toggle"
+              data-password-target="loginPassword"
+            >
+              👁️
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <button
+          id="loginButton"
+          class="auth-submit"
+          type="submit"
+        >
+          🔐 INICIAR SESIÓN
+        </button>
+
+      </form>
+
+
+      <div
+        id="authMessage"
+        class="auth-message"
+      ></div>
+
+
+      <div class="auth-separator">
+        <span>¿Todavía no tienes cuenta?</span>
+      </div>
+
+
+      <a
+        href="./registro.html"
+        class="auth-secondary-button"
+      >
+        🚀 CREAR CUENTA GRATIS
+      </a>
+
+
+      <a
+        href="./index.html"
+        class="back-home"
+      >
+        ← Volver al inicio
+      </a>
+
+    </section>
+
+  </main>
+
+
+  <script type="module" src="./js/auth.js"></script>
+
+</body>
+</html>
