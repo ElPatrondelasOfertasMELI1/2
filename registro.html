@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+  <meta name="theme-color" content="#ffe600">
+  <title>Crear cuenta | El Patrón de las Ofertas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="./css/auth.css">
+</head>
+<body>
+  <header class="auth-header">
+    <a href="./index.html" class="auth-logo">
+      <span>⚡</span>
+      <div>
+        EL PATRÓN
+        <small>DE LAS OFERTAS</small>
+      </div>
+    </a>
+  </header>
+  <main class="auth-page">
+    <section class="auth-card register-card">
+      <div class="auth-icon">
+        🚀
+      </div>
+      <span class="auth-label">
+        ÚNETE A LA COMUNIDAD
+      </span>
+      <h1>
+        Crear cuenta
+      </h1>
+      <p class="auth-description">
+        Regístrate gratis y empieza a llevar
+        el control de tus ahorros.
+      </p>
+      <form id="registerForm">
+        <div class="input-group">
+          <label for="registerName">
+            👤 Nombre
+          </label>
+          <input
+            id="registerName"
+            type="text"
+            autocomplete="name"
+            placeholder="Tu nombre"
+            maxlength="60"
+            required
+          >
+        </div>
+        <div class="input-group">
+          <label for="registerEmail">
+            📧 Correo electrónico
+          </label>
+          <input
+            id="registerEmail"
+            type="email"
+            autocomplete="email"
+            placeholder="tu@correo.com"
+            required
+          >
+        </div>
+        <div class="input-group">
+          <label for="registerPhone">
+            📱 Número de teléfono
+          </label>
+          <input
+            id="registerPhone"
+            type="tel"
+            autocomplete="tel"
+            inputmode="tel"
+            placeholder="10 dígitos"
+            maxlength="15"
+            required
+          >
+        </div>
+        <div class="input-group">
+          <label for="registerState">
+            📍 Estado de México
+          </label>
+          <select
+            id="registerState"
+            required
+          >
+            <option value="">
+              Selecciona tu estado
+            </option>
+            <option>Aguascalientes</option>
+            <option>Baja California</option>
+            <option>Baja California Sur</option>
+            <option>Campeche</option>
+            <option>Chiapas</option>
+            <option>Chihuahua</option>
+            <option>Ciudad de México</option>
+            <option>Coahuila</option>
+            <option>Colima</option>
+            <option>Durango</option>
+            <option>Estado de México</option>
+            <option>Guanajuato</option>
+            <option>Guerrero</option>
+            <option>Hidalgo</option>
+            <option>Jalisco</option>
+            <option>Michoacán</option>
+            <option>Morelos</option>
+            <option>Nayarit</option>
+            <option>Nuevo León</option>
+            <option>Oaxaca</option>
+            <option>Puebla</option>
+            <option>Querétaro</option>
+            <option>Quintana Roo</option>
+            <option>San Luis Potosí</option>
+            <option>Sinaloa</option>
+            <option>Sonora</option>
+            <option>Tabasco</option>
+            <option>Tamaulipas</option>
+            <option>Tlaxcala</option>
+            <option>Veracruz</option>
+            <option>Yucatán</option>
+            <option>Zacatecas</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label for="registerPassword">
+            🔐 Contraseña
+          </label>
+          <div class="password-wrapper">
+            <input
+              id="registerPassword"
+              type="password"
+              autocomplete="new-password"
+              placeholder="Mínimo 6 caracteres"
+              minlength="6"
+              required
+            >
+            <button
+              type="button"
+              class="password-toggle"
+              data-password-target="registerPassword"
+            >
+              👁️
+            </button>
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="registerPasswordConfirm">
+            🔐 Confirmar contraseña
+          </label>
+          <div class="password-wrapper">
+            <input
+              id="registerPasswordConfirm"
+              type="password"
+              autocomplete="new-password"
+              placeholder="Repite tu contraseña"
+              minlength="6"
+              required
+            >
+            <button
+              type="button"
+              class="password-toggle"
+              data-password-target="registerPasswordConfirm"
+            >
+              👁️
+            </button>
+          </div>
+        </div>
+        <label class="terms-check">
+          <input
+            id="acceptTerms"
+            type="checkbox"
+            required
+          >
+          <span>
+            Acepto el uso de mis datos para
+            gestionar mi cuenta y mis compras.
+          </span>
+        </label>
+        <button
+          id="registerButton"
+          class="auth-submit"
+          type="submit"
+        >
+          🚀 CREAR MI CUENTA
+        </button>
+      </form>
+      <div
+        id="authMessage"
+        class="auth-message"
+      ></div>
+      <div class="auth-separator">
+        <span>¿Ya tienes cuenta?</span>
+      </div>
+      <a
+        href="./login.html"
+        class="auth-secondary-button"
+      >
+        🔐 INICIAR SESIÓN
+      </a>
+      <a
+        href="./index.html"
+        class="back-home"
+      >
+        ← Volver al inicio
+      </a>
+    </section>
+  </main>
+  <script type="module" src="./js/registro.js"></script>
+</body>
+</html>
