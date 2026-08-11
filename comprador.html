@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+  <meta name="theme-color" content="#ffe600">
+  <title>Comprador del Mes | El Patrón de las Ofertas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="./css/perfil.css">
+</head>
+<body>
+  <header class="profile-header">
+    <a
+      href="./index.html"
+      class="profile-logo"
+    >
+      ⚡ EL PATRÓN
+    </a>
+    <a
+      href="./index.html"
+      class="profile-home"
+    >
+      🏠 Inicio
+    </a>
+  </header>
+  <main class="buyer-page">
+    <section class="buyer-hero">
+      <div class="trophy">
+        🏆
+      </div>
+      <span>
+        RECONOCIMIENTO MENSUAL
+      </span>
+      <h1>
+        👑 Comprador del Mes
+      </h1>
+      <p>
+        El usuario que consiguió el mayor
+        ahorro con nuestras ofertas y cupones.
+      </p>
+    </section>
+    <!-- GANADOR -->
+    <section
+      id="winnerSection"
+      class="winner-section"
+    >
+      <div class="winner-loading">
+        🏆
+        <p>
+          Buscando ganador...
+        </p>
+      </div>
+    </section>
+    <!-- PREMIO -->
+    <section class="prize-section">
+      <div class="prize-icon">
+        🎁
+      </div>
+      <div>
+        <span>
+          PREMIO DEL MES
+        </span>
+        <h2 id="prizeTitle">
+          Próximamente
+        </h2>
+        <p id="prizeDescription">
+          El premio será anunciado por
+          El Patrón de las Ofertas.
+        </p>
+      </div>
+    </section>
+    <!-- RANKING -->
+    <section class="ranking-public-section">
+      <div class="section-title">
+        <div>
+          <span>
+            TOP AHORRADORES
+          </span>
+          <h2>
+            🏆 Ranking del mes
+          </h2>
+        </div>
+      </div>
+      <div
+        id="publicRanking"
+        class="public-ranking"
+      >
+        <div class="winner-loading">
+          Cargando ranking...
+        </div>
+      </div>
+    </section>
+    <div class="buyer-back">
+      <a
+        href="./index.html"
+        class="primary-profile-button"
+      >
+        ⚡ Ver ofertas y cupones
+      </a>
+    </div>
+  </main>
+  <script type="module" src="./js/comprador.js"></script>
+</body>
+</html>
