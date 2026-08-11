@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  >
+  <meta name="theme-color" content="#ffe600">
+  <meta
+    name="description"
+    content="El Patrón de las Ofertas - Cupones, ofertas y descuentos de Mercado Libre México."
+  >
+  <title>⚡ El Patrón de las Ofertas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+  <!-- =====================================================
+       HEADER
+  ====================================================== -->
+  <header class="main-header">
+    <div class="header-inner">
+      <a href="./index.html" class="logo">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text">
+          EL PATRÓN
+          <small>DE LAS OFERTAS</small>
+        </span>
+      </a>
+      <nav class="desktop-nav">
+        <a href="#ofertas">🔥 Ofertas</a>
+        <a href="#relampago">⚡ Cupones</a>
+        <a href="#categorias">🏷️ Categorías</a>
+        <a href="#comprador">🏆 Comprador del mes</a>
+      </nav>
+      <div class="header-actions">
+        <a
+          href="./login.html"
+          id="loginButton"
+          class="header-login"
+        >
+          👤 Iniciar sesión
+        </a>
+        <a
+          href="./perfil.html"
+          id="profileButton"
+          class="header-profile hidden"
+        >
+          👤 Mi perfil
+        </a>
+      </div>
+    </div>
+  </header>
+  <!-- =====================================================
+       HERO
+  ====================================================== -->
+  <main>
+    <section class="hero-section">
+      <div class="hero-content">
+        <div class="hero-badge">
+          ⚡ DESCUENTOS TODOS LOS DÍAS
+        </div>
+        <h1>
+          Encuentra las mejores
+          <span>ofertas y cupones</span>
+        </h1>
+        <p>
+          Ahorra más en tus compras de Mercado Libre
+          con nuestros cupones, promociones y ofertas.
+        </p>
+        <div class="hero-buttons">
+          <a href="#relampago" class="primary-button">
+            🎟️ Ver cupones
+          </a>
+          <a href="#ofertas" class="secondary-button">
+            🔥 Ver ofertas
+          </a>
+        </div>
+      </div>
+    </section>
+    <!-- =====================================================
+         BENEFICIO MERCADO PAGO
+    ====================================================== -->
+    <section class="new-user-section">
+      <div class="new-user-card">
+        <div class="new-user-icon">
+          🎁
+        </div>
+        <div class="new-user-content">
+          <span class="new-user-label">
+            BENEFICIO PARA NUEVOS USUARIOS
+          </span>
+          <h2>
+            $100 GRATIS
+          </h2>
+          <p>
+            Si eres nuevo en Mercado Pago,
+            aprovecha este beneficio.
+          </p>
+        </div>
+        <a
+          id="mercadoPagoButton"
+          href="#"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="new-user-button"
+        >
+          OBTENER $100
+        </a>
+      </div>
+    </section>
+    <!-- =====================================================
+         CATEGORÍAS
+    ====================================================== -->
+    <section
+      id="categorias"
+      class="content-section"
+    >
+      <div class="section-heading">
+        <div>
+          <span class="section-label">
+            EXPLORA
+          </span>
+          <h2>
+            🏷️ Categorías
+          </h2>
+        </div>
+        <div class="slider-controls">
+          <button
+            class="slider-button"
+            data-slider-prev="categoriesSlider"
+            aria-label="Anterior"
+          >
+            ‹
+          </button>
+          <button
+            class="slider-button"
+            data-slider-next="categoriesSlider"
+            aria-label="Siguiente"
+          >
+            ›
+          </button>
+        </div>
+      </div>
+      <div
+        id="categoriesSlider"
+        class="horizontal-slider categories-slider"
+      >
+        <a href="#" class="category-card">
+          <span>📱</span>
+          <strong>Tecnología</strong>
+        </a>
+        <a href="#" class="category-card">
+          <span>👟</span>
+          <strong>Moda</strong>
+        </a>
+        <a href="#" class="category-card">
+          <span>🏠</span>
+          <strong>Hogar</strong>
+        </a>
+        <a href="#" class="category-card">
+          <span>🎮</span>
+          <strong>Videojuegos</strong>
+        </a>
+        <a href="#" class="category-card">
+          <span>🎒</span>
+          <strong>Escolar</strong>
+        </a>
+        <a href="#" class="category-card">
+          <span>🍳</span>
+          <strong>Cocina</strong>
+        </a>
+        <a href="#" class="category-card">
+          <span>🚗</span>
+          <strong>Automotriz</strong>
+        </a>
+        <a href="#" class="category-card">
+          <span>💄</span>
+          <strong>Belleza</strong>
+        </a>
+      </div>
+    </section>
+    <!-- =====================================================
+         OFERTAS
+    ====================================================== -->
+    <section
+      id="ofertas"
+      class="content-section"
+    >
+      <div class="section-heading">
+        <div>
+          <span class="section-label">
+            LAS MEJORES
+          </span>
+          <h2>
+            🔥 Ofertas
+          </h2>
+        </div>
+        <div class="slider-controls">
+          <button
+            class="slider-button"
+            data-slider-prev="offersSlider"
+            aria-label="Anterior"
+          >
+            ‹
+          </button>
+          <button
+            class="slider-button"
+            data-slider-next="offersSlider"
+            aria-label="Siguiente"
+          >
+            ›
+          </button>
+        </div>
+      </div>
+      <div
+        id="offersSlider"
+        class="horizontal-slider offers-slider"
+      >
+        <div class="loading-card">
+          <div class="loading-spinner"></div>
+          <p>Cargando ofertas...</p>
+        </div>
+      </div>
+    </section>
+    <!-- =====================================================
+         CUPONES RELÁMPAGO
+    ====================================================== -->
+    <section
+      id="relampago"
+      class="content-section coupon-section"
+    >
+      <div class="section-heading">
+        <div>
+          <span class="section-label">
+            POR TIEMPO LIMITADO
+          </span>
+          <h2>
+            ⚡ Cupones Relámpago
+          </h2>
+        </div>
+        <div class="slider-controls">
+          <button
+            class="slider-button"
+            data-slider-prev="flashCouponsSlider"
+            aria-label="Anterior"
+          >
+            ‹
+          </button>
+          <button
+            class="slider-button"
+            data-slider-next="flashCouponsSlider"
+            aria-label="Siguiente"
+          >
+            ›
+          </button>
+        </div>
+      </div>
+      <div
+        id="flashCouponsSlider"
+        class="horizontal-slider coupon-slider"
+      >
+        <div class="loading-card">
+          <div class="loading-spinner"></div>
+          <p>Cargando cupones...</p>
+        </div>
+      </div>
+    </section>
+    <!-- =====================================================
+         CUPONES EXCLUSIVOS
+    ====================================================== -->
+    <section
+      id="exclusivos"
+      class="content-section"
+    >
+      <div class="section-heading">
+        <div>
+          <span class="section-label">
+            PARA APROVECHAR
+          </span>
+          <h2>
+            👑 Cupones Exclusivos
+          </h2>
+        </div>
+        <div class="slider-controls">
+          <button
+            class="slider-button"
+            data-slider-prev="exclusiveCouponsSlider"
+            aria-label="Anterior"
+          >
+            ‹
+          </button>
+          <button
+            class="slider-button"
+            data-slider-next="exclusiveCouponsSlider"
+            aria-label="Siguiente"
+          >
+            ›
+          </button>
+        </div>
+      </div>
+      <div
+        id="exclusiveCouponsSlider"
+        class="horizontal-slider coupon-slider"
+      >
+        <div class="loading-card">
+          <div class="loading-spinner"></div>
+          <p>Cargando cupones...</p>
+        </div>
+      </div>
+    </section>
+    <!-- =====================================================
+         CUPONES BANCARIOS
+    ====================================================== -->
+    <section
+      id="bancarios"
+      class="content-section"
+    >
+      <div class="section-heading">
+        <div>
+          <span class="section-label">
+            PAGA MENOS
+          </span>
+          <h2>
+            🏦 Cupones Bancarios
+          </h2>
+        </div>
+        <div class="slider-controls">
+          <button
+            class="slider-button"
+            data-slider-prev="bankCouponsSlider"
+            aria-label="Anterior"
+          >
+            ‹
+          </button>
+          <button
+            class="slider-button"
+            data-slider-next="bankCouponsSlider"
+            aria-label="Siguiente"
+          >
+            ›
+          </button>
+        </div>
+      </div>
+      <div
+        id="bankCouponsSlider"
+        class="horizontal-slider coupon-slider"
+      >
+        <div class="loading-card">
+          <div class="loading-spinner"></div>
+          <p>Cargando cupones...</p>
+        </div>
+      </div>
+    </section>
+    <!-- =====================================================
+         COMPRADOR DEL MES
+    ====================================================== -->
+    <section
+      id="comprador"
+      class="buyer-month-section"
+    >
+      <div class="buyer-month-card">
+        <div class="buyer-decoration">
+          🏆
+        </div>
+        <div class="buyer-content">
+          <span class="section-label">
+            RECONOCIMIENTO
+          </span>
+          <h2>
+            👑 Comprador del Mes
+          </h2>
+          <p>
+            El usuario que más ahorro consiguió
+            utilizando nuestras ofertas y cupones.
+          </p>
+          <a
+            href="./comprador.html"
+            class="buyer-button"
+          >
+            🏆 Ver ganador
+          </a>
+        </div>
+        <div
+          id="buyerMonthPreview"
+          class="buyer-preview"
+        >
+          <div class="buyer-placeholder">
+            👤
+          </div>
+          <strong>
+            Próximamente
+          </strong>
+          <span>
+            El ganador aparecerá aquí
+          </span>
+        </div>
+      </div>
+    </section>
+    <!-- =====================================================
+         REGISTRO
+    ====================================================== -->
+    <section class="join-section">
+      <div class="join-card">
+        <div class="join-icon">
+          🚀
+        </div>
+        <h2>
+          Únete a nuestra comunidad
+        </h2>
+        <p>
+          Regístrate gratis, guarda tus compras,
+          registra tus ahorros y participa por premios.
+        </p>
+        <div class="join-buttons">
+          <a
+            href="./registro.html"
+            class="primary-button"
+          >
+            👤 Crear cuenta
+          </a>
+          <a
+            href="./login.html"
+            class="secondary-button"
+          >
+            🔐 Iniciar sesión
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <!-- =====================================================
+       FOOTER
+  ====================================================== -->
+  <footer class="main-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="logo">
+          <span class="logo-icon">⚡</span>
+          <span class="logo-text">
+            EL PATRÓN
+            <small>DE LAS OFERTAS</small>
+          </span>
+        </div>
+        <p>
+          Las mejores ofertas y cupones
+          de Mercado Libre México.
+        </p>
+      </div>
+      <div class="footer-links">
+        <a href="./registro.html">
+          Crear cuenta
+        </a>
+        <a href="./login.html">
+          Iniciar sesión
+        </a>
+        <a href="./comprador.html">
+          Comprador del mes
+        </a>
+      </div>
+      <div class="footer-copy">
+        © <span id="currentYear"></span>
+        El Patrón de las Ofertas
+      </div>
+    </div>
+  </footer>
+  <!-- =====================================================
+       BOTÓN FLOTANTE WHATSAPP
+  ====================================================== -->
+  <a
+    id="whatsappButton"
+    class="whatsapp-floating"
+    href="#"
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="WhatsApp"
+  >
+    <span>💬</span>
+  </a>
+  <!-- =====================================================
+       FIREBASE
+  ====================================================== -->
+  <script type="module" src="./js/firebase.js"></script>
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
