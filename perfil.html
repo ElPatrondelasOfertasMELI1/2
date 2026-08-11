@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+  <meta name="theme-color" content="#ffe600">
+  <title>Mi perfil | El Patrón de las Ofertas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="./css/perfil.css">
+</head>
+<body>
+  <header class="profile-header">
+    <a
+      href="./index.html"
+      class="profile-logo"
+    >
+      ⚡ EL PATRÓN
+    </a>
+    <a
+      href="./index.html"
+      class="profile-home"
+    >
+      🏠 Inicio
+    </a>
+  </header>
+  <main class="profile-page">
+    <!-- PERFIL -->
+    <section class="profile-hero">
+      <div class="profile-photo-container">
+        <img
+          id="profilePhoto"
+          class="profile-photo"
+          src=""
+          alt="Foto de perfil"
+        >
+        <label
+          for="photoInput"
+          class="change-photo-button"
+          title="Cambiar foto"
+        >
+          📷
+        </label>
+        <input
+          id="photoInput"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          hidden
+        >
+      </div>
+      <div class="profile-main-info">
+        <span class="profile-label">
+          MI CUENTA
+        </span>
+        <h1 id="profileName">
+          Cargando...
+        </h1>
+        <p id="profileEmail">
+          Cargando...
+        </p>
+        <span
+          id="profileState"
+          class="profile-state"
+        >
+          📍 --
+        </span>
+      </div>
+      <button
+        id="logoutButton"
+        class="logout-button"
+        type="button"
+      >
+        🚪 Cerrar sesión
+      </button>
+    </section>
+    <!-- ESTADÍSTICAS -->
+    <section class="stats-grid">
+      <article class="stat-card">
+        <span>💰</span>
+        <div>
+          <small>
+            AHORRO TOTAL
+          </small>
+          <strong id="totalSavings">
+            $0
+          </strong>
+        </div>
+      </article>
+      <article class="stat-card">
+        <span>🛍️</span>
+        <div>
+          <small>
+            COMPRAS
+          </small>
+          <strong id="totalPurchases">
+            0
+          </strong>
+        </div>
+      </article>
+      <article class="stat-card">
+        <span>🎟️</span>
+        <div>
+          <small>
+            CUPONES
+          </small>
+          <strong id="totalCoupons">
+            0
+          </strong>
+        </div>
+      </article>
+      <article class="stat-card">
+        <span>👁️</span>
+        <div>
+          <small>
+            VISITAS
+          </small>
+          <strong id="totalVisits">
+            0
+          </strong>
+        </div>
+      </article>
+    </section>
+    <!-- SUBIR COMPRA -->
+    <section class="profile-section">
+      <div class="section-title">
+        <div>
+          <span>
+            COMPRAS
+          </span>
+          <h2>
+            🧾 Registrar una compra
+          </h2>
+        </div>
+      </div>
+      <div class="purchase-card">
+        <div class="purchase-icon">
+          📸
+        </div>
+        <div class="purchase-info">
+          <h3>
+            ¿Usaste uno de nuestros cupones?
+          </h3>
+          <p>
+            Sube una captura de tu compra.
+            Nuestro equipo la revisará y,
+            si es válida, se agregará a tu ahorro.
+          </p>
+        </div>
+        <button
+          id="openPurchaseButton"
+          class="primary-profile-button"
+          type="button"
+        >
+          📸 SUBIR CAPTURA
+        </button>
+      </div>
+    </section>
+    <!-- FORMULARIO COMPRA -->
+    <section
+      id="purchaseFormSection"
+      class="profile-section hidden"
+    >
+      <div class="form-card">
+        <h2>
+          🧾 Comprobar compra
+        </h2>
+        <p>
+          Completa los datos de tu compra.
+        </p>
+        <form id="purchaseForm">
+          <div class="profile-input">
+            <label for="purchaseProduct">
+              Producto
+            </label>
+            <input
+              id="purchaseProduct"
+              type="text"
+              placeholder="Ej. Samsung Galaxy"
+              maxlength="150"
+              required
+            >
+          </div>
+          <div class="profile-input">
+            <label for="purchasePrice">
+              Precio que pagaste
+            </label>
+            <input
+              id="purchasePrice"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              required
+            >
+          </div>
+          <div class="profile-input">
+            <label for="purchaseSavings">
+              ¿Cuánto ahorraste?
+            </label>
+            <input
+              id="purchaseSavings"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              required
+            >
+          </div>
+          <div class="profile-input">
+            <label for="purchaseCoupon">
+              Cupón utilizado
+            </label>
+            <input
+              id="purchaseCoupon"
+              type="text"
+              placeholder="Ej. AHORRA500"
+              maxlength="50"
+            >
+          </div>
+          <div class="profile-input">
+            <label for="purchaseScreenshot">
+              Captura de compra
+            </label>
+            <input
+              id="purchaseScreenshot"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              required
+            >
+            <small>
+              Máximo recomendado: 5 MB.
+            </small>
+          </div>
+          <div class="form-actions">
+            <button
+              type="button"
+              id="cancelPurchaseButton"
+              class="cancel-button"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              id="submitPurchaseButton"
+              class="primary-profile-button"
+            >
+              ✅ ENVIAR A VERIFICACIÓN
+            </button>
+          </div>
+        </form>
+        <div
+          id="purchaseMessage"
+          class="profile-message"
+        ></div>
+      </div>
+    </section>
+    <!-- HISTORIAL -->
+    <section class="profile-section">
+      <div class="section-title">
+        <div>
+          <span>
+            HISTORIAL
+          </span>
+          <h2>
+            🛍️ Mis compras
+          </h2>
+        </div>
+      </div>
+      <div
+        id="purchaseHistory"
+        class="purchase-history"
+      >
+        <div class="empty-history">
+          Cargando compras...
+        </div>
+      </div>
+    </section>
+    <!-- RANKING -->
+    <section class="ranking-card">
+      <div class="ranking-icon">
+        🏆
+      </div>
+      <div>
+        <span>
+          RANKING
+        </span>
+        <h2>
+          ¿Serás el próximo
+          Comprador del Mes?
+        </h2>
+        <p>
+          Registra tus compras verificadas
+          y aumenta tu ahorro acumulado.
+        </p>
+      </div>
+      <a
+        href="./comprador.html"
+        class="ranking-button"
+      >
+        🏆 Ver ranking
+      </a>
+    </section>
+  </main>
+  <div
+    id="globalMessage"
+    class="global-message"
+  ></div>
+  <script type="module" src="./js/perfil.js"></script>
+</body>
+</html>
