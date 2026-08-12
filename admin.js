@@ -1,6 +1,9 @@
 /* =========================================================
    EL PATRÓN DE LAS OFERTAS
    ADMIN PRO
+   FIREBASE NUEVO
+   SIN FIREBASE STORAGE
+   IMÁGENES / VIDEOS EN BASE64
 ========================================================= */
 
 import {
@@ -38,22 +41,26 @@ import {
 
 const firebaseConfig = {
 
-  apiKey: "TU_API_KEY",
+  apiKey:
+    "AIzaSyDOoYZZhaTn6hbBQ0ml--mq8ByT0KdF9e0",
 
   authDomain:
-    "TU_PROYECTO.firebaseapp.com",
+    "el-patron-de-las-ofertas.firebaseapp.com",
 
   projectId:
-    "TU_PROJECT_ID",
+    "el-patron-de-las-ofertas",
 
   storageBucket:
-    "TU_PROYECTO.firebasestorage.app",
+    "el-patron-de-las-ofertas.firebasestorage.app",
 
   messagingSenderId:
-    "TU_MESSAGING_SENDER_ID",
+    "996329026447",
 
   appId:
-    "TU_APP_ID"
+    "1:996329026447:web:dde5b6748aff41e087d1fa",
+
+  measurementId:
+    "G-GTD9375PRW"
 
 };
 
@@ -73,16 +80,68 @@ const db =
 
 
 /* =========================================================
-   UTILIDADES
+   CONSTANTES
 ========================================================= */
 
-const $ = selector =>
-  document.querySelector(selector);
+/*
+  Firestore tiene límite de 1 MiB por documento.
+
+  Dejamos margen de seguridad para los demás campos
+  del documento.
+
+  IMÁGENES:
+  se comprimen automáticamente.
+
+  VIDEOS:
+  solo se permiten archivos pequeños.
+*/
+
+const MAX_BASE64_BYTES =
+  700 * 1024;
+
+const MAX_VIDEO_BYTES =
+  500 * 1024;
+
+const IMAGE_MAX_WIDTH =
+  1200;
+
+const IMAGE_MAX_HEIGHT =
+  1200;
+
+const IMAGE_QUALITY =
+  0.72;
 
 
-const $$ = selector =>
-  document.querySelectorAll(selector);
+/* =========================================================
+   VARIABLES
+========================================================= */
 
+let editingOfferId = null;
+
+let editingCouponId = null;
+
+let adminStarted = false;
+
+let listenersStarted = false;
+
+
+/* =========================================================
+   UTILIDADES DOM
+========================================================= */
+
+const $ =
+  selector =>
+    document.querySelector(selector);
+
+
+const $$ =
+  selector =>
+    document.querySelectorAll(selector);
+
+
+/* =========================================================
+   ESCAPAR HTML
+========================================================= */
 
 function escapeHtml(value) {
 
@@ -96,20 +155,28 @@ function escapeHtml(value) {
 }
 
 
+/* =========================================================
+   DINERO
+========================================================= */
+
 function money(value) {
 
   return Number(value || 0)
     .toLocaleString(
       "es-MX",
       {
-        style:"currency",
-        currency:"MXN",
-        maximumFractionDigits:0
+        style: "currency",
+        currency: "MXN",
+        maximumFractionDigits: 0
       }
     );
 
 }
 
+
+/* =========================================================
+   CÓDIGO CUPÓN
+========================================================= */
 
 function codeUpper(value) {
 
@@ -119,6 +186,10 @@ function codeUpper(value) {
 
 }
 
+
+/* =========================================================
+   MENSAJES
+========================================================= */
 
 function showMessage(
   message,
@@ -147,16 +218,22 @@ function showMessage(
       "20px";
 
     box.style.zIndex =
-      "99999";
+      "999999";
 
     box.style.padding =
-      "13px 18px";
+      "14px 18px";
 
     box.style.borderRadius =
-      "10px";
+      "12px";
 
     box.style.fontWeight =
       "800";
+
+    box.style.fontFamily =
+      "Arial, sans-serif";
+
+    box.style.boxShadow =
+      "0 8px 30px rgba(0,0,0,.20)";
 
     document.body.appendChild(
       box
@@ -174,6 +251,7 @@ function showMessage(
       ? "#e53935"
       : "#00a650";
 
+
   box.style.color =
     "#fff";
 
@@ -187,11 +265,37 @@ function showMessage(
     setTimeout(
       () => {
 
-        box.remove();
+        if (box) {
+
+          box.remove();
+
+        }
 
       },
       3500
     );
+
+}
+
+
+/* =========================================================
+   VALIDAR SESIÓN
+========================================================= */
+
+function requireAuth() {
+
+  if (!auth.currentUser) {
+
+    showMessage(
+      "❌ Debes iniciar sesión.",
+      "error"
+    );
+
+    return false;
+
+  }
+
+  return true;
 
 }
 
@@ -249,7 +353,10 @@ if (loginForm) {
 
       } catch (error) {
 
-        console.error(error);
+        console.error(
+          "LOGIN:",
+          error
+        );
 
 
         showMessage(
@@ -337,27 +444,27 @@ if (logoutButton) {
     "click",
     async () => {
 
-      await signOut(auth);
+      try {
 
-      showMessage(
-        "Sesión cerrada."
-      );
+        await signOut(auth);
+
+        showMessage(
+          "Sesión cerrada."
+        );
+
+      } catch (error) {
+
+        console.error(
+          "LOGOUT:",
+          error
+        );
+
+      }
 
     }
   );
 
 }
-
-
-/* =========================================================
-   VARIABLES
-========================================================= */
-
-let editingOfferId = null;
-
-let editingCouponId = null;
-
-let adminStarted = false;
 
 
 /* =========================================================
@@ -368,7 +475,8 @@ function startAdmin() {
 
   if (adminStarted) return;
 
-  adminStarted = true;
+  adminStarted =
+    true;
 
 
   bindOfferForm();
@@ -386,6 +494,370 @@ function startAdmin() {
   loadPurchases();
 
   loadStatistics();
+
+  startRealtimeListeners();
+
+}
+
+
+/* =========================================================
+   BASE64
+========================================================= */
+
+/*
+  Convierte un archivo en Base64.
+*/
+
+function fileToBase64(file) {
+
+  return new Promise(
+    (resolve, reject) => {
+
+      const reader =
+        new FileReader();
+
+
+      reader.onload =
+        () => resolve(
+          reader.result
+        );
+
+
+      reader.onerror =
+        reject;
+
+
+      reader.readAsDataURL(
+        file
+      );
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   OBTENER TAMAÑO APROXIMADO BASE64
+========================================================= */
+
+function base64Size(base64) {
+
+  if (!base64) return 0;
+
+
+  const comma =
+    base64.indexOf(",");
+
+
+  const pure =
+    comma >= 0
+      ? base64.substring(
+          comma + 1
+        )
+      : base64;
+
+
+  return Math.ceil(
+    pure.length * 0.75
+  );
+
+}
+
+
+/* =========================================================
+   COMPRIMIR IMAGEN
+========================================================= */
+
+async function compressImage(
+  file
+) {
+
+  if (!file) {
+
+    return null;
+
+  }
+
+
+  if (
+    !file.type.startsWith(
+      "image/"
+    )
+  ) {
+
+    throw new Error(
+      "El archivo seleccionado no es una imagen."
+    );
+
+  }
+
+
+  const imageUrl =
+    URL.createObjectURL(
+      file
+    );
+
+
+  try {
+
+    const image =
+      await new Promise(
+        (resolve, reject) => {
+
+          const img =
+            new Image();
+
+
+          img.onload =
+            () => resolve(img);
+
+
+          img.onerror =
+            () =>
+              reject(
+                new Error(
+                  "No se pudo cargar la imagen."
+                )
+              );
+
+
+          img.src =
+            imageUrl;
+
+        }
+      );
+
+
+    let width =
+      image.width;
+
+
+    let height =
+      image.height;
+
+
+    const ratio =
+      Math.min(
+        IMAGE_MAX_WIDTH / width,
+        IMAGE_MAX_HEIGHT / height,
+        1
+      );
+
+
+    width =
+      Math.round(
+        width * ratio
+      );
+
+
+    height =
+      Math.round(
+        height * ratio
+      );
+
+
+    const canvas =
+      document.createElement(
+        "canvas"
+      );
+
+
+    canvas.width =
+      width;
+
+
+    canvas.height =
+      height;
+
+
+    const context =
+      canvas.getContext(
+        "2d"
+      );
+
+
+    context.drawImage(
+      image,
+      0,
+      0,
+      width,
+      height
+    );
+
+
+    let quality =
+      IMAGE_QUALITY;
+
+
+    let base64 =
+      canvas.toDataURL(
+        "image/jpeg",
+        quality
+      );
+
+
+    /*
+      Si todavía es grande,
+      seguimos reduciendo calidad.
+    */
+
+    while (
+      base64Size(base64) >
+        MAX_BASE64_BYTES &&
+      quality > 0.30
+    ) {
+
+      quality -=
+        0.08;
+
+
+      base64 =
+        canvas.toDataURL(
+          "image/jpeg",
+          quality
+        );
+
+    }
+
+
+    if (
+      base64Size(base64) >
+        MAX_BASE64_BYTES
+    ) {
+
+      throw new Error(
+        "La imagen sigue siendo demasiado grande después de comprimirla."
+      );
+
+    }
+
+
+    return base64;
+
+
+  } finally {
+
+    URL.revokeObjectURL(
+      imageUrl
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   PROCESAR VIDEO
+========================================================= */
+
+async function processVideo(
+  file
+) {
+
+  if (!file) {
+
+    return null;
+
+  }
+
+
+  if (
+    !file.type.startsWith(
+      "video/"
+    )
+  ) {
+
+    throw new Error(
+      "El archivo seleccionado no es un video."
+    );
+
+  }
+
+
+  if (
+    file.size >
+      MAX_VIDEO_BYTES
+  ) {
+
+    throw new Error(
+      "El video es demasiado grande para guardarlo en Firestore. Máximo recomendado: 500 KB."
+    );
+
+  }
+
+
+  const base64 =
+    await fileToBase64(
+      file
+    );
+
+
+  if (
+    base64Size(base64) >
+      MAX_BASE64_BYTES
+  ) {
+
+    throw new Error(
+      "El video convertido supera el tamaño permitido."
+    );
+
+  }
+
+
+  return base64;
+
+}
+
+
+/* =========================================================
+   OBTENER ARCHIVO DE IMAGEN
+========================================================= */
+
+function getImageFile() {
+
+  const input =
+    $("#offerImageFile");
+
+
+  if (
+    input &&
+    input.files &&
+    input.files[0]
+  ) {
+
+    return input.files[0];
+
+  }
+
+
+  return null;
+
+}
+
+
+/* =========================================================
+   OBTENER ARCHIVO DE VIDEO
+========================================================= */
+
+function getVideoFile() {
+
+  const input =
+    $("#offerVideoFile");
+
+
+  if (
+    input &&
+    input.files &&
+    input.files[0]
+  ) {
+
+    return input.files[0];
+
+  }
+
+
+  return null;
 
 }
 
@@ -410,38 +882,53 @@ function bindOfferForm() {
       event.preventDefault();
 
 
+      if (!requireAuth()) {
+
+        return;
+
+      }
+
+
       const titulo =
-        $("#offerTitle")?.value.trim();
+        $("#offerTitle")
+          ?.value
+          .trim();
 
 
       const precioAntes =
         Number(
-          $("#offerPriceBefore")?.value || 0
+          $("#offerPriceBefore")
+            ?.value || 0
         );
 
 
       const precioActual =
         Number(
-          $("#offerPriceCurrent")?.value || 0
+          $("#offerPriceCurrent")
+            ?.value || 0
         );
 
 
       const categoria =
-        $("#offerCategory")?.value.trim();
+        $("#offerCategory")
+          ?.value
+          .trim();
 
 
       const link =
-        $("#offerLink")?.value.trim();
+        $("#offerLink")
+          ?.value
+          .trim();
 
 
-      const imagen =
-        $("#offerImage")?.value.trim() || "";
-
-
-      if (!titulo || !precioActual || !link) {
+      if (
+        !titulo ||
+        !precioActual ||
+        !link
+      ) {
 
         showMessage(
-          "Completa título, precio y enlace.",
+          "Completa título, precio actual y enlace de Mercado Libre.",
           "error"
         );
 
@@ -450,29 +937,113 @@ function bindOfferForm() {
       }
 
 
-      const data = {
+      const imageFile =
+        getImageFile();
 
-        titulo,
 
-        precioAntes,
+      const videoFile =
+        getVideoFile();
 
-        precioActual,
 
-        categoria,
+      const existing =
+        editingOfferId
+          ? await getDoc(
+              doc(
+                db,
+                "ofertas",
+                editingOfferId
+              )
+            )
+          : null;
 
-        link,
 
-        imagen,
+      let oldData =
+        existing?.exists()
+          ? existing.data()
+          : {};
 
-        activo:true,
 
-        actualizado:
-          serverTimestamp()
+      let imagenBase64 =
+        oldData.imagenBase64 ||
+        "";
 
-      };
+
+      let videoBase64 =
+        oldData.videoBase64 ||
+        "";
 
 
       try {
+
+        /*
+          IMAGEN
+        */
+
+        if (imageFile) {
+
+          showMessage(
+            "⏳ Comprimiendo imagen..."
+          );
+
+
+          imagenBase64 =
+            await compressImage(
+              imageFile
+            );
+
+        }
+
+
+        /*
+          VIDEO
+        */
+
+        if (videoFile) {
+
+          showMessage(
+            "⏳ Procesando video..."
+          );
+
+
+          videoBase64 =
+            await processVideo(
+              videoFile
+            );
+
+        }
+
+
+        /*
+          DATOS
+        */
+
+        const data = {
+
+          titulo,
+
+          precioAntes,
+
+          precioActual,
+
+          categoria,
+
+          link,
+
+          imagenBase64,
+
+          videoBase64,
+
+          activo: true,
+
+          actualizado:
+            serverTimestamp()
+
+        };
+
+
+        /*
+          ACTUALIZAR
+        */
 
         if (editingOfferId) {
 
@@ -491,7 +1062,13 @@ function bindOfferForm() {
           );
 
 
-        } else {
+        }
+
+        /*
+          CREAR
+        */
+
+        else {
 
           await addDoc(
             collection(
@@ -499,9 +1076,12 @@ function bindOfferForm() {
               "ofertas"
             ),
             {
+
               ...data,
+
               creado:
                 serverTimestamp()
+
             }
           );
 
@@ -523,12 +1103,23 @@ function bindOfferForm() {
         loadOffers();
 
 
+        loadStatistics();
+
+
       } catch (error) {
 
-        console.error(error);
+        console.error(
+          "GUARDAR OFERTA:",
+          error
+        );
+
 
         showMessage(
-          "❌ No se pudo guardar la oferta.",
+          "❌ " +
+          (
+            error.message ||
+            "No se pudo guardar la oferta."
+          ),
           "error"
         );
 
@@ -585,29 +1176,75 @@ async function loadOffers() {
           "admin-item";
 
 
+        const image =
+          data.imagenBase64
+            ? `
+              <img
+                src="${data.imagenBase64}"
+                alt=""
+                style="
+                  width:60px;
+                  height:60px;
+                  object-fit:cover;
+                  border-radius:10px;
+                "
+              >
+            `
+            : "";
+
+
         card.innerHTML = `
 
-          <div>
+          <div
+            style="
+              display:flex;
+              align-items:center;
+              gap:12px;
+            "
+          >
 
-            <strong>
-              ${escapeHtml(data.titulo)}
-            </strong>
+            ${image}
 
-            <small>
-              ${money(data.precioActual)}
-            </small>
+            <div>
+
+              <strong>
+                ${escapeHtml(
+                  data.titulo
+                )}
+              </strong>
+
+              <small>
+                ${money(
+                  data.precioActual
+                )}
+              </small>
+
+              ${
+                data.videoBase64
+                  ? `
+                    <small>
+                      🎥 Video incluido
+                    </small>
+                  `
+                  : ""
+              }
+
+            </div>
 
           </div>
+
 
           <div>
 
             <button
+              type="button"
               data-edit-offer="${item.id}"
             >
               ✏️ Editar
             </button>
 
             <button
+              type="button"
               data-delete-offer="${item.id}"
             >
               🗑️ Eliminar
@@ -666,7 +1303,10 @@ async function loadOffers() {
 
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      "LISTAR OFERTAS:",
+      error
+    );
 
   }
 
@@ -677,7 +1317,9 @@ async function loadOffers() {
    EDITAR OFERTA
 ========================================================= */
 
-async function editOffer(id) {
+async function editOffer(
+  id
+) {
 
   try {
 
@@ -692,6 +1334,11 @@ async function editOffer(id) {
 
 
     if (!snapshot.exists()) {
+
+      showMessage(
+        "La oferta no existe.",
+        "error"
+      );
 
       return;
 
@@ -722,10 +1369,40 @@ async function editOffer(id) {
       data.link || "";
 
 
-    if ($("#offerImage")) {
+    /*
+      Si el HTML antiguo tiene offerImage,
+      no lo usamos como URL.
+
+      La imagen ahora se maneja con
+      #offerImageFile.
+    */
+
+    if (
+      $("#offerImage")
+    ) {
 
       $("#offerImage").value =
-        data.imagen || "";
+        "";
+
+    }
+
+
+    if (
+      $("#offerImageFile")
+    ) {
+
+      $("#offerImageFile").value =
+        "";
+
+    }
+
+
+    if (
+      $("#offerVideoFile")
+    ) {
+
+      $("#offerVideoFile").value =
+        "";
 
     }
 
@@ -734,14 +1411,23 @@ async function editOffer(id) {
       id;
 
 
-    $("#offerForm")?.scrollIntoView({
-      behavior:"smooth"
-    });
+    $("#offerForm")
+      ?.scrollIntoView({
+        behavior: "smooth"
+      });
+
+
+    showMessage(
+      "✏️ Editando oferta."
+    );
 
 
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      "EDITAR OFERTA:",
+      error
+    );
 
   }
 
@@ -752,7 +1438,18 @@ async function editOffer(id) {
    ELIMINAR OFERTA
 ========================================================= */
 
-async function deleteOffer(id) {
+async function deleteOffer(
+  id
+) {
+
+  if (
+    !requireAuth()
+  ) {
+
+    return;
+
+  }
+
 
   if (
     !confirm(
@@ -783,10 +1480,16 @@ async function deleteOffer(id) {
 
     loadOffers();
 
+    loadStatistics();
+
 
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      "ELIMINAR OFERTA:",
+      error
+    );
+
 
     showMessage(
       "❌ No se pudo eliminar.",
@@ -818,39 +1521,56 @@ function bindCouponForm() {
       event.preventDefault();
 
 
+      if (!requireAuth()) {
+
+        return;
+
+      }
+
+
       const codigo =
         codeUpper(
-          $("#couponCode")?.value
+          $("#couponCode")
+            ?.value
         );
 
 
       const titulo =
-        $("#couponTitle")?.value.trim();
+        $("#couponTitle")
+          ?.value
+          .trim();
 
 
       const tipo =
-        $("#couponType")?.value ||
+        $("#couponType")
+          ?.value ||
         "flash";
 
 
       const descuento =
-        $("#couponDiscount")?.value.trim();
+        $("#couponDiscount")
+          ?.value
+          .trim();
 
 
       const minimo =
         Number(
-          $("#couponMinimum")?.value || 0
+          $("#couponMinimum")
+            ?.value || 0
         );
 
 
       const tope =
         Number(
-          $("#couponTop")?.value || 0
+          $("#couponTop")
+            ?.value || 0
         );
 
 
       const link =
-        $("#couponLink")?.value.trim() ||
+        $("#couponLink")
+          ?.value
+          .trim() ||
         "https://www.mercadolibre.com.mx/";
 
 
@@ -882,7 +1602,7 @@ function bindCouponForm() {
 
         link,
 
-        activo:true,
+        activo: true,
 
         actualizado:
           serverTimestamp()
@@ -917,9 +1637,12 @@ function bindCouponForm() {
               "cupones"
             ),
             {
+
               ...data,
+
               creado:
                 serverTimestamp()
+
             }
           );
 
@@ -940,10 +1663,16 @@ function bindCouponForm() {
 
         loadCoupons();
 
+        loadStatistics();
+
 
       } catch (error) {
 
-        console.error(error);
+        console.error(
+          "GUARDAR CUPÓN:",
+          error
+        );
+
 
         showMessage(
           "❌ No se pudo guardar el cupón.",
@@ -986,8 +1715,12 @@ async function loadCoupons() {
       snapshot.docs
         .map(
           item => ({
-            id:item.id,
+
+            id:
+              item.id,
+
             ...item.data()
+
           })
         )
         .filter(
@@ -1005,12 +1738,13 @@ async function loadCoupons() {
     */
 
     coupons.sort(
-      (a,b) => {
+      (a, b) => {
 
         const aText =
           String(
             a.descuento || ""
           );
+
 
         const bText =
           String(
@@ -1075,25 +1809,35 @@ async function loadCoupons() {
           <div>
 
             <strong>
-              ${escapeHtml(coupon.codigo)}
+              ${escapeHtml(
+                coupon.codigo
+              )}
             </strong>
 
             <small>
-              ${escapeHtml(coupon.descuento || "")}
-              · Mínimo ${money(coupon.minimo)}
+              ${escapeHtml(
+                coupon.descuento || ""
+              )}
+              · Mínimo
+              ${money(
+                coupon.minimo
+              )}
             </small>
 
           </div>
 
+
           <div>
 
             <button
+              type="button"
               data-edit-coupon="${coupon.id}"
             >
               ✏️ Editar
             </button>
 
             <button
+              type="button"
               data-delete-coupon="${coupon.id}"
             >
               🗑️ Eliminar
@@ -1152,18 +1896,30 @@ async function loadCoupons() {
 
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      "LISTAR CUPONES:",
+      error
+    );
 
   }
 
 }
 
 
-function extractNumber(value) {
+/* =========================================================
+   EXTRAER NÚMERO
+========================================================= */
+
+function extractNumber(
+  value
+) {
 
   return Number(
     String(value)
-      .replace(/[^\d.]/g,"")
+      .replace(
+        /[^\d.]/g,
+        ""
+      )
   ) || 0;
 
 }
@@ -1173,92 +1929,117 @@ function extractNumber(value) {
    EDITAR CUPÓN
 ========================================================= */
 
-async function editCoupon(id) {
+async function editCoupon(
+  id
+) {
 
-  const snapshot =
-    await getDoc(
-      doc(
-        db,
-        "cupones",
-        id
-      )
+  try {
+
+    const snapshot =
+      await getDoc(
+        doc(
+          db,
+          "cupones",
+          id
+        )
+      );
+
+
+    if (!snapshot.exists()) {
+
+      showMessage(
+        "El cupón no existe.",
+        "error"
+      );
+
+      return;
+
+    }
+
+
+    const data =
+      snapshot.data();
+
+
+    if ($("#couponCode")) {
+
+      $("#couponCode").value =
+        data.codigo || "";
+
+    }
+
+
+    if ($("#couponTitle")) {
+
+      $("#couponTitle").value =
+        data.titulo || "";
+
+    }
+
+
+    if ($("#couponType")) {
+
+      $("#couponType").value =
+        data.tipo || "flash";
+
+    }
+
+
+    if ($("#couponDiscount")) {
+
+      $("#couponDiscount").value =
+        data.descuento || "";
+
+    }
+
+
+    if ($("#couponMinimum")) {
+
+      $("#couponMinimum").value =
+        data.minimo || "";
+
+    }
+
+
+    if ($("#couponTop")) {
+
+      $("#couponTop").value =
+        data.tope || "";
+
+    }
+
+
+    if ($("#couponLink")) {
+
+      $("#couponLink").value =
+        data.link || "";
+
+    }
+
+
+    editingCouponId =
+      id;
+
+
+    $("#couponForm")
+      ?.scrollIntoView({
+        behavior: "smooth"
+      });
+
+
+    showMessage(
+      "✏️ Editando cupón."
     );
 
 
-  if (!snapshot.exists()) {
+  } catch (error) {
 
-    return;
-
-  }
-
-
-  const data =
-    snapshot.data();
-
-
-  if ($("#couponCode")) {
-
-    $("#couponCode").value =
-      data.codigo || "";
+    console.error(
+      "EDITAR CUPÓN:",
+      error
+    );
 
   }
-
-
-  if ($("#couponTitle")) {
-
-    $("#couponTitle").value =
-      data.titulo || "";
-
-  }
-
-
-  if ($("#couponType")) {
-
-    $("#couponType").value =
-      data.tipo || "flash";
-
-  }
-
-
-  if ($("#couponDiscount")) {
-
-    $("#couponDiscount").value =
-      data.descuento || "";
-
-  }
-
-
-  if ($("#couponMinimum")) {
-
-    $("#couponMinimum").value =
-      data.minimo || "";
-
-  }
-
-
-  if ($("#couponTop")) {
-
-    $("#couponTop").value =
-      data.tope || "";
-
-  }
-
-
-  if ($("#couponLink")) {
-
-    $("#couponLink").value =
-      data.link || "";
-
-  }
-
-
-  editingCouponId =
-    id;
-
-
-  $("#couponForm")?.scrollIntoView({
-    behavior:"smooth"
-  });
 
 }
 
@@ -1267,7 +2048,18 @@ async function editCoupon(id) {
    ELIMINAR CUPÓN
 ========================================================= */
 
-async function deleteCoupon(id) {
+async function deleteCoupon(
+  id
+) {
+
+  if (
+    !requireAuth()
+  ) {
+
+    return;
+
+  }
+
 
   if (
     !confirm(
@@ -1298,10 +2090,16 @@ async function deleteCoupon(id) {
 
     loadCoupons();
 
+    loadStatistics();
+
 
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      "ELIMINAR CUPÓN:",
+      error
+    );
+
 
     showMessage(
       "❌ No se pudo eliminar.",
@@ -1333,20 +2131,34 @@ function bindUserForm() {
       event.preventDefault();
 
 
+      if (!requireAuth()) {
+
+        return;
+
+      }
+
+
       const nombre =
-        $("#userName")?.value.trim();
+        $("#userName")
+          ?.value
+          .trim();
 
 
       const email =
-        $("#userEmail")?.value.trim();
+        $("#userEmail")
+          ?.value
+          .trim();
 
 
       const telefono =
-        $("#userPhone")?.value.trim();
+        $("#userPhone")
+          ?.value
+          .trim();
 
 
       const estado =
-        $("#userStatus")?.value ||
+        $("#userStatus")
+          ?.value ||
         "pendiente";
 
 
@@ -1379,11 +2191,11 @@ function bindUserForm() {
 
             estado,
 
-            ahorroTotal:0,
+            ahorroTotal: 0,
 
-            compras:0,
+            compras: 0,
 
-            cuponesUsados:0,
+            cuponesUsados: 0,
 
             fechaRegistro:
               serverTimestamp()
@@ -1402,13 +2214,19 @@ function bindUserForm() {
 
         loadUsers();
 
+        loadStatistics();
+
 
       } catch (error) {
 
-        console.error(error);
+        console.error(
+          "CREAR USUARIO:",
+          error
+        );
+
 
         showMessage(
-          "❌ No se pudo crear.",
+          "❌ No se pudo crear el usuario.",
           "error"
         );
 
@@ -1421,7 +2239,7 @@ function bindUserForm() {
 
 
 /* =========================================================
-   USUARIOS
+   LISTAR USUARIOS
 ========================================================= */
 
 async function loadUsers() {
@@ -1470,24 +2288,38 @@ async function loadUsers() {
           <div>
 
             <strong>
-              ${escapeHtml(data.nombre)}
+              ${escapeHtml(
+                data.nombre
+              )}
             </strong>
 
             <small>
-              ${escapeHtml(data.email || "")}
-              · ${escapeHtml(data.estado || "pendiente")}
+              ${escapeHtml(
+                data.email || ""
+              )}
+              ·
+              ${escapeHtml(
+                data.estado ||
+                "pendiente"
+              )}
             </small>
 
           </div>
 
+
           <div>
 
             <strong>
-              ${money(data.ahorroTotal)}
+              ${money(
+                data.ahorroTotal
+              )}
             </strong>
 
             <small>
-              ${data.compras || 0} compras
+              ${
+                data.compras || 0
+              }
+              compras
             </small>
 
           </div>
@@ -1505,7 +2337,10 @@ async function loadUsers() {
 
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      "LISTAR USUARIOS:",
+      error
+    );
 
   }
 
@@ -1578,6 +2413,7 @@ async function loadPurchases() {
 
           </div>
 
+
           <div>
 
             <strong>
@@ -1588,7 +2424,8 @@ async function loadPurchases() {
 
             <small>
               ${escapeHtml(
-                data.estado || "pendiente"
+                data.estado ||
+                "pendiente"
               )}
             </small>
 
@@ -1607,7 +2444,16 @@ async function loadPurchases() {
 
   } catch (error) {
 
-    console.error(error);
+    /*
+      Si compras todavía no existe,
+      Firestore simplemente devolverá
+      una colección vacía.
+    */
+
+    console.error(
+      "COMPRAS:",
+      error
+    );
 
   }
 
@@ -1620,15 +2466,16 @@ async function loadPurchases() {
 
 async function loadStatistics() {
 
+  if (!auth.currentUser) {
+
+    return;
+
+  }
+
+
   try {
 
-    const [
-      offers,
-      coupons,
-      users,
-      purchases,
-      copies
-    ] =
+    const results =
       await Promise.all([
 
         getDocs(
@@ -1669,6 +2516,26 @@ async function loadStatistics() {
       ]);
 
 
+    const offers =
+      results[0];
+
+
+    const coupons =
+      results[1];
+
+
+    const users =
+      results[2];
+
+
+    const purchases =
+      results[3];
+
+
+    const copies =
+      results[4];
+
+
     setText(
       "#statOffers",
       offers.size
@@ -1700,10 +2567,11 @@ async function loadStatistics() {
 
 
     /*
-       CUPÓN MÁS COPIADO
+      CUPÓN MÁS COPIADO
     */
 
-    const counter = {};
+    const counter =
+      {};
 
 
     copies.forEach(
@@ -1715,7 +2583,8 @@ async function loadStatistics() {
 
         const code =
           codeUpper(
-            data.codigo
+            data.codigo ||
+            data.cupon
           );
 
 
@@ -1736,7 +2605,7 @@ async function loadStatistics() {
         counter
       )
       .sort(
-        (a,b) =>
+        (a, b) =>
           b[1] - a[1]
       )[0];
 
@@ -1748,13 +2617,20 @@ async function loadStatistics() {
         `${topCoupon[0]} · ${topCoupon[1]} copias`
       );
 
+    } else {
+
+      setText(
+        "#topCoupon",
+        "Sin datos"
+      );
+
     }
 
 
   } catch (error) {
 
     console.error(
-      "Estadísticas:",
+      "ESTADÍSTICAS:",
       error
     );
 
@@ -1787,95 +2663,302 @@ function setText(
 
 
 /* =========================================================
-   ACTUALIZACIÓN AUTOMÁTICA
+   LISTENERS FIRESTORE
 ========================================================= */
 
-function listenCollection(
-  collectionName,
-  callback
-) {
+function startRealtimeListeners() {
 
-  try {
+  if (listenersStarted) return;
 
-    return onSnapshot(
-      collection(
-        db,
-        collectionName
-      ),
-      callback,
-      error =>
-        console.error(
-          collectionName,
-          error
-        )
-    );
+  listenersStarted =
+    true;
 
-  } catch (error) {
 
-    console.error(error);
+  /*
+    OFERTAS
+  */
 
-  }
+  onSnapshot(
+    collection(
+      db,
+      "ofertas"
+    ),
+    () => {
+
+      if (
+        auth.currentUser
+      ) {
+
+        loadOffers();
+
+        loadStatistics();
+
+      }
+
+    },
+    error => {
+
+      console.error(
+        "Listener ofertas:",
+        error
+      );
+
+    }
+  );
+
+
+  /*
+    CUPONES
+  */
+
+  onSnapshot(
+    collection(
+      db,
+      "cupones"
+    ),
+    () => {
+
+      if (
+        auth.currentUser
+      ) {
+
+        loadCoupons();
+
+        loadStatistics();
+
+      }
+
+    },
+    error => {
+
+      console.error(
+        "Listener cupones:",
+        error
+      );
+
+    }
+  );
+
+
+  /*
+    USUARIOS
+  */
+
+  onSnapshot(
+    collection(
+      db,
+      "usuarios"
+    ),
+    () => {
+
+      if (
+        auth.currentUser
+      ) {
+
+        loadUsers();
+
+        loadStatistics();
+
+      }
+
+    },
+    error => {
+
+      console.error(
+        "Listener usuarios:",
+        error
+      );
+
+    }
+  );
 
 }
 
 
 /* =========================================================
-   ESCUCHAR CAMBIOS
+   PREVISUALIZACIÓN DE IMAGEN
 ========================================================= */
 
-listenCollection(
-  "ofertas",
-  () => {
+const imageInput =
+  $("#offerImageFile");
 
-    if (
-      auth.currentUser
-    ) {
 
-      loadOffers();
-      loadStatistics();
+if (imageInput) {
+
+  imageInput.addEventListener(
+    "change",
+    async () => {
+
+      const file =
+        imageInput.files?.[0];
+
+
+      if (!file) return;
+
+
+      try {
+
+        showMessage(
+          "⏳ Preparando imagen..."
+        );
+
+
+        const base64 =
+          await compressImage(
+            file
+          );
+
+
+        let preview =
+          $("#offerImagePreview");
+
+
+        if (!preview) {
+
+          preview =
+            document.createElement(
+              "img"
+            );
+
+          preview.id =
+            "offerImagePreview";
+
+          preview.style.maxWidth =
+            "220px";
+
+          preview.style.maxHeight =
+            "220px";
+
+          preview.style.objectFit =
+            "cover";
+
+          preview.style.borderRadius =
+            "12px";
+
+          preview.style.display =
+            "block";
+
+          preview.style.marginTop =
+            "10px";
+
+
+          imageInput.parentNode
+            ?.appendChild(
+              preview
+            );
+
+        }
+
+
+        preview.src =
+          base64;
+
+
+        showMessage(
+          "✅ Imagen lista."
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          "IMAGEN:",
+          error
+        );
+
+
+        imageInput.value =
+          "";
+
+
+        showMessage(
+          "❌ " +
+          error.message,
+          "error"
+        );
+
+      }
 
     }
+  );
 
-  }
-);
-
-
-listenCollection(
-  "cupones",
-  () => {
-
-    if (
-      auth.currentUser
-    ) {
-
-      loadCoupons();
-      loadStatistics();
-
-    }
-
-  }
-);
-
-
-listenCollection(
-  "usuarios",
-  () => {
-
-    if (
-      auth.currentUser
-    ) {
-
-      loadUsers();
-      loadStatistics();
-
-    }
-
-  }
-);
+}
 
 
 /* =========================================================
-   EXPORTAR FUNCIONES
+   VALIDAR VIDEO ANTES DE GUARDAR
+========================================================= */
+
+const videoInput =
+  $("#offerVideoFile");
+
+
+if (videoInput) {
+
+  videoInput.addEventListener(
+    "change",
+    () => {
+
+      const file =
+        videoInput.files?.[0];
+
+
+      if (!file) return;
+
+
+      if (
+        !file.type.startsWith(
+          "video/"
+        )
+      ) {
+
+        videoInput.value =
+          "";
+
+
+        showMessage(
+          "❌ Selecciona un archivo de video.",
+          "error"
+        );
+
+
+        return;
+
+      }
+
+
+      if (
+        file.size >
+          MAX_VIDEO_BYTES
+      ) {
+
+        videoInput.value =
+          "";
+
+
+        showMessage(
+          "❌ Video demasiado grande. Máximo 500 KB.",
+          "error"
+        );
+
+
+        return;
+
+      }
+
+
+      showMessage(
+        "✅ Video compatible."
+      );
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   EXPORTAR
 ========================================================= */
 
 window.AdminPRO = {
@@ -1896,6 +2979,10 @@ window.AdminPRO = {
 
   deleteOffer,
 
-  deleteCoupon
+  deleteCoupon,
+
+  compressImage,
+
+  processVideo
 
 };
