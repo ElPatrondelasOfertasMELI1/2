@@ -1,21 +1,22 @@
-/* =========================================================
-   EL PATRÓN DE LAS OFERTAS
-   ADMIN PRO + PÁGINA PRINCIPAL
-========================================================= */
+// =========================================================
+// EL PATRÓN DE LAS OFERTAS
+// ADMIN PRO
+// =========================================================
 
 import {
-  initializeApp
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  auth,
+  db
+} from "./firebase.js";
+
 
 import {
-  getAuth,
   onAuthStateChanged,
-  signInWithEmailAndPassword,
   signOut
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+} from
+"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
 
 import {
-  getFirestore,
   collection,
   doc,
   getDoc,
@@ -28,65 +29,9 @@ import {
   deleteDoc,
   increment,
   serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+} from
+"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-
-/* =========================================================
-   🔥 CONFIGURACIÓN FIREBASE
-
-   PEGA AQUÍ LA CONFIGURACIÓN DE TU PROYECTO FIREBASE.
-
-   Firebase Console
-   → Configuración del proyecto
-   → Tus aplicaciones
-   → Configuración del SDK
-========================================================= */
-
-const firebaseConfig = {
-
-  apiKey: "PEGA_AQUI_TU_API_KEY",
-
-  authDomain:
-    "PEGA_AQUI_TU_PROYECTO.firebaseapp.com",
-
-  projectId:
-    "PEGA_AQUI_TU_PROJECT_ID",
-
-  storageBucket:
-    "PEGA_AQUI_TU_PROJECT_ID.appspot.com",
-
-  messagingSenderId:
-    "PEGA_AQUI_TU_SENDER_ID",
-
-  appId:
-    "PEGA_AQUI_TU_APP_ID"
-
-};
-
-
-/* =========================================================
-   FIREBASE
-========================================================= */
-
-const firebaseApp =
-  initializeApp(
-    firebaseConfig
-  );
-
-const auth =
-  getAuth(
-    firebaseApp
-  );
-
-const db =
-  getFirestore(
-    firebaseApp
-  );
-
-
-/* =========================================================
-   ESTADO
-========================================================= */
 
 let currentAdmin = null;
 
@@ -97,68 +42,19 @@ let purchases = [];
 let dailyStats = [];
 
 
-/* =========================================================
-   HELPERS DOM
-========================================================= */
-
-const $ =
-  selector =>
-    document.querySelector(
-      selector
-    );
-
-const $$ =
-  selector =>
-    document.querySelectorAll(
-      selector
-    );
+const $ = selector =>
+  document.querySelector(selector);
 
 
-/* =========================================================
-   INICIO
-========================================================= */
+const $$ = selector =>
+  document.querySelectorAll(selector);
+
 
 document.addEventListener(
   "DOMContentLoaded",
-  iniciar
+  iniciarAdmin
 );
 
-
-function iniciar() {
-
-  const params =
-    new URLSearchParams(
-      window.location.search
-    );
-
-  const esAdmin =
-    params.get("admin") === "1";
-
-
-  if (esAdmin) {
-
-    $("#publicApp")
-      ?.classList
-      .add("hidden");
-
-    $("#adminApp")
-      ?.classList
-      .remove("hidden");
-
-    iniciarAdmin();
-
-  } else {
-
-    cargarPaginaPublica();
-
-  }
-
-}
-
-
-/* =========================================================
-   ADMIN
-========================================================= */
 
 function iniciarAdmin() {
 
@@ -183,7 +79,8 @@ function observarAdministrador() {
 
       if (!user) {
 
-        mostrarLogin();
+        window.location.href =
+          "./login.html";
 
         return;
       }
@@ -198,6 +95,7 @@ function observarAdministrador() {
             user.uid
           );
 
+
         const snapshot =
           await getDoc(
             usuarioRef
@@ -206,11 +104,9 @@ function observarAdministrador() {
 
         if (!snapshot.exists()) {
 
-          mostrarLogin(
-            "Tu usuario no tiene perfil en la colección usuarios."
+          bloquearAdmin(
+            "No existe un perfil de administrador."
           );
-
-          await signOut(auth);
 
           return;
         }
@@ -235,49 +131,50 @@ function observarAdministrador() {
           rol !== "administrador"
         ) {
 
-          mostrarLogin(
+          bloquearAdmin(
             "Tu cuenta no tiene permisos de administrador."
           );
-
-          await signOut(auth);
 
           return;
         }
 
 
         currentAdmin = {
-
           ...data,
-
-          uid:
-            user.uid,
-
+          uid: user.uid,
           email:
             user.email ||
             data.email ||
             ""
-
         };
 
 
-        $("#adminEmail")
-          .textContent =
+        const email =
+          $("#adminEmail");
+
+
+        if (email) {
+
+          email.textContent =
             currentAdmin.email;
 
+        }
 
-        mostrarPanelAdmin();
+
+        ocultarLoading();
 
         await cargarTodo();
 
 
-      } catch (error) {
+      } catch(error) {
 
         console.error(
           "Error verificando administrador:",
           error
         );
 
-        mostrarLogin(
+
+        bloquearAdmin(
           "No se pudo verificar tu acceso."
         );
 
@@ -290,118 +187,79 @@ function observarAdministrador() {
 
 
 /* =========================================================
-   LOGIN
+   BLOQUEO
 ========================================================= */
 
-function mostrarLogin(
-  mensaje = ""
+function bloquearAdmin(
+  mensaje
 ) {
 
-  $("#adminLogin")
-    ?.classList
-    .remove("hidden");
-
-  $("#adminPanel")
-    ?.classList
-    .add("hidden");
+  const loading =
+    $("#loadingScreen");
 
 
-  if (mensaje) {
-
-    $("#loginMessage")
-      .textContent =
-        mensaje;
-
+  if (!loading) {
+    return;
   }
 
+
+  loading.innerHTML = `
+
+    <div class="loading-box">
+
+      <div class="loading-logo">
+        🔒
+      </div>
+
+      <h2>
+        Acceso denegado
+      </h2>
+
+      <p>
+        ${escaparHtml(mensaje)}
+      </p>
+
+      <button
+        class="primary-button"
+        id="backHomeButton"
+        style="margin-top:20px"
+      >
+        🏠 Volver
+      </button>
+
+    </div>
+
+  `;
+
+
+  $("#backHomeButton")
+    ?.addEventListener(
+      "click",
+      () => {
+
+        window.location.href =
+          "./index.html";
+
+      }
+    );
+
 }
 
 
-function mostrarPanelAdmin() {
+/* =========================================================
+   LOADING
+========================================================= */
 
-  $("#adminLogin")
+function ocultarLoading() {
+
+  $("#loadingScreen")
     ?.classList
     .add("hidden");
 
-  $("#adminPanel")
+
+  $("#adminApp")
     ?.classList
     .remove("hidden");
-
-}
-
-
-$("#loginForm")
-  ?.addEventListener(
-    "submit",
-    async event => {
-
-      event.preventDefault();
-
-
-      const email =
-        $("#loginEmail")
-          .value
-          .trim();
-
-      const password =
-        $("#loginPassword")
-          .value;
-
-
-      $("#loginMessage")
-        .textContent =
-          "Verificando acceso...";
-
-
-      try {
-
-        await signInWithEmailAndPassword(
-          auth,
-          email,
-          password
-        );
-
-      } catch (error) {
-
-        console.error(
-          error
-        );
-
-        $("#loginMessage")
-          .textContent =
-            traducirErrorLogin(
-              error.code
-            );
-
-      }
-
-    }
-  );
-
-
-function traducirErrorLogin(
-  code
-) {
-
-  const errores = {
-
-    "auth/invalid-credential":
-      "Correo o contraseña incorrectos.",
-
-    "auth/invalid-email":
-      "El correo no es válido.",
-
-    "auth/user-disabled":
-      "Esta cuenta está deshabilitada.",
-
-    "auth/too-many-requests":
-      "Demasiados intentos. Espera un momento."
-
-  };
-
-
-  return errores[code] ||
-    "No se pudo iniciar sesión.";
 
 }
 
@@ -453,9 +311,9 @@ function cambiarSeccion(
 
   $$(".admin-section")
     .forEach(
-      sectionElement => {
+      element => {
 
-        sectionElement.classList.remove(
+        element.classList.remove(
           "active-section"
         );
 
@@ -467,9 +325,7 @@ function cambiarSeccion(
     `#section-${section}`
   )
     ?.classList
-    .add(
-      "active-section"
-    );
+    .add("active-section");
 
 
   const titles = {
@@ -495,10 +351,9 @@ function cambiarSeccion(
   };
 
 
-  $("#pageTitle")
-    .textContent =
-      titles[section] ||
-      "Admin PRO";
+  $("#pageTitle").textContent =
+    titles[section] ||
+    "Admin PRO";
 
 }
 
@@ -526,7 +381,9 @@ function configurarEventos() {
           "success"
         );
 
+
         await cargarTodo();
+
 
         mostrarToast(
           "✅ Datos actualizados",
@@ -543,6 +400,7 @@ function configurarEventos() {
       () => {
 
         limpiarFormularioCupon();
+
 
         $("#couponFormPanel")
           ?.classList
@@ -578,6 +436,7 @@ function configurarEventos() {
       () => {
 
         limpiarFormularioOferta();
+
 
         $("#offerFormPanel")
           ?.classList
@@ -662,6 +521,7 @@ async function cargarTodo() {
     cargarEstadisticas()
   ]);
 
+
   actualizarDashboard();
 
 }
@@ -700,7 +560,7 @@ async function cargarUsuarios() {
 
 
     users.sort(
-      (a, b) =>
+      (a,b) =>
         Number(
           b.ahorroTotal || 0
         ) -
@@ -712,7 +572,8 @@ async function cargarUsuarios() {
 
     renderUsuarios();
 
-  } catch (error) {
+
+  } catch(error) {
 
     console.error(
       "Error usuarios:",
@@ -737,8 +598,7 @@ function renderUsuarios() {
 
   const search =
     String(
-      $("#userSearch")
-        ?.value ||
+      $("#userSearch")?.value ||
       ""
     )
       .toLowerCase()
@@ -752,9 +612,7 @@ function renderUsuarios() {
         const texto = `
 
           ${user.nombre || ""}
-
           ${user.email || ""}
-
           ${user.estado || ""}
 
         `.toLowerCase();
@@ -774,24 +632,27 @@ function renderUsuarios() {
   if (!filtered.length) {
 
     tbody.innerHTML = `
+
       <tr>
+
         <td colspan="7">
           No hay usuarios.
         </td>
+
       </tr>
+
     `;
 
     return;
+
   }
 
 
   filtered.forEach(
-    (user, index) => {
+    (user,index) => {
 
       const tr =
-        document.createElement(
-          "tr"
-        );
+        document.createElement("tr");
 
 
       tr.innerHTML = `
@@ -815,12 +676,14 @@ function renderUsuarios() {
 
         </td>
 
+
         <td>
           ${escaparHtml(
             user.email ||
             ""
           )}
         </td>
+
 
         <td>
           🇲🇽
@@ -830,11 +693,14 @@ function renderUsuarios() {
           )}
         </td>
 
+
         <td>
           ${formatearPrecio(
-            user.ahorroTotal
+            user.ahorroTotal ||
+            0
           )}
         </td>
+
 
         <td>
           ${Number(
@@ -843,6 +709,7 @@ function renderUsuarios() {
           )}
         </td>
 
+
         <td>
           ${Number(
             user.cuponesUsados ||
@@ -850,18 +717,19 @@ function renderUsuarios() {
           )}
         </td>
 
+
         <td>
+
           <span class="rank-badge">
             #${index + 1}
           </span>
+
         </td>
 
       `;
 
 
-      tbody.appendChild(
-        tr
-      );
+      tbody.appendChild(tr);
 
     }
   );
@@ -902,7 +770,7 @@ async function cargarCupones() {
 
 
     coupons.sort(
-      (a, b) =>
+      (a,b) =>
         Number(
           b.copias || 0
         ) -
@@ -915,7 +783,7 @@ async function cargarCupones() {
     renderCupones();
 
 
-  } catch (error) {
+  } catch(error) {
 
     console.error(
       "Error cupones:",
@@ -941,13 +809,28 @@ function renderCupones() {
   tbody.innerHTML = "";
 
 
+  if (!coupons.length) {
+
+    tbody.innerHTML = `
+
+      <tr>
+        <td colspan="8">
+          No hay cupones.
+        </td>
+      </tr>
+
+    `;
+
+    return;
+
+  }
+
+
   coupons.forEach(
     coupon => {
 
       const tr =
-        document.createElement(
-          "tr"
-        );
+        document.createElement("tr");
 
 
       const codigo =
@@ -955,8 +838,7 @@ function renderCupones() {
           coupon.codigo ||
           coupon.code ||
           ""
-        )
-          .toUpperCase();
+        ).toUpperCase();
 
 
       const activo =
@@ -964,26 +846,25 @@ function renderCupones() {
         String(
           coupon.estado ||
           ""
-        )
-          .toLowerCase() !==
-          "agotado";
+        ).toLowerCase() !==
+        "agotado";
 
 
       tr.innerHTML = `
 
         <td>
           <strong>
-            ${escaparHtml(
-              codigo
-            )}
+            ${escaparHtml(codigo)}
           </strong>
         </td>
+
 
         <td>
           ${obtenerNombreTipo(
             coupon.tipo
           )}
         </td>
+
 
         <td>
           ${escaparHtml(
@@ -993,6 +874,7 @@ function renderCupones() {
             ""
           )}
         </td>
+
 
         <td>
           ${
@@ -1004,6 +886,7 @@ function renderCupones() {
           }
         </td>
 
+
         <td>
           ${
             coupon.tope
@@ -1014,6 +897,7 @@ function renderCupones() {
           }
         </td>
 
+
         <td>
           🔥
           ${Number(
@@ -1021,6 +905,7 @@ function renderCupones() {
             0
           )}
         </td>
+
 
         <td>
 
@@ -1040,6 +925,7 @@ function renderCupones() {
 
         </td>
 
+
         <td>
 
           <button
@@ -1048,6 +934,7 @@ function renderCupones() {
           >
             ✏️
           </button>
+
 
           <button
             class="danger-button"
@@ -1087,15 +974,17 @@ function renderCupones() {
         );
 
 
-      tbody.appendChild(
-        tr
-      );
+      tbody.appendChild(tr);
 
     }
   );
 
 }
 
+
+/* =========================================================
+   GUARDAR CUPÓN
+========================================================= */
 
 async function guardarCupon(
   event
@@ -1125,6 +1014,7 @@ async function guardarCupon(
     );
 
     return;
+
   }
 
 
@@ -1189,7 +1079,7 @@ async function guardarCupon(
 
 
       mostrarToast(
-        "✅ Cupón actualizado",
+        "✅ Cupón actualizado.",
         "success"
       );
 
@@ -1213,7 +1103,7 @@ async function guardarCupon(
 
 
       mostrarToast(
-        "✅ Cupón creado",
+        "✅ Cupón creado.",
         "success"
       );
 
@@ -1228,13 +1118,10 @@ async function guardarCupon(
     await cargarCupones();
 
 
-    cargarPaginaPublica();
+  } catch(error) {
 
-  } catch (error) {
+    console.error(error);
 
-    console.error(
-      error
-    );
 
     mostrarToast(
       "❌ No se pudo guardar el cupón.",
@@ -1246,15 +1133,16 @@ async function guardarCupon(
 }
 
 
-function editarCupon(
-  id
-) {
+/* =========================================================
+   EDITAR CUPÓN
+========================================================= */
+
+function editarCupon(id) {
 
   const coupon =
     coupons.find(
       item =>
-        item.id ===
-        id
+        item.id === id
     );
 
 
@@ -1263,91 +1151,75 @@ function editarCupon(
   }
 
 
-  $("#couponId")
-    .value =
-      coupon.id;
+  $("#couponId").value =
+    coupon.id;
 
 
-  $("#couponCode")
-    .value =
-      String(
-        coupon.codigo ||
-        coupon.code ||
-        ""
-      )
-        .toUpperCase();
+  $("#couponCode").value =
+    String(
+      coupon.codigo ||
+      coupon.code ||
+      ""
+    ).toUpperCase();
 
 
-  $("#couponType")
-    .value =
-      normalizarTipo(
-        coupon.tipo
-      );
+  $("#couponType").value =
+    normalizarTipo(
+      coupon.tipo
+    );
 
 
-  $("#couponDiscount")
-    .value =
-      coupon.descuento ||
-      coupon.monto ||
-      coupon.valor ||
-      "";
+  $("#couponDiscount").value =
+    coupon.descuento ||
+    coupon.monto ||
+    coupon.valor ||
+    "";
 
 
-  $("#couponMinimum")
-    .value =
-      Number(
-        coupon.compraMinima ||
-        0
-      );
+  $("#couponMinimum").value =
+    Number(
+      coupon.compraMinima ||
+      0
+    );
 
 
-  $("#couponMaximum")
-    .value =
-      Number(
-        coupon.tope ||
-        0
-      );
+  $("#couponMaximum").value =
+    Number(
+      coupon.tope ||
+      0
+    );
 
 
-  $("#couponLink")
-    .value =
-      coupon.link ||
-      "";
+  $("#couponLink").value =
+    coupon.link ||
+    "";
 
 
-  $("#couponActive")
-    .checked =
-      coupon.activo !== false;
+  $("#couponActive").checked =
+    coupon.activo !== false;
 
 
-  $("#couponWarning")
-    .checked =
-      coupon.porAgotarse === true;
+  $("#couponWarning").checked =
+    coupon.porAgotarse === true;
 
 
   $("#couponFormPanel")
     .classList
     .remove("hidden");
 
-
-  $("#couponFormPanel")
-    .scrollIntoView({
-      behavior:
-        "smooth"
-    });
-
 }
 
 
-async function eliminarCupon(
-  id
-) {
+/* =========================================================
+   ELIMINAR CUPÓN
+========================================================= */
+
+async function eliminarCupon(id) {
 
   const coupon =
     coupons.find(
       item =>
-        item.id ===
-        id
+        item.id === id
     );
 
 
@@ -1360,8 +1232,7 @@ async function eliminarCupon(
     String(
       coupon.codigo ||
       ""
-    )
-      .toUpperCase();
+    ).toUpperCase();
 
 
   if (
@@ -1369,9 +1240,7 @@ async function eliminarCupon(
       `¿Eliminar el cupón ${codigo}?`
     )
   ) {
-
     return;
-
   }
 
 
@@ -1387,7 +1256,7 @@ async function eliminarCupon(
 
 
     mostrarToast(
-      "🗑️ Cupón eliminado",
+      "🗑️ Cupón eliminado.",
       "success"
     );
 
@@ -1395,13 +1264,10 @@ async function eliminarCupon(
     await cargarCupones();
 
 
-    cargarPaginaPublica();
+  } catch(error) {
 
-  } catch (error) {
+    console.error(error);
 
-    console.error(
-      error
-    );
 
     mostrarToast(
       "❌ No se pudo eliminar.",
@@ -1446,7 +1312,7 @@ async function cargarOfertas() {
 
 
     offers.sort(
-      (a, b) =>
+      (a,b) =>
         fechaValor(
           b.creado
         ) -
@@ -1458,7 +1324,8 @@ async function cargarOfertas() {
 
     renderOfertas();
 
-  } catch (error) {
+
+  } catch(error) {
 
     console.error(
       "Error ofertas:",
@@ -1484,6 +1351,25 @@ function renderOfertas() {
   tbody.innerHTML = "";
 
 
+  if (!offers.length) {
+
+    tbody.innerHTML = `
+
+      <tr>
+
+        <td colspan="7">
+          No hay ofertas.
+        </td>
+
+      </tr>
+
+    `;
+
+    return;
+
+  }
+
+
   offers.forEach(
     offer => {
 
@@ -1505,15 +1391,12 @@ function renderOfertas() {
       const ahorro =
         Math.max(
           0,
-          antes -
-          actual
+          antes - actual
         );
 
 
       const tr =
-        document.createElement(
-          "tr"
-        );
+        document.createElement("tr");
 
 
       tr.innerHTML = `
@@ -1536,6 +1419,7 @@ function renderOfertas() {
 
         </td>
 
+
         <td>
           <strong>
             ${escaparHtml(
@@ -1545,11 +1429,13 @@ function renderOfertas() {
           </strong>
         </td>
 
+
         <td>
           ${formatearPrecio(
             antes
           )}
         </td>
+
 
         <td>
           ${formatearPrecio(
@@ -1557,11 +1443,13 @@ function renderOfertas() {
           )}
         </td>
 
+
         <td>
           ${formatearPrecio(
             ahorro
           )}
         </td>
+
 
         <td>
           👆
@@ -1571,6 +1459,7 @@ function renderOfertas() {
           )}
         </td>
 
+
         <td>
 
           <button
@@ -1579,6 +1468,7 @@ function renderOfertas() {
           >
             ✏️
           </button>
+
 
           <button
             class="danger-button"
@@ -1618,15 +1508,17 @@ function renderOfertas() {
         );
 
 
-      tbody.appendChild(
-        tr
-      );
+      tbody.appendChild(tr);
 
     }
   );
 
 }
 
+
+/* =========================================================
+   GUARDAR OFERTA
+========================================================= */
 
 async function guardarOferta(
   event
@@ -1693,7 +1585,7 @@ async function guardarOferta(
 
 
       mostrarToast(
-        "✅ Oferta actualizada",
+        "✅ Oferta actualizada.",
         "success"
       );
 
@@ -1705,7 +1597,6 @@ async function guardarOferta(
           "ofertas"
         ),
         {
-
           ...data,
 
           clics: 0,
@@ -1718,7 +1609,7 @@ async function guardarOferta(
 
 
       mostrarToast(
-        "✅ Oferta creada",
+        "✅ Oferta creada.",
         "success"
       );
 
@@ -1733,13 +1624,10 @@ async function guardarOferta(
     await cargarOfertas();
 
 
-    cargarPaginaPublica();
+  } catch(error) {
 
-  } catch (error) {
+    console.error(error);
 
-    console.error(
-      error
-    );
 
     mostrarToast(
       "❌ No se pudo guardar la oferta.",
@@ -1751,15 +1639,16 @@ async function guardarOferta(
 }
 
 
-function editarOferta(
-  id
-) {
+/* =========================================================
+   EDITAR OFERTA
+========================================================= */
+
+function editarOferta(id) {
 
   const offer =
     offers.find(
       item =>
-        item.id ===
-        id
+        item.id === id
     );
 
 
@@ -1768,72 +1657,59 @@ function editarOferta(
   }
 
 
-  $("#offerId")
-    .value =
-      offer.id;
+  $("#offerId").value =
+    offer.id;
 
 
-  $("#offerTitle")
-    .value =
-      offer.titulo ||
-      "";
+  $("#offerTitle").value =
+    offer.titulo ||
+    "";
 
 
-  $("#offerOldPrice")
-    .value =
-      Number(
-        offer.precioAntes ||
-        0
-      );
+  $("#offerOldPrice").value =
+    Number(
+      offer.precioAntes ||
+      0
+    );
 
 
-  $("#offerCurrentPrice")
-    .value =
-      Number(
-        offer.precioActual ||
-        offer.precioFinal ||
-        0
-      );
+  $("#offerCurrentPrice").value =
+    Number(
+      offer.precioActual ||
+      offer.precioFinal ||
+      0
+    );
 
 
-  $("#offerImage")
-    .value =
-      offer.imagen ||
-      "";
+  $("#offerImage").value =
+    offer.imagen ||
+    "";
 
 
-  $("#offerLink")
-    .value =
-      offer.link ||
-      "";
+  $("#offerLink").value =
+    offer.link ||
+    "";
 
 
   $("#offerFormPanel")
     .classList
     .remove("hidden");
 
-
-  $("#offerFormPanel")
-    .scrollIntoView({
-      behavior:
-        "smooth"
-    });
-
 }
 
 
-async function eliminarOferta(
-  id
-) {
+/* =========================================================
+   ELIMINAR OFERTA
+========================================================= */
+
+async function eliminarOferta(id) {
 
   if (
     !confirm(
       "¿Eliminar esta oferta?"
     )
   ) {
-
     return;
-
   }
 
 
@@ -1849,7 +1725,7 @@ async function eliminarOferta(
 
 
     mostrarToast(
-      "🗑️ Oferta eliminada",
+      "🗑️ Oferta eliminada.",
       "success"
     );
 
@@ -1857,13 +1733,10 @@ async function eliminarOferta(
     await cargarOfertas();
 
 
-    cargarPaginaPublica();
+  } catch(error) {
 
-  } catch (error) {
+    console.error(error);
 
-    console.error(
-      error
-    );
 
     mostrarToast(
       "❌ No se pudo eliminar.",
@@ -1883,36 +1756,19 @@ async function cargarCompras() {
 
   try {
 
-    let snapshot;
-
-
-    try {
-
-      snapshot =
-        await getDocs(
-          query(
-            collection(
-              db,
-              "compras"
-            ),
-            orderBy(
-              "creado",
-              "desc"
-            )
-          )
-        );
-
-    } catch {
-
-      snapshot =
-        await getDocs(
+    const snapshot =
+      await getDocs(
+        query(
           collection(
             db,
             "compras"
+          ),
+          orderBy(
+            "creado",
+            "desc"
           )
-        );
-
-    }
+        )
+      );
 
 
     purchases = [];
@@ -1930,27 +1786,52 @@ async function cargarCompras() {
     );
 
 
-    purchases.sort(
-      (a, b) =>
-        fechaValor(
-          b.creado
-        ) -
-        fechaValor(
-          a.creado
-        )
-    );
+  } catch(error) {
 
-
-    renderCompras();
-
-  } catch (error) {
-
-    console.error(
-      "Error compras:",
+    console.warn(
+      "No se pudo ordenar compras:",
       error
     );
 
+
+    try {
+
+      const snapshot =
+        await getDocs(
+          collection(
+            db,
+            "compras"
+          )
+        );
+
+
+      purchases = [];
+
+
+      snapshot.forEach(
+        item => {
+
+          purchases.push({
+            id: item.id,
+            ...item.data()
+          });
+
+        }
+      );
+
+
+    } catch(secondError) {
+
+      console.error(
+        secondError
+      );
+
+    }
+
   }
+
+
+  renderCompras();
 
 }
 
@@ -1999,12 +1880,18 @@ function renderCompras() {
   if (!lista.length) {
 
     container.innerHTML = `
-      <div class="panel" style="padding:25px">
-        🛒 No hay compras para este filtro.
+
+      <div
+        class="panel"
+        style="padding:30px;text-align:center"
+      >
+        🛒 No hay compras.
       </div>
+
     `;
 
     return;
+
   }
 
 
@@ -2012,9 +1899,7 @@ function renderCompras() {
     purchase => {
 
       const card =
-        document.createElement(
-          "article"
-        );
+        document.createElement("article");
 
 
       card.className =
@@ -2055,6 +1940,7 @@ function renderCompras() {
               )}
             </h3>
 
+
             <p>
               👤
               ${escaparHtml(
@@ -2062,6 +1948,7 @@ function renderCompras() {
                 "Usuario"
               )}
             </p>
+
 
             <p>
               📧
@@ -2071,21 +1958,26 @@ function renderCompras() {
               )}
             </p>
 
+
             <p>
               💰 Precio:
               ${formatearPrecio(
-                purchase.precio
+                purchase.precio ||
+                0
               )}
             </p>
+
 
             <p>
               💵 Ahorro:
               <strong>
                 ${formatearPrecio(
-                  purchase.ahorro
+                  purchase.ahorro ||
+                  0
                 )}
               </strong>
             </p>
+
 
             ${
               purchase.cupon
@@ -2096,8 +1988,7 @@ function renderCompras() {
                       ${escaparHtml(
                         String(
                           purchase.cupon
-                        )
-                          .toUpperCase()
+                        ).toUpperCase()
                       )}
                     </strong>
                   </p>
@@ -2153,10 +2044,11 @@ function renderCompras() {
         }
 
 
-        ${
-          estado === "pendiente"
-            ? `
-              <div class="purchase-bottom">
+        <div class="purchase-bottom">
+
+          ${
+            estado === "pendiente"
+              ? `
 
                 <div class="purchase-actions">
 
@@ -2167,6 +2059,7 @@ function renderCompras() {
                     ✅ APROBAR
                   </button>
 
+
                   <button
                     class="danger-button"
                     data-reject="${purchase.id}"
@@ -2176,18 +2069,17 @@ function renderCompras() {
 
                 </div>
 
-              </div>
-            `
-            : ""
-        }
+              `
+              : ""
+          }
+
+        </div>
 
       `;
 
 
       card
-        .querySelector(
-          "[data-image]"
-        )
+        .querySelector("[data-image]")
         ?.addEventListener(
           "click",
           event =>
@@ -2225,9 +2117,7 @@ function renderCompras() {
         );
 
 
-      container.appendChild(
-        card
-      );
+      container.appendChild(card);
 
     }
   );
@@ -2269,6 +2159,7 @@ async function aprobarCompra(
     );
 
     return;
+
   }
 
 
@@ -2277,9 +2168,7 @@ async function aprobarCompra(
       "¿Confirmar esta compra como VERIFICADA?"
     )
   ) {
-
     return;
-
   }
 
 
@@ -2297,6 +2186,27 @@ async function aprobarCompra(
 
     }
 
+
+    const ahorro =
+      Math.max(
+        0,
+        Number(
+          purchase.ahorro ||
+          0
+        )
+      );
+
+
+    const tieneCupon =
+      Boolean(
+        String(
+          purchase.cupon ||
+          ""
+        ).trim()
+      );
+
+
+    /* ACTUALIZAR COMPRA */
 
     await updateDoc(
       doc(
@@ -2325,25 +2235,7 @@ async function aprobarCompra(
     );
 
 
-    const ahorro =
-      Math.max(
-        0,
-        Number(
-          purchase.ahorro ||
-          0
-        )
-      );
-
-
-    const tieneCupon =
-      Boolean(
-        String(
-          purchase.cupon ||
-          ""
-        )
-          .trim()
-      );
-
+    /* ACTUALIZAR USUARIO */
 
     const userRef =
       doc(
@@ -2398,6 +2290,7 @@ async function aprobarCompra(
         updateData
       );
 
+
     } else {
 
       await setDoc(
@@ -2432,13 +2325,17 @@ async function aprobarCompra(
             serverTimestamp()
 
         },
+
         {
           merge: true
         }
+
       );
 
     }
 
+
+    /* ESTADÍSTICAS GENERALES */
 
     await setDoc(
       doc(
@@ -2460,11 +2357,15 @@ async function aprobarCompra(
           serverTimestamp()
 
       },
+
       {
         merge: true
       }
+
     );
 
+
+    /* ESTADÍSTICA DIARIA */
 
     const fecha =
       obtenerFechaLocal();
@@ -2492,9 +2393,11 @@ async function aprobarCompra(
           serverTimestamp()
 
       },
+
       {
         merge: true
       }
+
     );
 
 
@@ -2506,7 +2409,8 @@ async function aprobarCompra(
 
     await cargarTodo();
 
-  } catch (error) {
+
+  } catch(error) {
 
     console.error(
       "Error aprobando compra:",
@@ -2525,7 +2429,7 @@ async function aprobarCompra(
 
 
 /* =========================================================
-   RECHAZAR COMPRA
+   RECHAZAR
 ========================================================= */
 
 async function rechazarCompra(
@@ -2537,9 +2441,7 @@ async function rechazarCompra(
       "¿Rechazar esta compra?"
     )
   ) {
-
     return;
-
   }
 
 
@@ -2582,11 +2484,10 @@ async function rechazarCompra(
 
     actualizarDashboard();
 
-  } catch (error) {
 
-    console.error(
-      error
-    );
+  } catch(error) {
+
+    console.error(error);
 
 
     mostrarToast(
@@ -2632,20 +2533,20 @@ async function cargarEstadisticas() {
 
 
     dailyStats.sort(
-      (a, b) =>
+      (a,b) =>
         String(
           a.fecha ||
           a.id
-        )
-          .localeCompare(
-            String(
-              b.fecha ||
-              b.id
-            )
+        ).localeCompare(
+          String(
+            b.fecha ||
+            b.id
           )
+        )
     );
 
-  } catch (error) {
+
+  } catch(error) {
 
     console.error(
       "Error estadísticas:",
@@ -2663,25 +2564,20 @@ async function cargarEstadisticas() {
 
 function actualizarDashboard() {
 
-  setText(
-    "#statUsers",
-    users.length
-  );
+  $("#statUsers").textContent =
+    users.length;
 
-  setText(
-    "#statCoupons",
-    coupons.length
-  );
 
-  setText(
-    "#statOffers",
-    offers.length
-  );
+  $("#statCoupons").textContent =
+    coupons.length;
 
-  setText(
-    "#statPurchases",
-    purchases.length
-  );
+
+  $("#statOffers").textContent =
+    offers.length;
+
+
+  $("#statPurchases").textContent =
+    purchases.length;
 
 
   const pendientes =
@@ -2694,10 +2590,8 @@ function actualizarDashboard() {
     ).length;
 
 
-  setText(
-    "#statPending",
-    pendientes
-  );
+  $("#statPending").textContent =
+    pendientes;
 
 
   const ahorroTotal =
@@ -2710,10 +2604,7 @@ function actualizarDashboard() {
           "aprobada"
       )
       .reduce(
-        (
-          total,
-          purchase
-        ) =>
+        (total,purchase) =>
           total +
           Number(
             purchase.ahorro ||
@@ -2723,20 +2614,15 @@ function actualizarDashboard() {
       );
 
 
-  setText(
-    "#statSavings",
+  $("#statSavings").textContent =
     formatearPrecio(
       ahorroTotal
-    )
-  );
+    );
 
 
   const copias =
     coupons.reduce(
-      (
-        total,
-        coupon
-      ) =>
+      (total,coupon) =>
         total +
         Number(
           coupon.copias ||
@@ -2746,18 +2632,13 @@ function actualizarDashboard() {
     );
 
 
-  setText(
-    "#statCopies",
-    copias
-  );
+  $("#statCopies").textContent =
+    copias;
 
 
   const clics =
     offers.reduce(
-      (
-        total,
-        offer
-      ) =>
+      (total,offer) =>
         total +
         Number(
           offer.clics ||
@@ -2767,10 +2648,8 @@ function actualizarDashboard() {
     );
 
 
-  setText(
-    "#statClicks",
-    clics
-  );
+  $("#statClicks").textContent =
+    clics;
 
 
   renderTopCoupons();
@@ -2804,7 +2683,7 @@ function renderTopCoupons() {
   const top =
     [...coupons]
       .sort(
-        (a, b) =>
+        (a,b) =>
           Number(
             b.copias ||
             0
@@ -2814,15 +2693,11 @@ function renderTopCoupons() {
             0
           )
       )
-      .slice(
-        0,
-        5
-      );
+      .slice(0,5);
 
 
-  container.innerHTML = `
-    <div class="ranking-list"></div>
-  `;
+  container.innerHTML =
+    `<div class="ranking-list"></div>`;
 
 
   const list =
@@ -2832,12 +2707,10 @@ function renderTopCoupons() {
 
 
   top.forEach(
-    (coupon, index) => {
+    (coupon,index) => {
 
       const item =
-        document.createElement(
-          "div"
-        );
+        document.createElement("div");
 
 
       item.className =
@@ -2849,34 +2722,42 @@ function renderTopCoupons() {
         <div class="ranking-left">
 
           <div class="ranking-position">
-            #${index + 1}
+            ${index + 1}
           </div>
 
-          <div class="ranking-name">
-            ${escaparHtml(
-              String(
-                coupon.codigo ||
-                ""
-              )
-                .toUpperCase()
-            )}
+          <div>
+
+            <div class="ranking-name">
+
+              ${escaparHtml(
+                String(
+                  coupon.codigo ||
+                  ""
+                ).toUpperCase()
+              )}
+
+            </div>
+
           </div>
 
         </div>
 
+
         <div class="ranking-value">
+
           ${Number(
             coupon.copias ||
             0
-          )} copias
+          )}
+
+          copias
+
         </div>
 
       `;
 
 
-      list.appendChild(
-        item
-      );
+      list.appendChild(item);
 
     }
   );
@@ -2902,7 +2783,7 @@ function renderTopUsers() {
   const top =
     [...users]
       .sort(
-        (a, b) =>
+        (a,b) =>
           Number(
             b.ahorroTotal ||
             0
@@ -2912,10 +2793,7 @@ function renderTopUsers() {
             0
           )
       )
-      .slice(
-        0,
-        10
-      );
+      .slice(0,10);
 
 
   containers.forEach(
@@ -2926,9 +2804,8 @@ function renderTopUsers() {
       }
 
 
-      container.innerHTML = `
-        <div class="ranking-list"></div>
-      `;
+      container.innerHTML =
+        `<div class="ranking-list"></div>`;
 
 
       const list =
@@ -2938,12 +2815,10 @@ function renderTopUsers() {
 
 
       top.forEach(
-        (user, index) => {
+        (user,index) => {
 
           const item =
-            document.createElement(
-              "div"
-            );
+            document.createElement("div");
 
 
           item.className =
@@ -2955,6 +2830,7 @@ function renderTopUsers() {
             <div class="ranking-left">
 
               <div class="ranking-position">
+
                 ${
                   index === 0
                     ? "🥇"
@@ -2964,41 +2840,51 @@ function renderTopUsers() {
                         ? "🥉"
                         : `#${index + 1}`
                 }
+
               </div>
+
 
               <div>
 
                 <div class="ranking-name">
+
                   ${escaparHtml(
                     user.nombre ||
                     "Usuario"
                   )}
+
                 </div>
 
+
                 <small>
+
                   ${Number(
                     user.compras ||
                     0
-                  )} compras
+                  )}
+
+                  compras
+
                 </small>
 
               </div>
 
             </div>
 
+
             <div class="ranking-value">
+
               ${formatearPrecio(
                 user.ahorroTotal ||
                 0
               )}
+
             </div>
 
           `;
 
 
-          list.appendChild(
-            item
-          );
+          list.appendChild(item);
 
         }
       );
@@ -3034,8 +2920,7 @@ function renderStates() {
         String(
           user.estado ||
           "No indicado"
-        )
-          .trim();
+        ).trim();
 
 
       counts[estado] =
@@ -3053,7 +2938,7 @@ function renderStates() {
       counts
     )
       .sort(
-        (a, b) =>
+        (a,b) =>
           b[1] -
           a[1]
       );
@@ -3082,16 +2967,21 @@ function renderStates() {
 
 
       states.forEach(
-        ([estado, cantidad]) => {
+        ([estado,cantidad]) => {
 
           const item =
-            document.createElement(
-              "div"
-            );
+            document.createElement("div");
 
 
           item.className =
             "bar-item";
+
+
+          const porcentaje =
+            (
+              cantidad /
+              max
+            ) * 100;
 
 
           item.innerHTML = `
@@ -3105,22 +2995,19 @@ function renderStates() {
                 )}
               </span>
 
+
               <strong>
                 ${cantidad}
               </strong>
 
             </div>
 
+
             <div class="bar-track">
 
               <div
                 class="bar-fill"
-                style="width:${
-                  (
-                    cantidad /
-                    max
-                  ) * 100
-                }%"
+                style="width:${porcentaje}%"
               ></div>
 
             </div>
@@ -3128,9 +3015,7 @@ function renderStates() {
           `;
 
 
-          container.appendChild(
-            item
-          );
+          container.appendChild(item);
 
         }
       );
@@ -3142,7 +3027,7 @@ function renderStates() {
 
 
 /* =========================================================
-   COPIAS POR CUPÓN
+   COPIAS CUPONES
 ========================================================= */
 
 function renderCouponCopies() {
@@ -3159,7 +3044,7 @@ function renderCouponCopies() {
   const sorted =
     [...coupons]
       .sort(
-        (a, b) =>
+        (a,b) =>
           Number(
             b.copias ||
             0
@@ -3168,7 +3053,8 @@ function renderCouponCopies() {
             a.copias ||
             0
           )
-      );
+      )
+      .slice(0,15);
 
 
   const max =
@@ -3188,74 +3074,65 @@ function renderCouponCopies() {
     "";
 
 
-  sorted
-    .slice(
-      0,
-      15
-    )
-    .forEach(
-      coupon => {
+  sorted.forEach(
+    coupon => {
 
-        const copies =
-          Number(
-            coupon.copias ||
-            0
-          );
-
-
-        const item =
-          document.createElement(
-            "div"
-          );
-
-
-        item.className =
-          "bar-item";
-
-
-        item.innerHTML = `
-
-          <div class="bar-label">
-
-            <span>
-              ${escaparHtml(
-                String(
-                  coupon.codigo ||
-                  ""
-                )
-                  .toUpperCase()
-              )}
-            </span>
-
-            <strong>
-              ${copies}
-            </strong>
-
-          </div>
-
-          <div class="bar-track">
-
-            <div
-              class="bar-fill"
-              style="width:${
-                (
-                  copies /
-                  max
-                ) * 100
-              }%"
-            ></div>
-
-          </div>
-
-        `;
-
-
-        container.appendChild(
-          item
+      const copies =
+        Number(
+          coupon.copias ||
+          0
         );
 
-      }
-    );
+
+      const item =
+        document.createElement("div");
+
+
+      item.className =
+        "bar-item";
+
+
+      item.innerHTML = `
+
+        <div class="bar-label">
+
+          <span>
+
+            ${escaparHtml(
+              String(
+                coupon.codigo ||
+                ""
+              ).toUpperCase()
+            )}
+
+          </span>
+
+
+          <strong>
+            ${copies}
+          </strong>
+
+        </div>
+
+
+        <div class="bar-track">
+
+          <div
+            class="bar-fill"
+            style="width:${
+              (copies / max) * 100
+            }%"
+          ></div>
+
+        </div>
+
+      `;
+
+
+      container.appendChild(item);
+
+    }
+  );
 
 }
 
@@ -3294,13 +3171,12 @@ function dibujarGrafica(
 
 
   const ctx =
-    canvas.getContext(
-      "2d"
-    );
+    canvas.getContext("2d");
 
 
   const width =
     canvas.width;
+
 
   const height =
     canvas.height;
@@ -3319,11 +3195,14 @@ function dibujarGrafica(
     ctx.fillStyle =
       "#777";
 
+
     ctx.font =
       "16px Arial";
 
+
     ctx.textAlign =
       "center";
+
 
     ctx.fillText(
       "No hay datos todavía",
@@ -3331,7 +3210,9 @@ function dibujarGrafica(
       height / 2
     );
 
+
     return;
+
   }
 
 
@@ -3352,56 +3233,54 @@ function dibujarGrafica(
     );
 
 
-  const left =
-    55;
-
-  const bottom =
-    40;
-
-  const top =
-    20;
-
-  const right =
-    20;
+  const paddingLeft = 55;
+  const paddingBottom = 40;
+  const paddingTop = 20;
+  const paddingRight = 20;
 
 
   const chartWidth =
     width -
-    left -
-    right;
+    paddingLeft -
+    paddingRight;
+
 
   const chartHeight =
     height -
-    top -
-    bottom;
+    paddingTop -
+    paddingBottom;
 
 
   ctx.strokeStyle =
     "#ddd";
 
-  ctx.lineWidth =
-    1;
+
+  ctx.lineWidth = 1;
 
 
   ctx.beginPath();
 
+
   ctx.moveTo(
-    left,
-    top
+    paddingLeft,
+    paddingTop
   );
 
+
   ctx.lineTo(
-    left,
+    paddingLeft,
     height -
-      bottom
+      paddingBottom
   );
+
 
   ctx.lineTo(
     width -
-      right,
+      paddingRight,
     height -
-      bottom
+      paddingBottom
   );
+
 
   ctx.stroke();
 
@@ -3409,8 +3288,10 @@ function dibujarGrafica(
   ctx.font =
     "11px Arial";
 
+
   ctx.fillStyle =
     "#777";
+
 
   ctx.textAlign =
     "right";
@@ -3423,7 +3304,7 @@ function dibujarGrafica(
   ) {
 
     const y =
-      top +
+      paddingTop +
       chartHeight -
       (
         chartHeight *
@@ -3442,7 +3323,7 @@ function dibujarGrafica(
 
     ctx.fillText(
       value,
-      left - 8,
+      paddingLeft - 8,
       y + 4
     );
 
@@ -3453,16 +3334,19 @@ function dibujarGrafica(
 
     ctx.beginPath();
 
+
     ctx.moveTo(
-      left,
+      paddingLeft,
       y
     );
 
+
     ctx.lineTo(
       width -
-        right,
+        paddingRight,
       y
     );
+
 
     ctx.stroke();
 
@@ -3472,17 +3356,18 @@ function dibujarGrafica(
   ctx.strokeStyle =
     "#171717";
 
-  ctx.lineWidth =
-    3;
+
+  ctx.lineWidth = 3;
+
 
   ctx.beginPath();
 
 
   data.forEach(
-    (item, index) => {
+    (item,index) => {
 
       const x =
-        left +
+        paddingLeft +
         (
           index /
           Math.max(
@@ -3501,7 +3386,7 @@ function dibujarGrafica(
 
 
       const y =
-        top +
+        paddingTop +
         chartHeight -
         (
           value /
@@ -3540,10 +3425,10 @@ function dibujarGrafica(
 
 
   data.forEach(
-    (item, index) => {
+    (item,index) => {
 
       const x =
-        left +
+        paddingLeft +
         (
           index /
           Math.max(
@@ -3562,7 +3447,7 @@ function dibujarGrafica(
 
 
       const y =
-        top +
+        paddingTop +
         chartHeight -
         (
           value /
@@ -3573,6 +3458,7 @@ function dibujarGrafica(
 
       ctx.beginPath();
 
+
       ctx.arc(
         x,
         y,
@@ -3580,6 +3466,7 @@ function dibujarGrafica(
         0,
         Math.PI * 2
       );
+
 
       ctx.fill();
 
@@ -3590,8 +3477,10 @@ function dibujarGrafica(
   ctx.fillStyle =
     "#777";
 
+
   ctx.font =
     "10px Arial";
+
 
   ctx.textAlign =
     "center";
@@ -3608,21 +3497,17 @@ function dibujarGrafica(
 
 
   data.forEach(
-    (item, index) => {
+    (item,index) => {
 
       if (
-        index %
-        salto !==
-        0
+        index % salto !== 0
       ) {
-
         return;
-
       }
 
 
       const x =
-        left +
+        paddingLeft +
         (
           index /
           Math.max(
@@ -3642,12 +3527,9 @@ function dibujarGrafica(
 
 
       ctx.fillText(
-        fecha.slice(
-          5
-        ),
+        fecha.slice(5),
         x,
-        height -
-          15
+        height - 15
       );
 
     }
@@ -3696,20 +3578,15 @@ function limpiarFormularioOferta() {
    MODAL
 ========================================================= */
 
-function abrirModalImagen(
-  url
-) {
+function abrirModalImagen(url) {
 
   $("#modalImage")
-    .src =
-      url;
+    .src = url;
 
 
   $("#imageModal")
     .classList
-    .remove(
-      "hidden"
-    );
+    .remove("hidden");
 
 }
 
@@ -3718,9 +3595,7 @@ function cerrarModal() {
 
   $("#imageModal")
     .classList
-    .add(
-      "hidden"
-    );
+    .add("hidden");
 
 
   $("#modalImage")
@@ -3737,507 +3612,18 @@ async function cerrarSesion() {
 
   try {
 
-    await signOut(
-      auth
-    );
+    await signOut(auth);
+
 
     window.location.href =
-      "./index.html";
-
-  } catch (error) {
-
-    console.error(
-      error
-    );
-
-  }
-
-}
+      "./login.html";
 
 
-/* =========================================================
-   PÁGINA PÚBLICA
-========================================================= */
+  } catch(error) {
 
-async function cargarPaginaPublica() {
-
-  try {
-
-    const [
-      couponSnapshot,
-      offerSnapshot
-    ] = await Promise.all([
-
-      getDocs(
-        collection(
-          db,
-          "cupones"
-        )
-      ),
-
-      getDocs(
-        collection(
-          db,
-          "ofertas"
-        )
-      )
-
-    ]);
-
-
-    const publicCoupons = [];
-
-
-    couponSnapshot.forEach(
-      item => {
-
-        publicCoupons.push({
-          id: item.id,
-          ...item.data()
-        });
-
-      }
-    );
-
-
-    const publicOffers = [];
-
-
-    offerSnapshot.forEach(
-      item => {
-
-        publicOffers.push({
-          id: item.id,
-          ...item.data()
-        });
-
-      }
-    );
-
-
-    renderPublicCoupons(
-      publicCoupons
-    );
-
-
-    renderPublicOffers(
-      publicOffers
-    );
-
-
-  } catch (error) {
-
-    console.error(
-      "Error página pública:",
-      error
-    );
-
-
-    const couponsContainer =
-      $("#publicCoupons");
-
-
-    const offersContainer =
-      $("#publicOffers");
-
-
-    if (couponsContainer) {
-
-      couponsContainer.innerHTML = `
-        <div class="public-loading">
-          ⚠️ No se pudieron cargar los cupones.
-        </div>
-      `;
-
-    }
-
-
-    if (offersContainer) {
-
-      offersContainer.innerHTML = `
-        <div class="public-loading">
-          ⚠️ No se pudieron cargar las ofertas.
-        </div>
-      `;
-
-    }
+    console.error(error);
 
   }
-
-}
-
-
-function renderPublicCoupons(
-  list
-) {
-
-  const container =
-    $("#publicCoupons");
-
-
-  if (!container) {
-    return;
-  }
-
-
-  const activos =
-    list.filter(
-      coupon =>
-        coupon.activo !== false &&
-        String(
-          coupon.estado ||
-          ""
-        )
-          .toLowerCase() !==
-          "agotado"
-    );
-
-
-  container.innerHTML =
-    "";
-
-
-  if (!activos.length) {
-
-    container.innerHTML = `
-      <div class="public-loading">
-        🎟️ No hay cupones activos en este momento.
-      </div>
-    `;
-
-    return;
-  }
-
-
-  activos.forEach(
-    coupon => {
-
-      const article =
-        document.createElement(
-          "article"
-        );
-
-
-      article.className =
-        "public-coupon";
-
-
-      const codigo =
-        String(
-          coupon.codigo ||
-          coupon.code ||
-          ""
-        )
-          .toUpperCase();
-
-
-      article.innerHTML = `
-
-        <div class="public-coupon-code">
-          ${escaparHtml(
-            codigo
-          )}
-        </div>
-
-        <div class="public-coupon-type">
-          ${obtenerNombreTipo(
-            coupon.tipo
-          )}
-        </div>
-
-        <div class="public-coupon-info">
-
-          ${
-            coupon.descuento
-              ? `🎁 ${escaparHtml(
-                  coupon.descuento
-                )}<br>`
-              : ""
-          }
-
-          ${
-            coupon.compraMinima
-              ? `🛒 Mínimo:
-                  ${formatearPrecio(
-                    coupon.compraMinima
-                  )}<br>`
-              : ""
-          }
-
-          ${
-            coupon.tope
-              ? `💰 Tope:
-                  ${formatearPrecio(
-                    coupon.tope
-                  )}`
-              : ""
-          }
-
-        </div>
-
-
-        <button
-          class="public-coupon-button"
-          data-copy-coupon="${coupon.id}"
-        >
-          📋 COPIAR CUPÓN
-        </button>
-
-      `;
-
-
-      article
-        .querySelector(
-          "[data-copy-coupon]"
-        )
-        ?.addEventListener(
-          "click",
-          () =>
-            copiarCuponPublico(
-              coupon
-            )
-        );
-
-
-      container.appendChild(
-        article
-      );
-
-    }
-  );
-
-}
-
-
-async function copiarCuponPublico(
-  coupon
-) {
-
-  const codigo =
-    String(
-      coupon.codigo ||
-      coupon.code ||
-      ""
-    )
-      .toUpperCase();
-
-
-  try {
-
-    await navigator.clipboard.writeText(
-      codigo
-    );
-
-
-    try {
-
-      await updateDoc(
-        doc(
-          db,
-          "cupones",
-          coupon.id
-        ),
-        {
-          copias:
-            increment(1)
-        }
-      );
-
-    } catch (error) {
-
-      console.warn(
-        "No se pudo incrementar copias:",
-        error
-      );
-
-    }
-
-
-    mostrarToast(
-      `✅ Cupón ${codigo} copiado`,
-      "success"
-    );
-
-
-    if (coupon.link) {
-
-      setTimeout(
-        () => {
-
-          window.location.href =
-            coupon.link;
-
-        },
-        250
-      );
-
-    }
-
-  } catch (error) {
-
-    console.error(
-      error
-    );
-
-
-    mostrarToast(
-      "❌ No se pudo copiar el cupón.",
-      "error"
-    );
-
-  }
-
-}
-
-
-function renderPublicOffers(
-  list
-) {
-
-  const container =
-    $("#publicOffers");
-
-
-  if (!container) {
-    return;
-  }
-
-
-  container.innerHTML =
-    "";
-
-
-  if (!list.length) {
-
-    container.innerHTML = `
-      <div class="public-loading">
-        🔥 No hay ofertas publicadas todavía.
-      </div>
-    `;
-
-    return;
-  }
-
-
-  list
-    .slice(
-      0,
-      20
-    )
-    .forEach(
-      offer => {
-
-        const article =
-          document.createElement(
-            "article"
-          );
-
-
-        article.className =
-          "public-offer";
-
-
-        const antes =
-          Number(
-            offer.precioAntes ||
-            0
-          );
-
-
-        const actual =
-          Number(
-            offer.precioActual ||
-            offer.precioFinal ||
-            0
-          );
-
-
-        article.innerHTML = `
-
-          ${
-            offer.imagen
-              ? `
-                <img
-                  src="${escaparHtml(
-                    offer.imagen
-                  )}"
-                  alt="${escaparHtml(
-                    offer.titulo ||
-                    "Oferta"
-                  )}"
-                >
-              `
-              : `
-                <div
-                  style="
-                    height:190px;
-                    display:grid;
-                    place-items:center;
-                    background:#f5f5f5;
-                    border-radius:12px;
-                    font-size:55px;
-                  "
-                >
-                  🔥
-                </div>
-              `
-          }
-
-
-          <h3>
-            ${escaparHtml(
-              offer.titulo ||
-              "Oferta"
-            )}
-          </h3>
-
-
-          ${
-            antes
-              ? `
-                <div class="public-old-price">
-                  ${formatearPrecio(
-                    antes
-                  )}
-                </div>
-              `
-              : ""
-          }
-
-
-          <div class="public-price">
-            ${formatearPrecio(
-              actual
-            )}
-          </div>
-
-
-          ${
-            offer.link
-              ? `
-                <a
-                  href="${escaparHtml(
-                    offer.link
-                  )}"
-                  class="public-offer-button"
-                  target="_blank"
-                  rel="noopener"
-                >
-                  🛒 VER OFERTA
-                </a>
-              `
-              : ""
-          }
-
-        `;
-
-
-        container.appendChild(
-          article
-        );
-
-      }
-    );
 
 }
 
@@ -4265,9 +3651,7 @@ function normalizarEstadoCompra(
       "aprobado",
       "verificada",
       "verificado"
-    ].includes(
-      value
-    )
+    ].includes(value)
   ) {
 
     return "aprobada";
@@ -4279,9 +3663,7 @@ function normalizarEstadoCompra(
     [
       "rechazada",
       "rechazado"
-    ].includes(
-      value
-    )
+    ].includes(value)
   ) {
 
     return "rechazada";
@@ -4294,9 +3676,7 @@ function normalizarEstadoCompra(
 }
 
 
-function normalizarTipo(
-  tipo
-) {
+function normalizarTipo(tipo) {
 
   const value =
     String(
@@ -4304,9 +3684,7 @@ function normalizarTipo(
       ""
     )
       .toLowerCase()
-      .normalize(
-        "NFD"
-      )
+      .normalize("NFD")
       .replace(
         /[\u0300-\u036f]/g,
         ""
@@ -4314,9 +3692,7 @@ function normalizarTipo(
 
 
   if (
-    value.includes(
-      "banc"
-    )
+    value.includes("banc")
   ) {
 
     return "bancario";
@@ -4325,12 +3701,8 @@ function normalizarTipo(
 
 
   if (
-    value.includes(
-      "exclus"
-    ) ||
-    value.includes(
-      "meli"
-    )
+    value.includes("exclus") ||
+    value.includes("meli")
   ) {
 
     return "exclusivo";
@@ -4343,14 +3715,10 @@ function normalizarTipo(
 }
 
 
-function obtenerNombreTipo(
-  tipo
-) {
+function obtenerNombreTipo(tipo) {
 
   const value =
-    normalizarTipo(
-      tipo
-    );
+    normalizarTipo(tipo);
 
 
   if (
@@ -4378,35 +3746,23 @@ function obtenerNombreTipo(
 }
 
 
-function formatearPrecio(
-  value
-) {
+function formatearPrecio(value) {
 
   return new Intl.NumberFormat(
     "es-MX",
     {
-      style:
-        "currency",
-
-      currency:
-        "MXN",
-
-      maximumFractionDigits:
-        2
+      style: "currency",
+      currency: "MXN",
+      maximumFractionDigits: 2
     }
   ).format(
-    Number(
-      value ||
-      0
-    )
+    Number(value || 0)
   );
 
 }
 
 
-function fechaValor(
-  value
-) {
+function fechaValor(value) {
 
   if (!value) {
     return 0;
@@ -4423,24 +3779,17 @@ function fechaValor(
   }
 
 
-  if (
-    value.seconds
-  ) {
+  if (value.seconds) {
 
-    return (
-      Number(
-        value.seconds
-      ) *
-      1000
-    );
+    return Number(
+      value.seconds
+    ) * 1000;
 
   }
 
 
   const date =
-    new Date(
-      value
-    );
+    new Date(value);
 
 
   return Number.isNaN(
@@ -4464,23 +3813,14 @@ function obtenerFechaLocal() {
 
   const month =
     String(
-      ahora.getMonth() +
-      1
-    )
-      .padStart(
-        2,
-        "0"
-      );
+      ahora.getMonth() + 1
+    ).padStart(2,"0");
 
 
   const day =
     String(
       ahora.getDate()
-    )
-      .padStart(
-        2,
-        "0"
-      );
+    ).padStart(2,"0");
 
 
   return `${year}-${month}-${day}`;
@@ -4488,9 +3828,7 @@ function obtenerFechaLocal() {
 }
 
 
-function escaparHtml(
-  value
-) {
+function escaparHtml(value) {
 
   return String(
     value ??
@@ -4516,25 +3854,6 @@ function escaparHtml(
       /'/g,
       "&#039;"
     );
-
-}
-
-
-function setText(
-  selector,
-  value
-) {
-
-  const element =
-    $(selector);
-
-
-  if (element) {
-
-    element.textContent =
-      value;
-
-  }
 
 }
 
