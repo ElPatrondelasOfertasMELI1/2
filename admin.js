@@ -1,7 +1,7 @@
 /* =========================================================
-   EL PATRÓN DE LAS OFERTAS
+   ⚡ EL PATRÓN DE LAS OFERTAS
    ADMIN PRO
-   FIREBASE NUEVO
+   Firebase nuevo
    SIN FIREBASE STORAGE
    IMÁGENES / VIDEOS EN BASE64
 ========================================================= */
@@ -80,53 +80,35 @@ const db =
 
 
 /* =========================================================
-   CONSTANTES
+   CONFIGURACIÓN MULTIMEDIA
 ========================================================= */
 
 /*
-  Firestore tiene límite de 1 MiB por documento.
+   Firestore tiene límite aproximado de 1 MiB por documento.
 
-  Dejamos margen de seguridad para los demás campos
-  del documento.
+   Por eso:
 
-  IMÁGENES:
-  se comprimen automáticamente.
+   IMAGEN:
+   máximo recomendado: 700 KB
 
-  VIDEOS:
-  solo se permiten archivos pequeños.
+   VIDEO:
+   máximo recomendado: 500 KB
+
+   Los archivos se convierten a Base64.
+
+   IMPORTANTE:
+   Base64 aumenta el tamaño aproximadamente 33%.
 */
 
-const MAX_BASE64_BYTES =
+const MAX_IMAGE_BYTES =
   700 * 1024;
 
 const MAX_VIDEO_BYTES =
   500 * 1024;
 
-const IMAGE_MAX_WIDTH =
-  1200;
-
-const IMAGE_MAX_HEIGHT =
-  1200;
-
-const IMAGE_QUALITY =
-  0.72;
-
 
 /* =========================================================
-   VARIABLES
-========================================================= */
-
-let editingOfferId = null;
-
-let editingCouponId = null;
-
-let adminStarted = false;
-
-let listenersStarted = false;
-
-
-/* =========================================================
-   UTILIDADES DOM
+   UTILIDADES
 ========================================================= */
 
 const $ =
@@ -175,7 +157,7 @@ function money(value) {
 
 
 /* =========================================================
-   CÓDIGO CUPÓN
+   CÓDIGO CUPÓN MAYÚSCULAS
 ========================================================= */
 
 function codeUpper(value) {
@@ -221,7 +203,7 @@ function showMessage(
       "999999";
 
     box.style.padding =
-      "14px 18px";
+      "14px 20px";
 
     box.style.borderRadius =
       "12px";
@@ -229,11 +211,11 @@ function showMessage(
     box.style.fontWeight =
       "800";
 
-    box.style.fontFamily =
-      "Arial, sans-serif";
+    box.style.fontSize =
+      "14px";
 
     box.style.boxShadow =
-      "0 8px 30px rgba(0,0,0,.20)";
+      "0 8px 30px rgba(0,0,0,.25)";
 
     document.body.appendChild(
       box
@@ -279,23 +261,190 @@ function showMessage(
 
 
 /* =========================================================
-   VALIDAR SESIÓN
+   CONVERTIR ARCHIVO A BASE64
 ========================================================= */
 
-function requireAuth() {
+function fileToBase64(file) {
 
-  if (!auth.currentUser) {
+  return new Promise(
+    (resolve, reject) => {
 
-    showMessage(
-      "❌ Debes iniciar sesión.",
-      "error"
-    );
+      const reader =
+        new FileReader();
 
-    return false;
+
+      reader.onload =
+        () => {
+
+          resolve(
+            reader.result
+          );
+
+        };
+
+
+      reader.onerror =
+        error => {
+
+          reject(error);
+
+        };
+
+
+      reader.readAsDataURL(
+        file
+      );
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   VALIDAR ARCHIVO
+========================================================= */
+
+function validateMediaFile(file) {
+
+  if (!file) {
+
+    return {
+      valid: true
+    };
 
   }
 
-  return true;
+
+  const isImage =
+    file.type.startsWith(
+      "image/"
+    );
+
+
+  const isVideo =
+    file.type.startsWith(
+      "video/"
+    );
+
+
+  if (!isImage && !isVideo) {
+
+    return {
+
+      valid: false,
+
+      message:
+        "❌ Solo puedes subir imágenes o videos."
+
+    };
+
+  }
+
+
+  if (
+    isImage &&
+    file.size > MAX_IMAGE_BYTES
+  ) {
+
+    return {
+
+      valid: false,
+
+      message:
+        "❌ La imagen supera 700 KB. Comprímela antes de subirla."
+
+    };
+
+  }
+
+
+  if (
+    isVideo &&
+    file.size > MAX_VIDEO_BYTES
+  ) {
+
+    return {
+
+      valid: false,
+
+      message:
+        "❌ El video supera 500 KB. Debe estar muy comprimido para guardarlo en Firestore."
+
+    };
+
+  }
+
+
+  return {
+
+    valid: true
+
+  };
+
+}
+
+
+/* =========================================================
+   OBTENER ARCHIVO BASE64
+========================================================= */
+
+async function getMediaBase64(
+  inputSelector
+) {
+
+  const input =
+    $(inputSelector);
+
+
+  if (!input) {
+
+    return null;
+
+  }
+
+
+  const file =
+    input.files?.[0];
+
+
+  if (!file) {
+
+    return null;
+
+  }
+
+
+  const validation =
+    validateMediaFile(
+      file
+    );
+
+
+  if (!validation.valid) {
+
+    throw new Error(
+      validation.message
+    );
+
+  }
+
+
+  return {
+
+    base64:
+      await fileToBase64(file),
+
+    tipo:
+      file.type,
+
+    nombre:
+      file.name,
+
+    tamaño:
+      file.size
+
+  };
 
 }
 
@@ -318,11 +467,14 @@ if (loginForm) {
 
 
       const email =
-        $("#adminEmail")?.value.trim();
+        $("#adminEmail")
+          ?.value
+          .trim();
 
 
       const password =
-        $("#adminPassword")?.value;
+        $("#adminPassword")
+          ?.value;
 
 
       if (!email || !password) {
@@ -382,6 +534,7 @@ onAuthStateChanged(
 
     const loginView =
       $("#adminLoginView");
+
 
     const adminView =
       $("#adminPanelView");
@@ -449,15 +602,12 @@ if (logoutButton) {
         await signOut(auth);
 
         showMessage(
-          "Sesión cerrada."
+          "👋 Sesión cerrada."
         );
 
       } catch (error) {
 
-        console.error(
-          "LOGOUT:",
-          error
-        );
+        console.error(error);
 
       }
 
@@ -468,12 +618,37 @@ if (logoutButton) {
 
 
 /* =========================================================
+   VARIABLES
+========================================================= */
+
+let editingOfferId =
+  null;
+
+
+let editingCouponId =
+  null;
+
+
+let editingUserId =
+  null;
+
+
+let adminStarted =
+  false;
+
+
+/* =========================================================
    INICIAR ADMIN
 ========================================================= */
 
 function startAdmin() {
 
-  if (adminStarted) return;
+  if (adminStarted) {
+
+    return;
+
+  }
+
 
   adminStarted =
     true;
@@ -495,370 +670,6 @@ function startAdmin() {
 
   loadStatistics();
 
-  startRealtimeListeners();
-
-}
-
-
-/* =========================================================
-   BASE64
-========================================================= */
-
-/*
-  Convierte un archivo en Base64.
-*/
-
-function fileToBase64(file) {
-
-  return new Promise(
-    (resolve, reject) => {
-
-      const reader =
-        new FileReader();
-
-
-      reader.onload =
-        () => resolve(
-          reader.result
-        );
-
-
-      reader.onerror =
-        reject;
-
-
-      reader.readAsDataURL(
-        file
-      );
-
-    }
-  );
-
-}
-
-
-/* =========================================================
-   OBTENER TAMAÑO APROXIMADO BASE64
-========================================================= */
-
-function base64Size(base64) {
-
-  if (!base64) return 0;
-
-
-  const comma =
-    base64.indexOf(",");
-
-
-  const pure =
-    comma >= 0
-      ? base64.substring(
-          comma + 1
-        )
-      : base64;
-
-
-  return Math.ceil(
-    pure.length * 0.75
-  );
-
-}
-
-
-/* =========================================================
-   COMPRIMIR IMAGEN
-========================================================= */
-
-async function compressImage(
-  file
-) {
-
-  if (!file) {
-
-    return null;
-
-  }
-
-
-  if (
-    !file.type.startsWith(
-      "image/"
-    )
-  ) {
-
-    throw new Error(
-      "El archivo seleccionado no es una imagen."
-    );
-
-  }
-
-
-  const imageUrl =
-    URL.createObjectURL(
-      file
-    );
-
-
-  try {
-
-    const image =
-      await new Promise(
-        (resolve, reject) => {
-
-          const img =
-            new Image();
-
-
-          img.onload =
-            () => resolve(img);
-
-
-          img.onerror =
-            () =>
-              reject(
-                new Error(
-                  "No se pudo cargar la imagen."
-                )
-              );
-
-
-          img.src =
-            imageUrl;
-
-        }
-      );
-
-
-    let width =
-      image.width;
-
-
-    let height =
-      image.height;
-
-
-    const ratio =
-      Math.min(
-        IMAGE_MAX_WIDTH / width,
-        IMAGE_MAX_HEIGHT / height,
-        1
-      );
-
-
-    width =
-      Math.round(
-        width * ratio
-      );
-
-
-    height =
-      Math.round(
-        height * ratio
-      );
-
-
-    const canvas =
-      document.createElement(
-        "canvas"
-      );
-
-
-    canvas.width =
-      width;
-
-
-    canvas.height =
-      height;
-
-
-    const context =
-      canvas.getContext(
-        "2d"
-      );
-
-
-    context.drawImage(
-      image,
-      0,
-      0,
-      width,
-      height
-    );
-
-
-    let quality =
-      IMAGE_QUALITY;
-
-
-    let base64 =
-      canvas.toDataURL(
-        "image/jpeg",
-        quality
-      );
-
-
-    /*
-      Si todavía es grande,
-      seguimos reduciendo calidad.
-    */
-
-    while (
-      base64Size(base64) >
-        MAX_BASE64_BYTES &&
-      quality > 0.30
-    ) {
-
-      quality -=
-        0.08;
-
-
-      base64 =
-        canvas.toDataURL(
-          "image/jpeg",
-          quality
-        );
-
-    }
-
-
-    if (
-      base64Size(base64) >
-        MAX_BASE64_BYTES
-    ) {
-
-      throw new Error(
-        "La imagen sigue siendo demasiado grande después de comprimirla."
-      );
-
-    }
-
-
-    return base64;
-
-
-  } finally {
-
-    URL.revokeObjectURL(
-      imageUrl
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   PROCESAR VIDEO
-========================================================= */
-
-async function processVideo(
-  file
-) {
-
-  if (!file) {
-
-    return null;
-
-  }
-
-
-  if (
-    !file.type.startsWith(
-      "video/"
-    )
-  ) {
-
-    throw new Error(
-      "El archivo seleccionado no es un video."
-    );
-
-  }
-
-
-  if (
-    file.size >
-      MAX_VIDEO_BYTES
-  ) {
-
-    throw new Error(
-      "El video es demasiado grande para guardarlo en Firestore. Máximo recomendado: 500 KB."
-    );
-
-  }
-
-
-  const base64 =
-    await fileToBase64(
-      file
-    );
-
-
-  if (
-    base64Size(base64) >
-      MAX_BASE64_BYTES
-  ) {
-
-    throw new Error(
-      "El video convertido supera el tamaño permitido."
-    );
-
-  }
-
-
-  return base64;
-
-}
-
-
-/* =========================================================
-   OBTENER ARCHIVO DE IMAGEN
-========================================================= */
-
-function getImageFile() {
-
-  const input =
-    $("#offerImageFile");
-
-
-  if (
-    input &&
-    input.files &&
-    input.files[0]
-  ) {
-
-    return input.files[0];
-
-  }
-
-
-  return null;
-
-}
-
-
-/* =========================================================
-   OBTENER ARCHIVO DE VIDEO
-========================================================= */
-
-function getVideoFile() {
-
-  const input =
-    $("#offerVideoFile");
-
-
-  if (
-    input &&
-    input.files &&
-    input.files[0]
-  ) {
-
-    return input.files[0];
-
-  }
-
-
-  return null;
-
 }
 
 
@@ -872,7 +683,11 @@ function bindOfferForm() {
     $("#offerForm");
 
 
-  if (!form) return;
+  if (!form) {
+
+    return;
+
+  }
 
 
   form.addEventListener(
@@ -880,13 +695,6 @@ function bindOfferForm() {
     async event => {
 
       event.preventDefault();
-
-
-      if (!requireAuth()) {
-
-        return;
-
-      }
 
 
       const titulo =
@@ -921,6 +729,16 @@ function bindOfferForm() {
           .trim();
 
 
+      /*
+        NOTA:
+        El link del producto puede seguir existiendo
+        como enlace del producto.
+
+        Lo que NO usamos son enlaces externos
+        para alojar imágenes/videos.
+      */
+
+
       if (
         !titulo ||
         !precioActual ||
@@ -928,7 +746,7 @@ function bindOfferForm() {
       ) {
 
         showMessage(
-          "Completa título, precio actual y enlace de Mercado Libre.",
+          "Completa título, precio y enlace del producto.",
           "error"
         );
 
@@ -937,85 +755,82 @@ function bindOfferForm() {
       }
 
 
-      const imageFile =
-        getImageFile();
-
-
-      const videoFile =
-        getVideoFile();
-
-
-      const existing =
-        editingOfferId
-          ? await getDoc(
-              doc(
-                db,
-                "ofertas",
-                editingOfferId
-              )
-            )
-          : null;
-
-
-      let oldData =
-        existing?.exists()
-          ? existing.data()
-          : {};
-
-
-      let imagenBase64 =
-        oldData.imagenBase64 ||
-        "";
-
-
-      let videoBase64 =
-        oldData.videoBase64 ||
-        "";
-
-
       try {
 
+        showMessage(
+          "⏳ Guardando oferta..."
+        );
+
+
+        let multimedia =
+          null;
+
+
         /*
-          IMAGEN
+          Buscar input multimedia.
+
+          Puede llamarse:
+
+          #offerMedia
+          #offerImage
+          #offerVideo
+
+          El primero que exista será utilizado.
         */
 
-        if (imageFile) {
+        const mediaInput =
+          $("#offerMedia") ||
+          $("#offerImageFile") ||
+          $("#offerImage") ||
+          $("#offerVideo");
 
-          showMessage(
-            "⏳ Comprimiendo imagen..."
-          );
+
+        if (
+          mediaInput &&
+          mediaInput.files &&
+          mediaInput.files.length
+        ) {
+
+          const file =
+            mediaInput.files[0];
 
 
-          imagenBase64 =
-            await compressImage(
-              imageFile
+          const validation =
+            validateMediaFile(
+              file
             );
+
+
+          if (!validation.valid) {
+
+            showMessage(
+              validation.message,
+              "error"
+            );
+
+            return;
+
+          }
+
+
+          multimedia = {
+
+            base64:
+              await fileToBase64(file),
+
+            tipo:
+              file.type,
+
+            nombre:
+              file.name,
+
+            tamaño:
+              file.size
+
+          };
 
         }
 
-
-        /*
-          VIDEO
-        */
-
-        if (videoFile) {
-
-          showMessage(
-            "⏳ Procesando video..."
-          );
-
-
-          videoBase64 =
-            await processVideo(
-              videoFile
-            );
-
-        }
-
-
-        /*
-          DATOS
-        */
 
         const data = {
 
@@ -1029,10 +844,6 @@ function bindOfferForm() {
 
           link,
 
-          imagenBase64,
-
-          videoBase64,
-
           activo: true,
 
           actualizado:
@@ -1042,8 +853,17 @@ function bindOfferForm() {
 
 
         /*
-          ACTUALIZAR
+          Solo agregamos multimedia
+          cuando realmente se seleccionó.
         */
+
+        if (multimedia) {
+
+          data.multimedia =
+            multimedia;
+
+        }
+
 
         if (editingOfferId) {
 
@@ -1061,14 +881,7 @@ function bindOfferForm() {
             "✅ Oferta actualizada."
           );
 
-
-        }
-
-        /*
-          CREAR
-        */
-
-        else {
+        } else {
 
           await addDoc(
             collection(
@@ -1115,11 +928,8 @@ function bindOfferForm() {
 
 
         showMessage(
-          "❌ " +
-          (
-            error.message ||
-            "No se pudo guardar la oferta."
-          ),
+          error.message ||
+          "❌ No se pudo guardar la oferta.",
           "error"
         );
 
@@ -1141,7 +951,11 @@ async function loadOffers() {
     $("#adminOffersList");
 
 
-  if (!container) return;
+  if (!container) {
+
+    return;
+
+  }
 
 
   try {
@@ -1157,6 +971,16 @@ async function loadOffers() {
 
     container.innerHTML =
       "";
+
+
+    if (snapshot.empty) {
+
+      container.innerHTML =
+        "<p>No hay ofertas todavía.</p>";
+
+      return;
+
+    }
 
 
     snapshot.forEach(
@@ -1176,75 +1000,100 @@ async function loadOffers() {
           "admin-item";
 
 
-        const image =
-          data.imagenBase64
-            ? `
+        const multimedia =
+          data.multimedia;
+
+
+        let mediaHTML =
+          "";
+
+
+        if (
+          multimedia &&
+          multimedia.base64
+        ) {
+
+          if (
+            String(
+              multimedia.tipo || ""
+            )
+            .startsWith("video/")
+          ) {
+
+            mediaHTML = `
+
+              <video
+                src="${multimedia.base64}"
+                controls
+                muted
+                playsinline
+                style="
+                  width:90px;
+                  height:70px;
+                  object-fit:cover;
+                  border-radius:8px;
+                "
+              ></video>
+
+            `;
+
+          } else {
+
+            mediaHTML = `
+
               <img
-                src="${data.imagenBase64}"
+                src="${multimedia.base64}"
                 alt=""
                 style="
-                  width:60px;
-                  height:60px;
+                  width:90px;
+                  height:70px;
                   object-fit:cover;
-                  border-radius:10px;
+                  border-radius:8px;
                 "
               >
-            `
-            : "";
+
+            `;
+
+          }
+
+        }
 
 
         card.innerHTML = `
 
-          <div
-            style="
-              display:flex;
-              align-items:center;
-              gap:12px;
-            "
-          >
+          ${mediaHTML}
 
-            ${image}
+          <div>
 
-            <div>
+            <strong>
+              ${escapeHtml(
+                data.titulo
+              )}
+            </strong>
 
-              <strong>
-                ${escapeHtml(
-                  data.titulo
-                )}
-              </strong>
+            <small>
+              ${money(
+                data.precioActual
+              )}
+            </small>
 
-              <small>
-                ${money(
-                  data.precioActual
-                )}
-              </small>
-
-              ${
-                data.videoBase64
-                  ? `
-                    <small>
-                      🎥 Video incluido
-                    </small>
-                  `
-                  : ""
-              }
-
-            </div>
+            <small>
+              ${escapeHtml(
+                data.categoria || ""
+              )}
+            </small>
 
           </div>
-
 
           <div>
 
             <button
-              type="button"
               data-edit-offer="${item.id}"
             >
               ✏️ Editar
             </button>
 
             <button
-              type="button"
               data-delete-offer="${item.id}"
             >
               🗑️ Eliminar
@@ -1304,7 +1153,7 @@ async function loadOffers() {
   } catch (error) {
 
     console.error(
-      "LISTAR OFERTAS:",
+      "CARGAR OFERTAS:",
       error
     );
 
@@ -1317,9 +1166,7 @@ async function loadOffers() {
    EDITAR OFERTA
 ========================================================= */
 
-async function editOffer(
-  id
-) {
+async function editOffer(id) {
 
   try {
 
@@ -1336,7 +1183,7 @@ async function editOffer(
     if (!snapshot.exists()) {
 
       showMessage(
-        "La oferta no existe.",
+        "La oferta ya no existe.",
         "error"
       );
 
@@ -1349,60 +1196,42 @@ async function editOffer(
       snapshot.data();
 
 
-    $("#offerTitle").value =
-      data.titulo || "";
+    if ($("#offerTitle")) {
 
-
-    $("#offerPriceBefore").value =
-      data.precioAntes || "";
-
-
-    $("#offerPriceCurrent").value =
-      data.precioActual || "";
-
-
-    $("#offerCategory").value =
-      data.categoria || "";
-
-
-    $("#offerLink").value =
-      data.link || "";
-
-
-    /*
-      Si el HTML antiguo tiene offerImage,
-      no lo usamos como URL.
-
-      La imagen ahora se maneja con
-      #offerImageFile.
-    */
-
-    if (
-      $("#offerImage")
-    ) {
-
-      $("#offerImage").value =
-        "";
+      $("#offerTitle").value =
+        data.titulo || "";
 
     }
 
 
-    if (
-      $("#offerImageFile")
-    ) {
+    if ($("#offerPriceBefore")) {
 
-      $("#offerImageFile").value =
-        "";
+      $("#offerPriceBefore").value =
+        data.precioAntes || "";
 
     }
 
 
-    if (
-      $("#offerVideoFile")
-    ) {
+    if ($("#offerPriceCurrent")) {
 
-      $("#offerVideoFile").value =
-        "";
+      $("#offerPriceCurrent").value =
+        data.precioActual || "";
+
+    }
+
+
+    if ($("#offerCategory")) {
+
+      $("#offerCategory").value =
+        data.categoria || "";
+
+    }
+
+
+    if ($("#offerLink")) {
+
+      $("#offerLink").value =
+        data.link || "";
 
     }
 
@@ -1424,10 +1253,7 @@ async function editOffer(
 
   } catch (error) {
 
-    console.error(
-      "EDITAR OFERTA:",
-      error
-    );
+    console.error(error);
 
   }
 
@@ -1438,18 +1264,7 @@ async function editOffer(
    ELIMINAR OFERTA
 ========================================================= */
 
-async function deleteOffer(
-  id
-) {
-
-  if (
-    !requireAuth()
-  ) {
-
-    return;
-
-  }
-
+async function deleteOffer(id) {
 
   if (
     !confirm(
@@ -1485,10 +1300,7 @@ async function deleteOffer(
 
   } catch (error) {
 
-    console.error(
-      "ELIMINAR OFERTA:",
-      error
-    );
+    console.error(error);
 
 
     showMessage(
@@ -1511,7 +1323,11 @@ function bindCouponForm() {
     $("#couponForm");
 
 
-  if (!form) return;
+  if (!form) {
+
+    return;
+
+  }
 
 
   form.addEventListener(
@@ -1519,13 +1335,6 @@ function bindCouponForm() {
     async event => {
 
       event.preventDefault();
-
-
-      if (!requireAuth()) {
-
-        return;
-
-      }
 
 
       const codigo =
@@ -1586,31 +1395,31 @@ function bindCouponForm() {
       }
 
 
-      const data = {
-
-        codigo,
-
-        titulo,
-
-        tipo,
-
-        descuento,
-
-        minimo,
-
-        tope,
-
-        link,
-
-        activo: true,
-
-        actualizado:
-          serverTimestamp()
-
-      };
-
-
       try {
+
+        const data = {
+
+          codigo,
+
+          titulo,
+
+          tipo,
+
+          descuento,
+
+          minimo,
+
+          tope,
+
+          link,
+
+          activo: true,
+
+          actualizado:
+            serverTimestamp()
+
+        };
+
 
         if (editingCouponId) {
 
@@ -1627,7 +1436,6 @@ function bindCouponForm() {
           showMessage(
             "✅ Cupón actualizado."
           );
-
 
         } else {
 
@@ -1697,7 +1505,11 @@ async function loadCoupons() {
     $("#adminCouponsList");
 
 
-  if (!container) return;
+  if (!container) {
+
+    return;
+
+  }
 
 
   try {
@@ -1730,11 +1542,11 @@ async function loadCoupons() {
 
 
     /*
-      Orden:
+       ORDEN:
 
-      1. Monto fijo menor
-      2. Monto fijo mayor
-      3. Porcentaje por mínimo ascendente
+       1. Monto fijo menor
+       2. Monto fijo mayor
+       3. Porcentaje por mínimo
     */
 
     coupons.sort(
@@ -1773,9 +1585,18 @@ async function loadCoupons() {
         }
 
 
-        if (aFixed) return -1;
+        if (aFixed) {
 
-        if (bFixed) return 1;
+          return -1;
+
+        }
+
+
+        if (bFixed) {
+
+          return 1;
+
+        }
 
 
         return (
@@ -1789,6 +1610,16 @@ async function loadCoupons() {
 
     container.innerHTML =
       "";
+
+
+    if (!coupons.length) {
+
+      container.innerHTML =
+        "<p>No hay cupones activos.</p>";
+
+      return;
+
+    }
 
 
     coupons.forEach(
@@ -1824,20 +1655,23 @@ async function loadCoupons() {
               )}
             </small>
 
-          </div>
+            <small>
+              ${escapeHtml(
+                coupon.tipo || ""
+              )}
+            </small>
 
+          </div>
 
           <div>
 
             <button
-              type="button"
               data-edit-coupon="${coupon.id}"
             >
               ✏️ Editar
             </button>
 
             <button
-              type="button"
               data-delete-coupon="${coupon.id}"
             >
               🗑️ Eliminar
@@ -1897,7 +1731,7 @@ async function loadCoupons() {
   } catch (error) {
 
     console.error(
-      "LISTAR CUPONES:",
+      "CARGAR CUPONES:",
       error
     );
 
@@ -1910,16 +1744,11 @@ async function loadCoupons() {
    EXTRAER NÚMERO
 ========================================================= */
 
-function extractNumber(
-  value
-) {
+function extractNumber(value) {
 
   return Number(
     String(value)
-      .replace(
-        /[^\d.]/g,
-        ""
-      )
+      .replace(/[^\d.]/g, "")
   ) || 0;
 
 }
@@ -1929,9 +1758,7 @@ function extractNumber(
    EDITAR CUPÓN
 ========================================================= */
 
-async function editCoupon(
-  id
-) {
+async function editCoupon(id) {
 
   try {
 
@@ -1946,11 +1773,6 @@ async function editCoupon(
 
 
     if (!snapshot.exists()) {
-
-      showMessage(
-        "El cupón no existe.",
-        "error"
-      );
 
       return;
 
@@ -2034,10 +1856,7 @@ async function editCoupon(
 
   } catch (error) {
 
-    console.error(
-      "EDITAR CUPÓN:",
-      error
-    );
+    console.error(error);
 
   }
 
@@ -2048,18 +1867,7 @@ async function editCoupon(
    ELIMINAR CUPÓN
 ========================================================= */
 
-async function deleteCoupon(
-  id
-) {
-
-  if (
-    !requireAuth()
-  ) {
-
-    return;
-
-  }
-
+async function deleteCoupon(id) {
 
   if (
     !confirm(
@@ -2095,10 +1903,7 @@ async function deleteCoupon(
 
   } catch (error) {
 
-    console.error(
-      "ELIMINAR CUPÓN:",
-      error
-    );
+    console.error(error);
 
 
     showMessage(
@@ -2121,7 +1926,11 @@ function bindUserForm() {
     $("#userForm");
 
 
-  if (!form) return;
+  if (!form) {
+
+    return;
+
+  }
 
 
   form.addEventListener(
@@ -2129,13 +1938,6 @@ function bindUserForm() {
     async event => {
 
       event.preventDefault();
-
-
-      if (!requireAuth()) {
-
-        return;
-
-      }
 
 
       const nombre =
@@ -2219,10 +2021,7 @@ function bindUserForm() {
 
       } catch (error) {
 
-        console.error(
-          "CREAR USUARIO:",
-          error
-        );
+        console.error(error);
 
 
         showMessage(
@@ -2248,7 +2047,11 @@ async function loadUsers() {
     $("#adminUsersList");
 
 
-  if (!container) return;
+  if (!container) {
+
+    return;
+
+  }
 
 
   try {
@@ -2264,6 +2067,16 @@ async function loadUsers() {
 
     container.innerHTML =
       "";
+
+
+    if (snapshot.empty) {
+
+      container.innerHTML =
+        "<p>No hay usuarios todavía.</p>";
+
+      return;
+
+    }
 
 
     snapshot.forEach(
@@ -2297,7 +2110,9 @@ async function loadUsers() {
               ${escapeHtml(
                 data.email || ""
               )}
-              ·
+            </small>
+
+            <small>
               ${escapeHtml(
                 data.estado ||
                 "pendiente"
@@ -2305,7 +2120,6 @@ async function loadUsers() {
             </small>
 
           </div>
-
 
           <div>
 
@@ -2316,10 +2130,17 @@ async function loadUsers() {
             </strong>
 
             <small>
-              ${
+              ${Number(
                 data.compras || 0
-              }
+              )}
               compras
+            </small>
+
+            <small>
+              ${Number(
+                data.cuponesUsados || 0
+              )}
+              cupones
             </small>
 
           </div>
@@ -2338,7 +2159,7 @@ async function loadUsers() {
   } catch (error) {
 
     console.error(
-      "LISTAR USUARIOS:",
+      "USUARIOS:",
       error
     );
 
@@ -2357,7 +2178,11 @@ async function loadPurchases() {
     $("#adminPurchasesList");
 
 
-  if (!container) return;
+  if (!container) {
+
+    return;
+
+  }
 
 
   try {
@@ -2373,6 +2198,16 @@ async function loadPurchases() {
 
     container.innerHTML =
       "";
+
+
+    if (snapshot.empty) {
+
+      container.innerHTML =
+        "<p>No hay compras todavía.</p>";
+
+      return;
+
+    }
 
 
     snapshot.forEach(
@@ -2413,7 +2248,6 @@ async function loadPurchases() {
 
           </div>
 
-
           <div>
 
             <strong>
@@ -2444,12 +2278,6 @@ async function loadPurchases() {
 
   } catch (error) {
 
-    /*
-      Si compras todavía no existe,
-      Firestore simplemente devolverá
-      una colección vacía.
-    */
-
     console.error(
       "COMPRAS:",
       error
@@ -2466,16 +2294,21 @@ async function loadPurchases() {
 
 async function loadStatistics() {
 
-  if (!auth.currentUser) {
-
-    return;
-
-  }
-
-
   try {
 
-    const results =
+    const [
+
+      offers,
+
+      coupons,
+
+      users,
+
+      purchases,
+
+      copies
+
+    ] =
       await Promise.all([
 
         getDocs(
@@ -2516,26 +2349,6 @@ async function loadStatistics() {
       ]);
 
 
-    const offers =
-      results[0];
-
-
-    const coupons =
-      results[1];
-
-
-    const users =
-      results[2];
-
-
-    const purchases =
-      results[3];
-
-
-    const copies =
-      results[4];
-
-
     setText(
       "#statOffers",
       offers.size
@@ -2567,7 +2380,7 @@ async function loadStatistics() {
 
 
     /*
-      CUPÓN MÁS COPIADO
+       CUPÓN MÁS COPIADO
     */
 
     const counter =
@@ -2583,12 +2396,15 @@ async function loadStatistics() {
 
         const code =
           codeUpper(
-            data.codigo ||
-            data.cupon
+            data.codigo
           );
 
 
-        if (!code) return;
+        if (!code) {
+
+          return;
+
+        }
 
 
         counter[code] =
@@ -2663,302 +2479,131 @@ function setText(
 
 
 /* =========================================================
-   LISTENERS FIRESTORE
+   ACTUALIZACIÓN AUTOMÁTICA
 ========================================================= */
 
-function startRealtimeListeners() {
-
-  if (listenersStarted) return;
-
-  listenersStarted =
-    true;
-
-
-  /*
-    OFERTAS
-  */
-
-  onSnapshot(
-    collection(
-      db,
-      "ofertas"
-    ),
-    () => {
-
-      if (
-        auth.currentUser
-      ) {
-
-        loadOffers();
-
-        loadStatistics();
-
-      }
-
-    },
-    error => {
-
-      console.error(
-        "Listener ofertas:",
-        error
-      );
-
-    }
-  );
-
-
-  /*
-    CUPONES
-  */
-
-  onSnapshot(
-    collection(
-      db,
-      "cupones"
-    ),
-    () => {
-
-      if (
-        auth.currentUser
-      ) {
-
-        loadCoupons();
-
-        loadStatistics();
-
-      }
-
-    },
-    error => {
-
-      console.error(
-        "Listener cupones:",
-        error
-      );
-
-    }
-  );
-
-
-  /*
-    USUARIOS
-  */
-
-  onSnapshot(
-    collection(
-      db,
-      "usuarios"
-    ),
-    () => {
-
-      if (
-        auth.currentUser
-      ) {
-
-        loadUsers();
-
-        loadStatistics();
-
-      }
-
-    },
-    error => {
-
-      console.error(
-        "Listener usuarios:",
-        error
-      );
-
-    }
-  );
-
-}
-
-
-/* =========================================================
-   PREVISUALIZACIÓN DE IMAGEN
-========================================================= */
-
-const imageInput =
-  $("#offerImageFile");
-
-
-if (imageInput) {
-
-  imageInput.addEventListener(
-    "change",
-    async () => {
-
-      const file =
-        imageInput.files?.[0];
-
-
-      if (!file) return;
-
-
-      try {
-
-        showMessage(
-          "⏳ Preparando imagen..."
-        );
-
-
-        const base64 =
-          await compressImage(
-            file
-          );
-
-
-        let preview =
-          $("#offerImagePreview");
-
-
-        if (!preview) {
-
-          preview =
-            document.createElement(
-              "img"
-            );
-
-          preview.id =
-            "offerImagePreview";
-
-          preview.style.maxWidth =
-            "220px";
-
-          preview.style.maxHeight =
-            "220px";
-
-          preview.style.objectFit =
-            "cover";
-
-          preview.style.borderRadius =
-            "12px";
-
-          preview.style.display =
-            "block";
-
-          preview.style.marginTop =
-            "10px";
-
-
-          imageInput.parentNode
-            ?.appendChild(
-              preview
-            );
-
-        }
-
-
-        preview.src =
-          base64;
-
-
-        showMessage(
-          "✅ Imagen lista."
-        );
-
-
-      } catch (error) {
+function listenCollection(
+  collectionName,
+  callback
+) {
+
+  try {
+
+    return onSnapshot(
+      collection(
+        db,
+        collectionName
+      ),
+      callback,
+      error => {
 
         console.error(
-          "IMAGEN:",
+          `Firestore ${collectionName}:`,
           error
         );
 
-
-        imageInput.value =
-          "";
-
-
-        showMessage(
-          "❌ " +
-          error.message,
-          "error"
-        );
-
       }
+    );
 
-    }
-  );
+  } catch (error) {
+
+    console.error(error);
+
+  }
 
 }
 
 
 /* =========================================================
-   VALIDAR VIDEO ANTES DE GUARDAR
+   ESCUCHAR OFERTAS
 ========================================================= */
 
-const videoInput =
-  $("#offerVideoFile");
+listenCollection(
+  "ofertas",
+  () => {
 
+    if (
+      auth.currentUser
+    ) {
 
-if (videoInput) {
+      loadOffers();
 
-  videoInput.addEventListener(
-    "change",
-    () => {
-
-      const file =
-        videoInput.files?.[0];
-
-
-      if (!file) return;
-
-
-      if (
-        !file.type.startsWith(
-          "video/"
-        )
-      ) {
-
-        videoInput.value =
-          "";
-
-
-        showMessage(
-          "❌ Selecciona un archivo de video.",
-          "error"
-        );
-
-
-        return;
-
-      }
-
-
-      if (
-        file.size >
-          MAX_VIDEO_BYTES
-      ) {
-
-        videoInput.value =
-          "";
-
-
-        showMessage(
-          "❌ Video demasiado grande. Máximo 500 KB.",
-          "error"
-        );
-
-
-        return;
-
-      }
-
-
-      showMessage(
-        "✅ Video compatible."
-      );
+      loadStatistics();
 
     }
-  );
 
-}
+  }
+);
 
 
 /* =========================================================
-   EXPORTAR
+   ESCUCHAR CUPONES
+========================================================= */
+
+listenCollection(
+  "cupones",
+  () => {
+
+    if (
+      auth.currentUser
+    ) {
+
+      loadCoupons();
+
+      loadStatistics();
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   ESCUCHAR USUARIOS
+========================================================= */
+
+listenCollection(
+  "usuarios",
+  () => {
+
+    if (
+      auth.currentUser
+    ) {
+
+      loadUsers();
+
+      loadStatistics();
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   ESCUCHAR COMPRAS
+========================================================= */
+
+listenCollection(
+  "compras",
+  () => {
+
+    if (
+      auth.currentUser
+    ) {
+
+      loadPurchases();
+
+      loadStatistics();
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   EXPORTAR ADMIN PRO
 ========================================================= */
 
 window.AdminPRO = {
@@ -2981,8 +2626,11 @@ window.AdminPRO = {
 
   deleteCoupon,
 
-  compressImage,
-
-  processVideo
+  showMessage
 
 };
+
+
+/* =========================================================
+   FIN ADMIN PRO
+========================================================= */
