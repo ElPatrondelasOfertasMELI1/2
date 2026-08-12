@@ -2,116 +2,142 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
-  >
-
-  <meta
-    name="description"
-    content="El Patrón de las Ofertas - Cupones y ofertas de Mercado Libre México"
-  >
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <title>⚡ El Patrón de las Ofertas</title>
 
-  <link rel="stylesheet" href="styles.css">
+  <meta
+    name="description"
+    content="Cupones, ofertas y descuentos para Mercado Libre México."
+  >
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-
-  <script src="firebase-config.js"></script>
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<!-- =========================================================
-     HEADER
-========================================================= -->
-
 <header class="header">
-
   <div class="header-inner">
 
     <a href="#" class="logo">
       <span class="logo-icon">⚡</span>
-      <span>
-        EL PATRÓN
+      <div>
+        <strong>EL PATRÓN</strong>
         <small>DE LAS OFERTAS</small>
-      </span>
+      </div>
     </a>
 
-    <nav class="desktop-nav">
-      <a href="#inicio">Inicio</a>
-      <a href="#ofertas">Ofertas</a>
-      <a href="#cupones">Cupones</a>
-      <a href="#categorias">Categorías</a>
-      <a href="#comprador">Comprador del mes</a>
+    <div class="search-box">
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="Buscar ofertas, cupones o productos..."
+      >
+      <button id="searchButton">🔍</button>
+    </div>
+
+    <nav class="desktop-menu">
+      <a href="#ofertas">🔥 Ofertas</a>
+      <a href="#cupones">🎟️ Cupones</a>
+      <a href="#categorias">🛍️ Categorías</a>
+      <a href="#bancos">🏦 Bancos</a>
+
+      <button class="account-button" id="accountButton">
+        👤 Mi cuenta
+      </button>
     </nav>
 
-    <button
-      class="menu-button"
-      id="menuButton"
-      aria-label="Abrir menú"
-    >
+    <button class="mobile-menu-button" id="mobileMenuButton">
       ☰
     </button>
 
   </div>
 
   <div class="mobile-menu" id="mobileMenu">
-
-    <a href="#inicio">Inicio</a>
     <a href="#ofertas">🔥 Ofertas</a>
     <a href="#cupones">🎟️ Cupones</a>
-    <a href="#categorias">📂 Categorías</a>
-    <a href="#comprador">🏆 Comprador del mes</a>
-
+    <a href="#categorias">🛍️ Categorías</a>
+    <a href="#bancos">🏦 Bancos</a>
+    <button id="mobileAccountButton">👤 Mi cuenta</button>
   </div>
-
 </header>
 
 
-<!-- =========================================================
-     HERO
-========================================================= -->
-
-<main id="inicio">
-
 <section class="hero">
+  <div class="hero-container">
 
-  <div class="hero-content">
+    <div class="hero-content">
 
-    <span class="hero-badge">
-      ⚡ OFERTAS Y CUPONES TODOS LOS DÍAS
-    </span>
+      <div class="hero-tag">
+        🔥 LAS MEJORES OFERTAS EN UN SOLO LUGAR
+      </div>
 
-    <h1>
-      Encuentra las mejores
-      <strong>ofertas de Mercado Libre</strong>
-    </h1>
+      <h1>
+        Encuentra la oferta.
+        <span>Activa el ahorro.</span>
+      </h1>
 
-    <p>
-      Cupones, descuentos y ofertas seleccionadas
-      para que pagues menos.
-    </p>
+      <p>
+        Cupones, promociones y ofertas seleccionadas
+        para que pagues menos en Mercado Libre México.
+      </p>
 
-    <div class="hero-buttons">
+      <div class="hero-buttons">
+        <a href="#cupones" class="button-primary">
+          🎟️ Ver cupones
+        </a>
 
-      <a href="#cupones" class="primary-button">
-        🎟️ VER CUPONES
-      </a>
+        <a href="#ofertas" class="button-secondary">
+          🔥 Ver ofertas
+        </a>
+      </div>
 
-      <a href="#ofertas" class="secondary-button">
-        🔥 VER OFERTAS
-      </a>
+      <div class="hero-stats">
+        <div>
+          <strong id="heroCouponCount">19+</strong>
+          <span>Cupones activos</span>
+        </div>
+
+        <div>
+          <strong>24/7</strong>
+          <span>Buscando ofertas</span>
+        </div>
+
+        <div>
+          <strong>🇲🇽</strong>
+          <span>México</span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="hero-visual">
+
+      <div class="hero-circle">
+        <div class="hero-lightning">⚡</div>
+        <strong>AHORRA</strong>
+        <span>MÁS</span>
+      </div>
+
+      <div class="floating-card card-one">
+        🎟️
+        <div>
+          <strong>$500 OFF</strong>
+          <small>Cupón activo</small>
+        </div>
+      </div>
+
+      <div class="floating-card card-two">
+        🔥
+        <div>
+          <strong>30% OFF</strong>
+          <small>Oferta encontrada</small>
+        </div>
+      </div>
 
     </div>
 
   </div>
-
 </section>
 
 
@@ -121,33 +147,210 @@
 
 <section class="section" id="ofertas">
 
-  <div class="section-title">
+  <div class="container">
 
-    <div>
-      <span>🔥 LO MEJOR</span>
-      <h2>Ofertas destacadas</h2>
+    <div class="section-header">
+
+      <div>
+        <span class="section-label">
+          SELECCIÓN DEL DÍA
+        </span>
+
+        <h2>🔥 Ofertas destacadas</h2>
+
+        <p>
+          Ofertas seleccionadas para encontrar los mejores precios.
+        </p>
+      </div>
+
+      <div class="carousel-controls">
+        <button id="offerPrev">←</button>
+        <button id="offerNext">→</button>
+      </div>
+
     </div>
 
-    <a href="#ofertas" class="see-more">
-      Ver todas →
-    </a>
+    <div class="carousel-wrapper">
+
+      <div
+        class="offer-carousel"
+        id="offerCarousel"
+      >
+
+        <article class="offer-card">
+
+          <div class="offer-image">
+            <span class="offer-discount">-35%</span>
+
+            <div class="product-placeholder">
+              🎧
+            </div>
+          </div>
+
+          <div class="offer-content">
+
+            <span class="offer-category">
+              Electrónica
+            </span>
+
+            <h3>
+              Audífonos Bluetooth Premium
+            </h3>
+
+            <div class="prices">
+              <span class="old-price">$1,299</span>
+              <strong>$844</strong>
+            </div>
+
+            <div class="offer-save">
+              Ahorras $455
+            </div>
+
+            <a
+              href="https://www.mercadolibre.com.mx/"
+              target="_blank"
+              rel="noopener"
+              class="offer-button"
+            >
+              VER OFERTA
+            </a>
+
+          </div>
+        </article>
+
+
+        <article class="offer-card">
+
+          <div class="offer-image">
+            <span class="offer-discount">-42%</span>
+
+            <div class="product-placeholder">
+              🥾
+            </div>
+          </div>
+
+          <div class="offer-content">
+
+            <span class="offer-category">
+              Moda
+            </span>
+
+            <h3>
+              Tenis deportivos para hombre
+            </h3>
+
+            <div class="prices">
+              <span class="old-price">$1,799</span>
+              <strong>$1,043</strong>
+            </div>
+
+            <div class="offer-save">
+              Ahorras $756
+            </div>
+
+            <a
+              href="https://www.mercadolibre.com.mx/"
+              target="_blank"
+              rel="noopener"
+              class="offer-button"
+            >
+              VER OFERTA
+            </a>
+
+          </div>
+        </article>
+
+
+        <article class="offer-card">
+
+          <div class="offer-image">
+            <span class="offer-discount">-28%</span>
+
+            <div class="product-placeholder">
+              📺
+            </div>
+          </div>
+
+          <div class="offer-content">
+
+            <span class="offer-category">
+              Electrónica
+            </span>
+
+            <h3>
+              Smart TV 55 pulgadas 4K
+            </h3>
+
+            <div class="prices">
+              <span class="old-price">$9,999</span>
+              <strong>$7,199</strong>
+            </div>
+
+            <div class="offer-save">
+              Ahorras $2,800
+            </div>
+
+            <a
+              href="https://www.mercadolibre.com.mx/"
+              target="_blank"
+              rel="noopener"
+              class="offer-button"
+            >
+              VER OFERTA
+            </a>
+
+          </div>
+        </article>
+
+
+        <article class="offer-card">
+
+          <div class="offer-image">
+            <span class="offer-discount">-31%</span>
+
+            <div class="product-placeholder">
+              🍳
+            </div>
+          </div>
+
+          <div class="offer-content">
+
+            <span class="offer-category">
+              Hogar
+            </span>
+
+            <h3>
+              Freidora de aire digital
+            </h3>
+
+            <div class="prices">
+              <span class="old-price">$2,499</span>
+              <strong>$1,724</strong>
+            </div>
+
+            <div class="offer-save">
+              Ahorras $775
+            </div>
+
+            <a
+              href="https://www.mercadolibre.com.mx/"
+              target="_blank"
+              rel="noopener"
+              class="offer-button"
+            >
+              VER OFERTA
+            </a>
+
+          </div>
+        </article>
+
+      </div>
+
+    </div>
+
+    <div class="carousel-dots" id="offerDots"></div>
 
   </div>
-
-  <div class="carousel-wrapper">
-
-    <div
-      class="carousel"
-      id="ofertasCarousel"
-    ></div>
-
-  </div>
-
-  <div
-    class="dots"
-    id="ofertasDots"
-  ></div>
-
 </section>
 
 
@@ -155,40 +358,36 @@
      MERCADO PAGO
 ========================================================= -->
 
-<section class="mercado-pago-section">
+<section class="mercadopago-section">
 
-  <div class="mercado-pago-card">
+  <div class="container">
 
-    <div class="mp-logo">
+    <div class="mercadopago-card">
 
-      <div class="mp-circle">
-        ₍
+      <div class="mp-left">
+
+        <div class="mp-logo">
+          <span>MP</span>
+        </div>
+
+        <div>
+          <span class="mp-label">
+            BENEFICIO PARA NUEVOS USUARIOS
+          </span>
+
+          <h2>$100 GRATIS</h2>
+
+          <p>
+            Descubre Mercado Pago y recibe tu beneficio
+            de bienvenida.
+          </p>
+
+          <small>
+            Tienes 7 días para reclamar tu premio.
+          </small>
+        </div>
+
       </div>
-
-      <div>
-        <strong>mercado pago</strong>
-      </div>
-
-    </div>
-
-    <div class="mp-content">
-
-      <span class="mp-badge">
-        🎁 BENEFICIO PARA NUEVOS USUARIOS
-      </span>
-
-      <h2>
-        ¡$100 GRATIS!
-      </h2>
-
-      <p>
-        Regístrate y disfruta tu beneficio
-        de Mercado Pago.
-      </p>
-
-      <small>
-        Tienes 7 días para reclamar tu premio.
-      </small>
 
       <a
         href="https://www.mercadopago.com.mx/"
@@ -196,13 +395,12 @@
         rel="noopener"
         class="mp-button"
       >
-        OBTENER BENEFICIO
+        OBTENER BENEFICIO →
       </a>
 
     </div>
 
   </div>
-
 </section>
 
 
@@ -212,62 +410,333 @@
 
 <section class="section" id="categorias">
 
-  <div class="section-title">
+  <div class="container">
 
-    <div>
-      <span>🛍️ EXPLORA</span>
-      <h2>Categorías</h2>
+    <div class="section-header">
+
+      <div>
+        <span class="section-label">
+          EXPLORA MERCADO LIBRE
+        </span>
+
+        <h2>🛍️ Categorías</h2>
+      </div>
+
+      <div class="carousel-controls">
+        <button id="categoryPrev">←</button>
+        <button id="categoryNext">→</button>
+      </div>
+
     </div>
 
+    <div class="carousel-wrapper">
+
+      <div
+        class="category-carousel"
+        id="categoryCarousel"
+      >
+
+        <a
+          href="https://listado.mercadolibre.com.mx/tecnologia"
+          target="_blank"
+          rel="noopener"
+          class="category-card"
+        >
+          <div class="category-icon">📱</div>
+          <strong>Tecnología</strong>
+          <span>Ver ofertas →</span>
+        </a>
+
+        <a
+          href="https://listado.mercadolibre.com.mx/electronica"
+          target="_blank"
+          rel="noopener"
+          class="category-card"
+        >
+          <div class="category-icon">🎧</div>
+          <strong>Electrónica</strong>
+          <span>Ver ofertas →</span>
+        </a>
+
+        <a
+          href="https://listado.mercadolibre.com.mx/hogar"
+          target="_blank"
+          rel="noopener"
+          class="category-card"
+        >
+          <div class="category-icon">🏠</div>
+          <strong>Hogar</strong>
+          <span>Ver ofertas →</span>
+        </a>
+
+        <a
+          href="https://listado.mercadolibre.com.mx/moda"
+          target="_blank"
+          rel="noopener"
+          class="category-card"
+        >
+          <div class="category-icon">👟</div>
+          <strong>Moda</strong>
+          <span>Ver ofertas →</span>
+        </a>
+
+        <a
+          href="https://listado.mercadolibre.com.mx/belleza"
+          target="_blank"
+          rel="noopener"
+          class="category-card"
+        >
+          <div class="category-icon">💄</div>
+          <strong>Belleza</strong>
+          <span>Ver ofertas →</span>
+        </a>
+
+        <a
+          href="https://listado.mercadolibre.com.mx/videojuegos"
+          target="_blank"
+          rel="noopener"
+          class="category-card"
+        >
+          <div class="category-icon">🎮</div>
+          <strong>Videojuegos</strong>
+          <span>Ver ofertas →</span>
+        </a>
+
+        <a
+          href="https://listado.mercadolibre.com.mx/deportes"
+          target="_blank"
+          rel="noopener"
+          class="category-card"
+        >
+          <div class="category-icon">⚽</div>
+          <strong>Deportes</strong>
+          <span>Ver ofertas →</span>
+        </a>
+
+        <a
+          href="https://listado.mercadolibre.com.mx/autos"
+          target="_blank"
+          rel="noopener"
+          class="category-card"
+        >
+          <div class="category-icon">🚗</div>
+          <strong>Autos</strong>
+          <span>Ver ofertas →</span>
+        </a>
+
+      </div>
+
+    </div>
+
+    <div class="carousel-dots" id="categoryDots"></div>
+
   </div>
-
-  <div class="carousel-wrapper">
-
-    <div
-      class="category-carousel"
-      id="categoriasCarousel"
-    ></div>
-
-  </div>
-
-  <div
-    class="dots"
-    id="categoriasDots"
-  ></div>
-
 </section>
 
 
 <!-- =========================================================
-     CUPONES
+     CUPONES RELÁMPAGO
 ========================================================= -->
 
-<section class="section coupons-section" id="cupones">
+<section class="section coupon-section" id="cupones">
 
-  <div class="section-title">
+  <div class="container">
 
-    <div>
-      <span>🎟️ AHORRA MÁS</span>
-      <h2>Cupones</h2>
-    </div>
-
-  </div>
-
-
-  <!-- RELÁMPAGO -->
-
-  <div class="coupon-block">
-
-    <div class="coupon-heading">
+    <div class="section-header">
 
       <div>
-        <span class="section-label flash">
-          ⚡ CUPONES RELÁMPAGO
+        <span class="section-label">
+          CUPONES ACTIVOS
         </span>
 
-        <h3>
-          Descuentos que pueden agotarse
-        </h3>
+        <h2>⚡ Cupones relámpago</h2>
+
+        <p>
+          Copia el cupón y te llevamos directamente a Mercado Libre.
+        </p>
+      </div>
+
+      <span class="active-counter" id="activeCouponCounter">
+        🟢 4 activos
+      </span>
+
+    </div>
+
+    <div class="carousel-wrapper">
+
+      <div
+        class="coupon-carousel"
+        id="flashCouponCarousel"
+      >
+
+        <article class="coupon-card flash">
+          <div class="coupon-top">
+            <span class="coupon-badge">⚡ RELÁMPAGO</span>
+            <span class="coupon-status active">🟢 ACTIVO</span>
+          </div>
+
+          <div class="coupon-discount">14% OFF</div>
+
+          <h3>Ahorra hasta $105</h3>
+
+          <p>
+            Compra mínima:
+            <strong>$600</strong>
+          </p>
+
+          <div class="coupon-code">
+            M●●●●●●
+          </div>
+
+          <button
+            class="copy-coupon"
+            data-code="MELI14"
+            data-link="https://www.mercadolibre.com.mx/"
+          >
+            📋 COPIAR CUPÓN
+          </button>
+
+          <small class="coupon-note">
+            El código se mostrará al copiar.
+          </small>
+        </article>
+
+
+        <article class="coupon-card flash">
+          <div class="coupon-top">
+            <span class="coupon-badge">⚡ RELÁMPAGO</span>
+            <span class="coupon-status active">🟢 ACTIVO</span>
+          </div>
+
+          <div class="coupon-discount">10% OFF</div>
+
+          <h3>Ahorra hasta $150</h3>
+
+          <p>
+            Compra mínima:
+            <strong>$1,200</strong>
+          </p>
+
+          <div class="coupon-code">
+            R●●●●●
+          </div>
+
+          <button
+            class="copy-coupon"
+            data-code="REG10"
+            data-link="https://www.mercadolibre.com.mx/"
+          >
+            📋 COPIAR CUPÓN
+          </button>
+
+          <small class="coupon-note">
+            El código se mostrará al copiar.
+          </small>
+        </article>
+
+
+        <article class="coupon-card flash">
+          <div class="coupon-top">
+            <span class="coupon-badge">⚡ RELÁMPAGO</span>
+            <span class="coupon-status warning">
+              🟠 POR AGOTARSE
+            </span>
+          </div>
+
+          <div class="coupon-discount">12% OFF</div>
+
+          <h3>Ahorra hasta $360</h3>
+
+          <p>
+            Compra mínima:
+            <strong>$2,400</strong>
+          </p>
+
+          <div class="coupon-code">
+            L●●●●●
+          </div>
+
+          <button
+            class="copy-coupon"
+            data-code="LIB12"
+            data-link="https://www.mercadolibre.com.mx/"
+          >
+            📋 COPIAR CUPÓN
+          </button>
+
+          <small class="coupon-note">
+            El código se mostrará al copiar.
+          </small>
+        </article>
+
+
+        <article class="coupon-card flash">
+          <div class="coupon-top">
+            <span class="coupon-badge">⚡ RELÁMPAGO</span>
+            <span class="coupon-status active">🟢 ACTIVO</span>
+          </div>
+
+          <div class="coupon-discount">$500 OFF</div>
+
+          <h3>Descuento directo</h3>
+
+          <p>
+            Compra mínima:
+            <strong>$5,000</strong>
+          </p>
+
+          <div class="coupon-code">
+            C●●●●●
+          </div>
+
+          <button
+            class="copy-coupon"
+            data-code="COM500"
+            data-link="https://www.mercadolibre.com.mx/"
+          >
+            📋 COPIAR CUPÓN
+          </button>
+
+          <small class="coupon-note">
+            El código se mostrará al copiar.
+          </small>
+        </article>
+
+      </div>
+
+    </div>
+
+    <div class="carousel-dots" id="flashDots"></div>
+
+  </div>
+</section>
+
+
+<!-- =========================================================
+     EXCLUSIVOS
+========================================================= -->
+
+<section class="section exclusive-section">
+
+  <div class="container">
+
+    <div class="section-header">
+
+      <div>
+        <span class="section-label">
+          BENEFICIOS ESPECIALES
+        </span>
+
+        <h2>🎁 Cupones exclusivos y tiendas</h2>
+
+        <p>
+          Promociones especiales seleccionadas para nuestra comunidad.
+        </p>
+      </div>
+
+      <div class="carousel-controls">
+        <button id="exclusivePrev">←</button>
+        <button id="exclusiveNext">→</button>
       </div>
 
     </div>
@@ -276,33 +745,151 @@
 
       <div
         class="coupon-carousel"
-        id="relampagoCarousel"
-      ></div>
+        id="exclusiveCarousel"
+      >
+
+        <article class="coupon-card exclusive">
+
+          <div class="coupon-top">
+            <span class="coupon-badge purple">
+              🎁 EXCLUSIVO
+            </span>
+
+            <span class="coupon-status active">
+              🟢 ACTIVO
+            </span>
+          </div>
+
+          <div class="coupon-discount">$500 OFF</div>
+
+          <h3>Beneficio Meli+</h3>
+
+          <p>
+            Compra mínima:
+            <strong>$4,000</strong>
+          </p>
+
+          <div class="coupon-code">
+            M●●●●●●
+          </div>
+
+          <button
+            class="copy-coupon"
+            data-code="MELIMAS7OLA"
+            data-link="https://www.mercadolibre.com.mx/"
+          >
+            📋 COPIAR CUPÓN
+          </button>
+
+        </article>
+
+
+        <article class="coupon-card exclusive">
+
+          <div class="coupon-top">
+            <span class="coupon-badge purple">
+              🏪 TIENDA
+            </span>
+
+            <span class="coupon-status active">
+              🟢 ACTIVO
+            </span>
+          </div>
+
+          <div class="coupon-discount">20% OFF</div>
+
+          <h3>Oferta especial de tienda</h3>
+
+          <p>
+            Compra mínima:
+            <strong>$1,500</strong>
+          </p>
+
+          <div class="coupon-code">
+            T●●●●●●
+          </div>
+
+          <button
+            class="copy-coupon"
+            data-code="TIENDA20"
+            data-link="https://www.mercadolibre.com.mx/"
+          >
+            📋 COPIAR CUPÓN
+          </button>
+
+        </article>
+
+
+        <article class="coupon-card exclusive">
+
+          <div class="coupon-top">
+            <span class="coupon-badge purple">
+              💎 ESPECIAL
+            </span>
+
+            <span class="coupon-status active">
+              🟢 ACTIVO
+            </span>
+          </div>
+
+          <div class="coupon-discount">$300 OFF</div>
+
+          <h3>Descuento especial</h3>
+
+          <p>
+            Compra mínima:
+            <strong>$2,500</strong>
+          </p>
+
+          <div class="coupon-code">
+            E●●●●●
+          </div>
+
+          <button
+            class="copy-coupon"
+            data-code="EXTRA300"
+            data-link="https://www.mercadolibre.com.mx/"
+          >
+            📋 COPIAR CUPÓN
+          </button>
+
+        </article>
+
+      </div>
 
     </div>
 
-    <div
-      class="dots"
-      id="relampagoDots"
-    ></div>
+    <div class="carousel-dots" id="exclusiveDots"></div>
 
   </div>
+</section>
 
 
-  <!-- EXCLUSIVOS -->
+<!-- =========================================================
+     BANCARIOS
+========================================================= -->
 
-  <div class="coupon-block">
+<section class="section" id="bancos">
 
-    <div class="coupon-heading">
+  <div class="container">
+
+    <div class="section-header">
 
       <div>
-        <span class="section-label exclusive">
-          🏆 CUPONES EXCLUSIVOS
+        <span class="section-label">
+          PROMOCIONES BANCARIAS
         </span>
 
-        <h3>
-          Beneficios especiales
-        </h3>
+        <h2>🏦 Cupones bancarios</h2>
+
+        <p>
+          Aprovecha las promociones de tu tarjeta.
+        </p>
+      </div>
+
+      <div class="carousel-controls">
+        <button id="bankPrev">←</button>
+        <button id="bankNext">→</button>
       </div>
 
     </div>
@@ -310,54 +897,140 @@
     <div class="carousel-wrapper">
 
       <div
-        class="coupon-carousel"
-        id="exclusivosCarousel"
-      ></div>
+        class="bank-carousel"
+        id="bankCarousel"
+      >
 
-    </div>
+        <article class="bank-card">
 
-    <div
-      class="dots"
-      id="exclusivosDots"
-    ></div>
+          <div class="bank-logo">BBVA</div>
 
-  </div>
+          <div>
+            <span class="bank-badge">25% OFF</span>
+
+            <h3>BBVA</h3>
+
+            <p>
+              Compra mínima:
+              <strong>$7,000</strong>
+            </p>
+
+            <p>
+              Tope:
+              <strong>$2,000</strong>
+            </p>
+          </div>
+
+          <button
+            class="copy-coupon bank-button"
+            data-code="BBVAGOL"
+            data-link="https://www.mercadolibre.com.mx/"
+          >
+            COPIAR CUPÓN
+          </button>
+
+        </article>
 
 
-  <!-- BANCARIOS -->
+        <article class="bank-card">
 
-  <div class="coupon-block">
+          <div class="bank-logo">HSBC</div>
 
-    <div class="coupon-heading">
+          <div>
+            <span class="bank-badge">15% OFF</span>
 
-      <div>
-        <span class="section-label bank">
-          🏦 CUPONES BANCARIOS
-        </span>
+            <h3>HSBC</h3>
 
-        <h3>
-          Aprovecha tu tarjeta
-        </h3>
+            <p>
+              Compra mínima:
+              <strong>$4,000</strong>
+            </p>
+
+            <p>
+              Tope:
+              <strong>$1,000</strong>
+            </p>
+          </div>
+
+          <button
+            class="copy-coupon bank-button"
+            data-code="HSBCGOL"
+            data-link="https://www.mercadolibre.com.mx/"
+          >
+            COPIAR CUPÓN
+          </button>
+
+        </article>
+
+
+        <article class="bank-card">
+
+          <div class="bank-logo">BANORTE</div>
+
+          <div>
+            <span class="bank-badge">10% BONO</span>
+
+            <h3>Banorte</h3>
+
+            <p>
+              Compra mínima:
+              <strong>$3,000</strong>
+            </p>
+
+            <p>
+              Tope:
+              <strong>$3,000</strong>
+            </p>
+          </div>
+
+          <button
+            class="copy-coupon bank-button"
+            data-code="BNRTGOL"
+            data-link="https://www.mercadolibre.com.mx/"
+          >
+            COPIAR CUPÓN
+          </button>
+
+        </article>
+
+
+        <article class="bank-card">
+
+          <div class="bank-logo">SANTANDER</div>
+
+          <div>
+            <span class="bank-badge">15% OFF</span>
+
+            <h3>Santander</h3>
+
+            <p>
+              Compra mínima:
+              <strong>$4,000</strong>
+            </p>
+
+            <p>
+              Tope:
+              <strong>$1,500</strong>
+            </p>
+          </div>
+
+          <button
+            class="copy-coupon bank-button"
+            data-code="SANTGOL"
+            data-link="https://www.mercadolibre.com.mx/"
+          >
+            COPIAR CUPÓN
+          </button>
+
+        </article>
+
       </div>
 
     </div>
 
-    <div class="carousel-wrapper">
-
-      <div
-        class="coupon-carousel"
-        id="bancariosCarousel"
-      ></div>
-
-    </div>
-
-    <div
-      class="dots"
-      id="bancariosDots"
-    ></div>
+    <div class="carousel-dots" id="bankDots"></div>
 
   </div>
-
 </section>
 
 
@@ -365,330 +1038,1641 @@
      COMPRADOR DEL MES
 ========================================================= -->
 
-<section
-  class="buyer-section"
-  id="comprador"
->
+<section class="winner-section" id="ranking">
 
-  <div class="buyer-container">
+  <div class="container">
 
-    <div class="buyer-header">
+    <div class="winner-card">
 
-      <span>
-        🏆 RECONOCIMIENTO
-      </span>
+      <div class="winner-trophy">🏆</div>
 
-      <h2>
-        Comprador del mes
-      </h2>
+      <div class="winner-content">
 
-      <p>
-        Cada mes reconocemos a uno de nuestros
-        seguidores que más aprovechó las ofertas.
-      </p>
-
-    </div>
-
-
-    <div
-      class="buyer-card"
-      id="buyerCard"
-    >
-
-      <div class="buyer-photo">
-        👤
-      </div>
-
-      <div>
-
-        <h3>
-          Próximo comprador del mes
-        </h3>
-
-        <p>
-          ¡Podrías aparecer aquí!
-        </p>
-
-      </div>
-
-      <div class="buyer-prize">
-
-        🏆
-        <strong>
-          PREMIO
-        </strong>
-
-      </div>
-
-    </div>
-
-
-    <div class="register-box">
-
-      <div>
-
-        <span class="register-icon">
-          👤
+        <span>
+          RECONOCIMIENTO DE LA COMUNIDAD
         </span>
 
-        <h3>
-          ¡Regístrate!
-        </h3>
+        <h2>Comprador del mes</h2>
+
+        <div class="winner-user">
+
+          <div class="winner-avatar">👤</div>
+
+          <div>
+            <strong>Carlos Hernández</strong>
+
+            <small>
+              Comprador destacado · Agosto 2026
+            </small>
+          </div>
+
+        </div>
 
         <p>
-          Participa para ser nuestro
-          comprador del mes.
+          Este mes consiguió los mejores ahorros utilizando
+          nuestros cupones y ofertas.
+        </p>
+
+        <div class="winner-prize">
+          🎁 Premio: <strong>$1,000 MXN</strong>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+
+<!-- =========================================================
+     REGISTRO
+========================================================= -->
+
+<section class="section register-section" id="registro">
+
+  <div class="container">
+
+    <div class="register-layout">
+
+      <div class="register-copy">
+
+        <span class="section-label">
+          FORMA PARTE
+        </span>
+
+        <h2>🏆 Regístrate y participa</h2>
+
+        <p>
+          Registra tus compras, demuestra cuánto has ahorrado
+          y participa para convertirte en nuestro comprador del mes.
+        </p>
+
+        <div class="register-benefit">
+          <span>✓</span>
+          <div>
+            <strong>Registra tus cupones</strong>
+            <small>
+              Guarda tus compras y cupones utilizados.
+            </small>
+          </div>
+        </div>
+
+        <div class="register-benefit">
+          <span>✓</span>
+          <div>
+            <strong>Demuestra tu ahorro</strong>
+            <small>
+              Sube la captura de tu compra.
+            </small>
+          </div>
+        </div>
+
+        <div class="register-benefit">
+          <span>✓</span>
+          <div>
+            <strong>Participa por premios</strong>
+            <small>
+              Compite por ser comprador del mes.
+            </small>
+          </div>
+        </div>
+
+      </div>
+
+
+      <form
+        class="register-form"
+        id="registerForm"
+      >
+
+        <h3>Crear mi cuenta</h3>
+
+        <p>Es rápido y gratis.</p>
+
+        <label>
+          Nombre completo
+
+          <input
+            id="registerName"
+            type="text"
+            required
+            placeholder="Tu nombre"
+          >
+        </label>
+
+        <label>
+          Correo electrónico
+
+          <input
+            id="registerEmail"
+            type="email"
+            required
+            placeholder="correo@ejemplo.com"
+          >
+        </label>
+
+        <label>
+          Número de teléfono
+
+          <input
+            id="registerPhone"
+            type="tel"
+            required
+            placeholder="10 dígitos"
+          >
+        </label>
+
+        <label>
+          Foto
+
+          <input
+            id="registerPhoto"
+            type="file"
+            accept="image/*"
+          >
+        </label>
+
+        <button
+          type="submit"
+          class="register-button"
+        >
+          CREAR MI CUENTA
+        </button>
+
+        <div
+          id="registerMessage"
+          class="form-message"
+        ></div>
+
+      </form>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- =========================================================
+     TESTIMONIOS
+========================================================= -->
+
+<section class="section testimonials" id="testimonios">
+
+  <div class="container">
+
+    <div class="section-header">
+
+      <div>
+        <span class="section-label">
+          NUESTRA COMUNIDAD
+        </span>
+
+        <h2>❤️ Gracias a El Patrón de las Ofertas</h2>
+
+        <p>
+          Usuarios que están aprovechando nuestros descuentos.
+        </p>
+      </div>
+
+    </div>
+
+    <div class="testimonial-grid">
+
+      <article class="testimonial-card">
+        <div class="testimonial-avatar">👨🏻</div>
+        <strong>Luis M.</strong>
+        <span>Veracruz</span>
+
+        <p>
+          “Gracias a El Patrón de las Ofertas he ahorrado
+          muchísimo en mis compras.”
+        </p>
+
+        <div class="testimonial-stars">
+          ⭐⭐⭐⭐⭐
+        </div>
+      </article>
+
+      <article class="testimonial-card">
+        <div class="testimonial-avatar">👩🏻</div>
+        <strong>Andrea R.</strong>
+        <span>Oaxaca</span>
+
+        <p>
+          “Los cupones relámpago son buenísimos.
+          Siempre reviso la página antes de comprar.”
+        </p>
+
+        <div class="testimonial-stars">
+          ⭐⭐⭐⭐⭐
+        </div>
+      </article>
+
+      <article class="testimonial-card">
+        <div class="testimonial-avatar">👨🏻</div>
+        <strong>Miguel G.</strong>
+        <span>Puebla</span>
+
+        <p>
+          “Ya llevo varios meses usando los cupones.
+          Realmente se nota el ahorro.”
+        </p>
+
+        <div class="testimonial-stars">
+          ⭐⭐⭐⭐⭐
+        </div>
+      </article>
+
+    </div>
+
+  </div>
+</section>
+
+
+<section class="final-cta">
+
+  <div class="container">
+
+    <div class="final-card">
+
+      <div class="final-icon">⚡</div>
+
+      <h2>¿Listo para pagar menos?</h2>
+
+      <p>
+        Revisa los cupones antes de hacer tu próxima compra.
+      </p>
+
+      <a
+        href="#cupones"
+        class="button-primary"
+      >
+        VER CUPONES ACTIVOS
+      </a>
+
+    </div>
+
+  </div>
+</section>
+
+
+<footer class="footer">
+
+  <div class="container">
+
+    <div class="footer-grid">
+
+      <div>
+
+        <a href="#" class="logo footer-logo">
+
+          <span class="logo-icon">⚡</span>
+
+          <div>
+            <strong>EL PATRÓN</strong>
+            <small>DE LAS OFERTAS</small>
+          </div>
+
+        </a>
+
+        <p>
+          Cupones, ofertas y promociones
+          para Mercado Libre México.
         </p>
 
       </div>
 
-      <button
-        class="primary-button"
-        id="openRegister"
-      >
-        REGISTRARME
-      </button>
+
+      <div>
+
+        <h4>Navegación</h4>
+
+        <a href="#ofertas">Ofertas</a>
+        <a href="#cupones">Cupones</a>
+        <a href="#categorias">Categorías</a>
+        <a href="#bancos">Bancos</a>
+
+      </div>
+
+
+      <div>
+
+        <h4>Comunidad</h4>
+
+        <a href="#ranking">Comprador del mes</a>
+        <a href="#registro">Registrarme</a>
+        <a href="#testimonios">Testimonios</a>
+
+      </div>
+
+
+      <div>
+
+        <h4>Síguenos</h4>
+
+        <a href="#">📱 WhatsApp</a>
+        <a href="#">📘 Facebook</a>
+        <a href="#">📸 Instagram</a>
+
+      </div>
 
     </div>
 
 
-    <div class="steps">
+    <div class="footer-bottom">
 
-      <div>
-        <span>1</span>
-        <strong>Regístrate</strong>
-        <small>Nombre, correo y teléfono</small>
-      </div>
+      <span>
+        © 2026 El Patrón de las Ofertas
+      </span>
 
-      <div>
-        <span>2</span>
-        <strong>Sube tu cupón</strong>
-        <small>Muéstranos el cupón utilizado</small>
-      </div>
-
-      <div>
-        <span>3</span>
-        <strong>Sube tu compra</strong>
-        <small>Captura de tu compra</small>
-      </div>
-
-      <div>
-        <span>4</span>
-        <strong>Comparte</strong>
-        <small>Tu experiencia con nosotros</small>
-      </div>
+      <span>
+        Todos los derechos reservados.
+      </span>
 
     </div>
 
   </div>
-
-</section>
-
-
-<!-- =========================================================
-     TESTIMONIO
-========================================================= -->
-
-<section class="testimonial-section">
-
-  <div class="testimonial-card">
-
-    <span class="quote">
-      “
-    </span>
-
-    <h2>
-      Cuéntanos cuánto has ahorrado
-    </h2>
-
-    <p>
-      Sube un video diciendo:
-    </p>
-
-    <strong>
-      “Gracias a El Patrón de las Ofertas
-      he ahorrado mucho.”
-    </strong>
-
-  </div>
-
-</section>
-
-</main>
-
-
-<!-- =========================================================
-     FOOTER
-========================================================= -->
-
-<footer>
-
-  <div class="footer-logo">
-    ⚡ EL PATRÓN DE LAS OFERTAS
-  </div>
-
-  <p>
-    Cupones y ofertas para ahorrar más.
-  </p>
-
-  <div class="footer-links">
-
-    <a href="#inicio">Inicio</a>
-    <a href="#ofertas">Ofertas</a>
-    <a href="#cupones">Cupones</a>
-    <a href="#categorias">Categorías</a>
-
-  </div>
-
-  <div class="footer-line"></div>
-
-  <small>
-    © 2026 El Patrón de las Ofertas.
-    Todos los derechos reservados.
-  </small>
-
 </footer>
 
 
 <!-- =========================================================
-     MODAL REGISTRO
+     MODAL
 ========================================================= -->
 
-<div
-  class="modal"
-  id="registerModal"
->
+<div class="modal" id="accountModal">
 
-  <div class="modal-content">
+  <div class="modal-box">
 
     <button
       class="modal-close"
-      id="closeRegister"
+      id="closeModal"
     >
       ×
     </button>
 
-    <h2>
-      🏆 Regístrate
-    </h2>
+    <div class="modal-icon">👤</div>
 
-    <p class="modal-description">
-      Participa para convertirte en
-      comprador del mes.
+    <h2>Mi cuenta</h2>
+
+    <p>
+      Regístrate para participar en el comprador del mes
+      y registrar tus compras.
     </p>
 
-    <form id="registerForm">
-
-      <label>
-        Nombre
-
-        <input
-          type="text"
-          id="userNombre"
-          required
-          placeholder="Tu nombre"
-        >
-
-      </label>
-
-
-      <label>
-        Correo electrónico
-
-        <input
-          type="email"
-          id="userCorreo"
-          required
-          placeholder="correo@ejemplo.com"
-        >
-
-      </label>
-
-
-      <label>
-        Teléfono
-
-        <input
-          type="tel"
-          id="userTelefono"
-          required
-          placeholder="10 dígitos"
-        >
-
-      </label>
-
-
-      <label>
-        Foto
-
-        <input
-          type="file"
-          id="userFoto"
-          accept="image/*"
-          required
-        >
-
-      </label>
-
-
-      <label>
-        Cupón utilizado
-
-        <input
-          type="text"
-          id="userCupon"
-          placeholder="Ejemplo: MELI14"
-        >
-
-      </label>
-
-
-      <label>
-        Captura de compra
-
-        <input
-          type="file"
-          id="userCaptura"
-          accept="image/*"
-        >
-
-      </label>
-
-
-      <label>
-        Video de agradecimiento
-
-        <input
-          type="file"
-          id="userVideo"
-          accept="video/*"
-        >
-
-      </label>
-
-
-      <button
-        type="submit"
-        class="primary-button full-button"
-      >
-        ENVIAR REGISTRO
-      </button>
-
-    </form>
-
-    <div
-      id="registerMessage"
-      class="form-message"
-    ></div>
+    <a
+      href="#registro"
+      class="button-primary"
+      id="modalRegister"
+    >
+      CREAR MI CUENTA
+    </a>
 
   </div>
-
 </div>
 
 
-<!-- APP -->
+<div class="toast" id="toast"></div>
 
-<script src="app.js"></script>
+
+<script type="module">
+
+import {
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  addDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+
+/* =========================================================
+   FIREBASE
+========================================================= */
+
+const firebaseConfig = {
+
+  apiKey: "TU_API_KEY",
+  authDomain: "TU_PROYECTO.firebaseapp.com",
+  projectId: "TU_PROJECT_ID",
+  storageBucket: "TU_PROYECTO.firebasestorage.app",
+  messagingSenderId: "TU_MESSAGING_SENDER_ID",
+  appId: "TU_APP_ID"
+
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+
+/* =========================================================
+   ELEMENTOS
+========================================================= */
+
+const toast =
+  document.getElementById("toast");
+
+
+function showToast(message) {
+
+  toast.textContent = message;
+
+  toast.classList.add("show");
+
+  clearTimeout(window.toastTimer);
+
+  window.toastTimer =
+    setTimeout(() => {
+
+      toast.classList.remove("show");
+
+    }, 2800);
+}
+
+
+/* =========================================================
+   MENÚ
+========================================================= */
+
+const mobileButton =
+  document.getElementById("mobileMenuButton");
+
+const mobileMenu =
+  document.getElementById("mobileMenu");
+
+
+mobileButton.addEventListener(
+  "click",
+  () => {
+
+    mobileMenu.classList.toggle("show");
+
+  }
+);
+
+
+mobileMenu
+  .querySelectorAll("a")
+  .forEach(link => {
+
+    link.addEventListener(
+      "click",
+      () => {
+
+        mobileMenu.classList.remove("show");
+
+      }
+    );
+
+  });
+
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+const modal =
+  document.getElementById("accountModal");
+
+document
+  .getElementById("accountButton")
+  .addEventListener(
+    "click",
+    () => modal.classList.add("show")
+  );
+
+
+document
+  .getElementById("mobileAccountButton")
+  .addEventListener(
+    "click",
+    () => {
+
+      modal.classList.add("show");
+      mobileMenu.classList.remove("show");
+
+    }
+  );
+
+
+document
+  .getElementById("closeModal")
+  .addEventListener(
+    "click",
+    () => modal.classList.remove("show")
+  );
+
+
+modal.addEventListener(
+  "click",
+  event => {
+
+    if (event.target === modal) {
+
+      modal.classList.remove("show");
+
+    }
+
+  }
+);
+
+
+document
+  .getElementById("modalRegister")
+  .addEventListener(
+    "click",
+    () => {
+
+      modal.classList.remove("show");
+
+    }
+  );
+
+
+/* =========================================================
+   CARRUSEL TÁCTIL
+========================================================= */
+
+function createCarousel(
+  element,
+  nextButton,
+  prevButton,
+  dotsElement,
+  options = {}
+) {
+
+  if (!element) return null;
+
+  const cards =
+    Array.from(
+      element.children
+    );
+
+  if (!cards.length) return null;
+
+  let current = 0;
+
+  let startX = 0;
+  let currentX = 0;
+  let dragging = false;
+
+  function getVisible() {
+
+    if (window.innerWidth <= 650) {
+
+      return 1;
+
+    }
+
+    if (window.innerWidth <= 1050) {
+
+      return 2;
+
+    }
+
+    return options.desktopVisible || 3;
+
+  }
+
+
+  function getStep() {
+
+    if (!cards[0]) return 0;
+
+    const gap =
+      parseFloat(
+        getComputedStyle(element).gap
+      ) || 0;
+
+    return cards[0].getBoundingClientRect().width + gap;
+
+  }
+
+
+  function getMax() {
+
+    return Math.max(
+      0,
+      cards.length - getVisible()
+    );
+
+  }
+
+
+  function renderDots() {
+
+    if (!dotsElement) return;
+
+    dotsElement.innerHTML = "";
+
+    const total =
+      getMax() + 1;
+
+    if (total <= 1) return;
+
+    for (
+      let i = 0;
+      i < total;
+      i++
+    ) {
+
+      const dot =
+        document.createElement("button");
+
+      dot.type = "button";
+
+      dot.className =
+        i === current
+          ? "active"
+          : "";
+
+      dot.setAttribute(
+        "aria-label",
+        `Ir al elemento ${i + 1}`
+      );
+
+      dot.addEventListener(
+        "click",
+        () => {
+
+          current = i;
+
+          render();
+
+        }
+      );
+
+      dotsElement.appendChild(dot);
+
+    }
+
+  }
+
+
+  function render() {
+
+    const max =
+      getMax();
+
+    if (current > max) {
+
+      current = max;
+
+    }
+
+    if (current < 0) {
+
+      current = 0;
+
+    }
+
+    const distance =
+      current * getStep();
+
+    element.style.transform =
+      `translate3d(-${distance}px,0,0)`;
+
+    if (dotsElement) {
+
+      dotsElement
+        .querySelectorAll("button")
+        .forEach(
+          (dot, index) => {
+
+            dot.classList.toggle(
+              "active",
+              index === current
+            );
+
+          }
+        );
+
+    }
+
+  }
+
+
+  function next() {
+
+    const max =
+      getMax();
+
+    if (current >= max) {
+
+      current = 0;
+
+    } else {
+
+      current++;
+
+    }
+
+    render();
+
+  }
+
+
+  function prev() {
+
+    const max =
+      getMax();
+
+    if (current <= 0) {
+
+      current = max;
+
+    } else {
+
+      current--;
+
+    }
+
+    render();
+
+  }
+
+
+  if (nextButton) {
+
+    nextButton.addEventListener(
+      "click",
+      next
+    );
+
+  }
+
+
+  if (prevButton) {
+
+    prevButton.addEventListener(
+      "click",
+      prev
+    );
+
+  }
+
+
+  element.addEventListener(
+    "touchstart",
+    event => {
+
+      startX =
+        event.touches[0].clientX;
+
+      currentX =
+        startX;
+
+      dragging = true;
+
+      element.classList.add(
+        "is-dragging"
+      );
+
+    },
+    { passive: true }
+  );
+
+
+  element.addEventListener(
+    "touchmove",
+    event => {
+
+      if (!dragging) return;
+
+      currentX =
+        event.touches[0].clientX;
+
+    },
+    { passive: true }
+  );
+
+
+  element.addEventListener(
+    "touchend",
+    () => {
+
+      if (!dragging) return;
+
+      dragging = false;
+
+      element.classList.remove(
+        "is-dragging"
+      );
+
+      const difference =
+        startX - currentX;
+
+      if (Math.abs(difference) < 45) {
+
+        return;
+
+      }
+
+      if (difference > 0) {
+
+        next();
+
+      } else {
+
+        prev();
+
+      }
+
+    }
+  );
+
+
+  window.addEventListener(
+    "resize",
+    () => {
+
+      renderDots();
+      render();
+
+    }
+  );
+
+
+  renderDots();
+  render();
+
+
+  return {
+    next,
+    prev,
+    render
+  };
+
+}
+
+
+/* =========================================================
+   OFERTAS
+========================================================= */
+
+const offerCarousel =
+  createCarousel(
+    document.getElementById("offerCarousel"),
+    document.getElementById("offerNext"),
+    document.getElementById("offerPrev"),
+    document.getElementById("offerDots"),
+    {
+      desktopVisible: 3
+    }
+  );
+
+
+/* =========================================================
+   CATEGORÍAS
+========================================================= */
+
+const categoryCarousel =
+  createCarousel(
+    document.getElementById("categoryCarousel"),
+    document.getElementById("categoryNext"),
+    document.getElementById("categoryPrev"),
+    document.getElementById("categoryDots"),
+    {
+      desktopVisible: 6
+    }
+  );
+
+
+/* =========================================================
+   RELÁMPAGO
+========================================================= */
+
+const flashCarousel =
+  createCarousel(
+    document.getElementById("flashCouponCarousel"),
+    null,
+    null,
+    document.getElementById("flashDots"),
+    {
+      desktopVisible: 4
+    }
+  );
+
+
+/* =========================================================
+   EXCLUSIVOS
+========================================================= */
+
+const exclusiveCarousel =
+  createCarousel(
+    document.getElementById("exclusiveCarousel"),
+    document.getElementById("exclusiveNext"),
+    document.getElementById("exclusivePrev"),
+    document.getElementById("exclusiveDots"),
+    {
+      desktopVisible: 3
+    }
+  );
+
+
+/* =========================================================
+   BANCOS
+========================================================= */
+
+const bankCarousel =
+  createCarousel(
+    document.getElementById("bankCarousel"),
+    document.getElementById("bankNext"),
+    document.getElementById("bankPrev"),
+    document.getElementById("bankDots"),
+    {
+      desktopVisible: 4
+    }
+  );
+
+
+/* =========================================================
+   AUTO MOVIMIENTO INICIAL CUPONES
+========================================================= */
+
+let flashAutoTimer = null;
+
+let flashMoves = 0;
+
+
+function startFlashAuto() {
+
+  if (!flashCarousel) return;
+
+  clearInterval(
+    flashAutoTimer
+  );
+
+  flashMoves = 0;
+
+  flashAutoTimer =
+    setInterval(
+      () => {
+
+        if (flashMoves >= 3) {
+
+          clearInterval(
+            flashAutoTimer
+          );
+
+          return;
+
+        }
+
+        flashCarousel.next();
+
+        flashMoves++;
+
+      },
+      2500
+    );
+
+}
+
+
+startFlashAuto();
+
+
+/* =========================================================
+   COPIAR CUPONES
+========================================================= */
+
+async function copyCoupon(button) {
+
+  const code =
+    String(
+      button.dataset.code || ""
+    ).toUpperCase();
+
+  const link =
+    button.dataset.link ||
+    "https://www.mercadolibre.com.mx/";
+
+
+  if (!code) {
+
+    showToast(
+      "❌ Cupón no disponible"
+    );
+
+    return;
+
+  }
+
+
+  let copied = false;
+
+
+  try {
+
+    if (
+      navigator.clipboard &&
+      window.isSecureContext
+    ) {
+
+      await navigator.clipboard.writeText(
+        code
+      );
+
+      copied = true;
+
+    }
+
+  } catch (error) {
+
+    copied = false;
+
+  }
+
+
+  if (!copied) {
+
+    const textarea =
+      document.createElement(
+        "textarea"
+      );
+
+    textarea.value = code;
+
+    textarea.style.position =
+      "fixed";
+
+    textarea.style.left =
+      "-9999px";
+
+    document.body.appendChild(
+      textarea
+    );
+
+    textarea.focus();
+
+    textarea.select();
+
+    try {
+
+      copied =
+        document.execCommand(
+          "copy"
+        );
+
+    } catch (error) {
+
+      copied = false;
+
+    }
+
+    textarea.remove();
+
+  }
+
+
+  if (copied) {
+
+    showToast(
+      `✅ Cupón ${code} copiado`
+    );
+
+  } else {
+
+    showToast(
+      `Cupón: ${code}`
+    );
+
+  }
+
+
+  const original =
+    button.innerHTML;
+
+  button.innerHTML =
+    `✓ ${code} COPIADO`;
+
+  button.classList.add(
+    "copied"
+  );
+
+
+  setTimeout(
+    () => {
+
+      button.innerHTML =
+        original;
+
+      button.classList.remove(
+        "copied"
+      );
+
+    },
+    2500
+  );
+
+
+  /*
+     Aquí queda preparado el punto
+     para registrar la copia en Firebase.
+  */
+
+  try {
+
+    await addDoc(
+      collection(
+        db,
+        "copias"
+      ),
+      {
+        codigo: code,
+        fecha: serverTimestamp(),
+        pagina: location.pathname
+      }
+    );
+
+  } catch (error) {
+
+    console.log(
+      "No se pudo registrar la copia:",
+      error
+    );
+
+  }
+
+
+  setTimeout(
+    () => {
+
+      window.location.href =
+        link;
+
+    },
+    450
+  );
+
+}
+
+
+document
+  .querySelectorAll(".copy-coupon")
+  .forEach(
+    button => {
+
+      button.addEventListener(
+        "click",
+        () => copyCoupon(button)
+      );
+
+    }
+  );
+
+
+/* =========================================================
+   BUSCADOR
+========================================================= */
+
+const searchInput =
+  document.getElementById(
+    "searchInput"
+  );
+
+const searchButton =
+  document.getElementById(
+    "searchButton"
+  );
+
+
+function searchSite() {
+
+  const value =
+    searchInput.value
+      .trim()
+      .toLowerCase();
+
+
+  if (!value) {
+
+    showToast(
+      "Escribe algo para buscar 🔎"
+    );
+
+    return;
+
+  }
+
+
+  const cards =
+    document.querySelectorAll(
+      ".offer-card, .coupon-card, .category-card, .bank-card"
+    );
+
+
+  let found = false;
+
+
+  cards.forEach(
+    card => {
+
+      const text =
+        card.innerText
+          .toLowerCase();
+
+
+      if (
+        text.includes(value)
+      ) {
+
+        card.style.outline =
+          "4px solid #ffe600";
+
+        card.scrollIntoView({
+          behavior: "smooth",
+          block: "center"
+        });
+
+        found = true;
+
+      } else {
+
+        card.style.outline =
+          "";
+
+      }
+
+    }
+  );
+
+
+  if (!found) {
+
+    showToast(
+      "No encontramos resultados 😕"
+    );
+
+  } else {
+
+    showToast(
+      "Oferta encontrada 🔥"
+    );
+
+  }
+
+}
+
+
+searchButton.addEventListener(
+  "click",
+  searchSite
+);
+
+
+searchInput.addEventListener(
+  "keydown",
+  event => {
+
+    if (event.key === "Enter") {
+
+      searchSite();
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   REGISTRO
+========================================================= */
+
+const registerForm =
+  document.getElementById(
+    "registerForm"
+  );
+
+
+registerForm.addEventListener(
+  "submit",
+  async event => {
+
+    event.preventDefault();
+
+
+    const name =
+      document.getElementById(
+        "registerName"
+      ).value.trim();
+
+
+    const email =
+      document.getElementById(
+        "registerEmail"
+      ).value.trim();
+
+
+    const phone =
+      document.getElementById(
+        "registerPhone"
+      ).value.trim();
+
+
+    const photo =
+      document.getElementById(
+        "registerPhoto"
+      ).files[0];
+
+
+    const message =
+      document.getElementById(
+        "registerMessage"
+      );
+
+
+    try {
+
+      await addDoc(
+        collection(
+          db,
+          "usuarios"
+        ),
+        {
+          nombre: name,
+          email: email,
+          telefono: phone,
+          foto: photo
+            ? await fileToBase64(photo)
+            : "",
+          ahorroTotal: 0,
+          compras: 0,
+          cuponesUsados: 0,
+          estado: "pendiente",
+          fechaRegistro:
+            serverTimestamp()
+        }
+      );
+
+
+      message.innerHTML =
+        `✅ Gracias ${escapeHtml(name)}. Tu registro fue recibido.`;
+
+
+      showToast(
+        "✅ Cuenta creada correctamente"
+      );
+
+
+      registerForm.reset();
+
+
+    } catch (error) {
+
+      console.error(error);
+
+      message.innerHTML =
+        "❌ No se pudo completar el registro.";
+
+    }
+
+  }
+);
+
+
+function fileToBase64(file) {
+
+  return new Promise(
+    (resolve, reject) => {
+
+      const reader =
+        new FileReader();
+
+      reader.onload =
+        () => resolve(
+          reader.result
+        );
+
+      reader.onerror =
+        reject;
+
+      reader.readAsDataURL(
+        file
+      );
+
+    }
+  );
+
+}
+
+
+function escapeHtml(value) {
+
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+
+}
+
+
+/* =========================================================
+   CARGAR OFERTAS DESDE FIRESTORE
+========================================================= */
+
+async function loadFirebaseOffers() {
+
+  try {
+
+    const snapshot =
+      await getDocs(
+        collection(
+          db,
+          "ofertas"
+        )
+      );
+
+
+    if (snapshot.empty) {
+
+      return;
+
+    }
+
+
+    const carousel =
+      document.getElementById(
+        "offerCarousel"
+      );
+
+
+    carousel.innerHTML =
+      "";
+
+
+    snapshot.forEach(
+      documentSnapshot => {
+
+        const data =
+          documentSnapshot.data();
+
+
+        const card =
+          document.createElement(
+            "article"
+          );
+
+
+        card.className =
+          "offer-card";
+
+
+        const precioAntes =
+          Number(
+            data.precioAntes || 0
+          );
+
+
+        const precioActual =
+          Number(
+            data.precioActual || 0
+          );
+
+
+        let descuento = 0;
+
+
+        if (
+          precioAntes > 0 &&
+          precioActual > 0 &&
+          precioActual < precioAntes
+        ) {
+
+          descuento =
+            Math.round(
+              (
+                1 -
+                precioActual /
+                  precioAntes
+              ) * 100
+            );
+
+        }
+
+
+        card.innerHTML = `
+
+          <div class="offer-image">
+
+            ${
+              descuento > 0
+                ? `<span class="offer-discount">
+                     -${descuento}%
+                   </span>`
+                : ""
+            }
+
+            ${
+              data.imagen
+                ? `<img
+                     src="${data.imagen}"
+                     alt="${escapeHtml(data.titulo || "Oferta")}"
+                     loading="lazy"
+                   >`
+                : `<div class="product-placeholder">🔥</div>`
+            }
+
+          </div>
+
+          <div class="offer-content">
+
+            <span class="offer-category">
+              ${escapeHtml(data.categoria || "Oferta")}
+            </span>
+
+            <h3>
+              ${escapeHtml(data.titulo || "Oferta especial")}
+            </h3>
+
+            <div class="prices">
+
+              ${
+                precioAntes
+                  ? `<span class="old-price">
+                       $${precioAntes.toLocaleString("es-MX")}
+                     </span>`
+                  : ""
+              }
+
+              <strong>
+                $${precioActual.toLocaleString("es-MX")}
+              </strong>
+
+            </div>
+
+            ${
+              precioAntes > precioActual
+                ? `<div class="offer-save">
+                     Ahorras $${(
+                       precioAntes -
+                       precioActual
+                     ).toLocaleString("es-MX")}
+                   </div>`
+                : ""
+            }
+
+            <a
+              href="${data.link || "https://www.mercadolibre.com.mx/"}"
+              target="_blank"
+              rel="noopener"
+              class="offer-button"
+            >
+              VER OFERTA
+            </a>
+
+          </div>
+
+        `;
+
+
+        carousel.appendChild(
+          card
+        );
+
+      }
+    );
+
+
+    createCarousel(
+      carousel,
+      document.getElementById(
+        "offerNext"
+      ),
+      document.getElementById(
+        "offerPrev"
+      ),
+      document.getElementById(
+        "offerDots"
+      ),
+      {
+        desktopVisible: 3
+      }
+    );
+
+
+  } catch (error) {
+
+    console.log(
+      "Firebase ofertas:",
+      error
+    );
+
+  }
+
+}
+
+
+loadFirebaseOffers();
+
+
+</script>
 
 </body>
 </html>
