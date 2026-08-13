@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Admin PRO | El Patrón de las Ofertas</title>
+
+  <link
+    rel="stylesheet"
+    href="admin.css"
+  >
+</head>
+
+<body>
+
+  <!-- =====================================================
+       LOGIN
+  ====================================================== -->
+
+  <section
+    id="adminLoginView"
+    class="login-screen"
+  >
+
+    <div class="login-card">
+
+      <div class="login-logo">
+        ⚡
+      </div>
+
+      <h1>
+        EL PATRÓN
+      </h1>
+
+      <h2>
+        DE LAS OFERTAS
+      </h2>
+
+      <div class="login-badge">
+        ADMIN PRO
+      </div>
+
+      <p class="login-description">
+        Acceso exclusivo al panel administrativo
+      </p>
+
+      <form id="adminLoginForm">
+
+        <div class="form-group">
+
+          <label for="adminEmail">
+            Correo electrónico
+          </label>
+
+          <input
+            id="adminEmail"
+            type="email"
+            placeholder="admin@correo.com"
+            autocomplete="username"
+            required
+          >
+
+        </div>
+
+        <div class="form-group">
+
+          <label for="adminPassword">
+            Contraseña
+          </label>
+
+          <input
+            id="adminPassword"
+            type="password"
+            placeholder="••••••••"
+            autocomplete="current-password"
+            required
+          >
+
+        </div>
+
+        <button
+          type="submit"
+          class="primary-button login-button"
+        >
+          🔐 ENTRAR AL ADMIN
+        </button>
+
+      </form>
+
+      <p class="login-footer">
+        ⚡ El Patrón de las Ofertas
+      </p>
+
+    </div>
+
+  </section>
+
+
+  <!-- =====================================================
+       ADMIN
+  ====================================================== -->
+
+  <section
+    id="adminPanelView"
+    class="admin-app"
+    style="display:none;"
+  >
+
+    <!-- HEADER -->
+
+    <header class="admin-header">
+
+      <div class="brand">
+
+        <div class="brand-icon">
+          ⚡
+        </div>
+
+        <div>
+
+          <h1>
+            EL PATRÓN DE LAS OFERTAS
+          </h1>
+
+          <span>
+            ADMIN PRO
+          </span>
+
+        </div>
+
+      </div>
+
+      <button
+        id="adminLogout"
+        class="logout-button"
+        type="button"
+      >
+        🚪 Cerrar sesión
+      </button>
+
+    </header>
+
+
+    <!-- CONTENIDO -->
+
+    <main class="admin-container">
+
+
+      <!-- =================================================
+           DASHBOARD
+      ================================================== -->
+
+      <section class="dashboard-section">
+
+        <div class="section-title">
+
+          <div>
+
+            <span class="section-kicker">
+              PANEL DE CONTROL
+            </span>
+
+            <h2>
+              📊 Resumen general
+            </h2>
+
+          </div>
+
+        </div>
+
+
+        <div class="stats-grid">
+
+          <div class="stat-card">
+
+            <div class="stat-icon">
+              🛍️
+            </div>
+
+            <div>
+
+              <span>
+                OFERTAS
+              </span>
+
+              <strong id="statOffers">
+                0
+              </strong>
+
+            </div>
+
+          </div>
+
+
+          <div class="stat-card">
+
+            <div class="stat-icon">
+              🎟️
+            </div>
+
+            <div>
+
+              <span>
+                CUPONES
+              </span>
+
+              <strong id="statCoupons">
+                0
+              </strong>
+
+            </div>
+
+          </div>
+
+
+          <div class="stat-card">
+
+            <div class="stat-icon">
+              👥
+            </div>
+
+            <div>
+
+              <span>
+                USUARIOS
+              </span>
+
+              <strong id="statUsers">
+                0
+              </strong>
+
+            </div>
+
+          </div>
+
+
+          <div class="stat-card">
+
+            <div class="stat-icon">
+              🛒
+            </div>
+
+            <div>
+
+              <span>
+                COMPRAS
+              </span>
+
+              <strong id="statPurchases">
+                0
+              </strong>
+
+            </div>
+
+          </div>
+
+
+          <div class="stat-card">
+
+            <div class="stat-icon">
+              📋
+            </div>
+
+            <div>
+
+              <span>
+                COPIAS
+              </span>
+
+              <strong id="statCopies">
+                0
+              </strong>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- TOP CUPON -->
+
+        <div class="top-card">
+
+          <div class="top-card-icon">
+            🏆
+          </div>
+
+          <div>
+
+            <span>
+              CUPÓN MÁS COPIADO
+            </span>
+
+            <strong id="topCoupon">
+              Sin copias todavía
+            </strong>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+
+      <!-- =================================================
+           OFERTAS
+      ================================================== -->
+
+      <section class="admin-section">
+
+        <div class="section-title">
+
+          <div>
+
+            <span class="section-kicker">
+              MERCADO LIBRE
+            </span>
+
+            <h2>
+              🛍️ Gestionar ofertas
+            </h2>
+
+          </div>
+
+        </div>
+
+
+        <div class="panel-grid">
+
+          <!-- FORMULARIO -->
+
+          <div class="form-card">
+
+            <div class="card-heading">
+
+              <h3>
+                ➕ Publicar oferta
+              </h3>
+
+              <p>
+                Agrega una nueva oferta a tu página.
+              </p>
+
+            </div>
+
+
+            <form id="offerForm">
+
+              <div class="form-group">
+
+                <label for="offerTitle">
+                  Título de la oferta
+                </label>
+
+                <input
+                  id="offerTitle"
+                  type="text"
+                  placeholder="Ej. Audífonos Bluetooth"
+                  required
+                >
+
+              </div>
+
+
+              <div class="two-columns">
+
+                <div class="form-group">
+
+                  <label for="offerPriceBefore">
+                    Precio anterior
+                  </label>
+
+                  <input
+                    id="offerPriceBefore"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="1999"
+                  >
+
+                </div>
+
+
+                <div class="form-group">
+
+                  <label for="offerPriceCurrent">
+                    Precio actual
+                  </label>
+
+                  <input
+                    id="offerPriceCurrent"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="999"
+                    required
+                  >
+
+                </div>
+
+              </div>
+
+
+              <div class="form-group">
+
+                <label for="offerCategory">
+                  Categoría
+                </label>
+
+                <input
+                  id="offerCategory"
+                  type="text"
+                  placeholder="Tecnología"
+                >
+
+              </div>
+
+
+              <div class="form-group">
+
+                <label for="offerLink">
+                  Link del producto
+                </label>
+
+                <input
+                  id="offerLink"
+                  type="url"
+                  placeholder="https://www.mercadolibre.com.mx/..."
+                >
+
+              </div>
+
+
+              <div class="upload-box">
+
+                <label for="offerImageFile">
+                  📷 Imagen
+                </label>
+
+                <input
+                  id="offerImageFile"
+                  type="file"
+                  accept="image/*"
+                >
+
+                <small>
+                  Máximo 1.5 MB. Se guardará como Base64.
+                </small>
+
+              </div>
+
+
+              <div class="upload-box">
+
+                <label for="offerVideoFile">
+                  🎥 Video
+                </label>
+
+                <input
+                  id="offerVideoFile"
+                  type="file"
+                  accept="video/*"
+                >
+
+                <small>
+                  Máximo 5 MB. Se guardará como Base64.
+                </small>
+
+              </div>
+
+
+              <button
+                type="submit"
+                class="primary-button"
+              >
+                🚀 PUBLICAR OFERTA
+              </button>
+
+            </form>
+
+          </div>
+
+
+          <!-- LISTA -->
+
+          <div class="list-card">
+
+            <div class="card-heading">
+
+              <h3>
+                📦 Ofertas publicadas
+              </h3>
+
+              <p>
+                Administra tus ofertas existentes.
+              </p>
+
+            </div>
+
+            <div
+              id="adminOffersList"
+              class="admin-list"
+            >
+
+              <div class="empty-state">
+                Cargando ofertas...
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+
+      <!-- =================================================
+           CUPONES
+      ================================================== -->
+
+      <section class="admin-section">
+
+        <div class="section-title">
+
+          <div>
+
+            <span class="section-kicker">
+              MERCADO LIBRE
+            </span>
+
+            <h2>
+              🎟️ Gestionar cupones
+            </h2>
+
+          </div>
+
+        </div>
+
+
+        <div class="panel-grid">
+
+          <div class="form-card">
+
+            <div class="card-heading">
+
+              <h3>
+                ➕ Crear cupón
+              </h3>
+
+              <p>
+                Publica y administra tus códigos.
+              </p>
+
+            </div>
+
+
+            <form id="couponForm">
+
+              <div class="form-group">
+
+                <label for="couponCode">
+                  Código
+                </label>
+
+                <input
+                  id="couponCode"
+                  type="text"
+                  placeholder="MELI123"
+                  autocomplete="off"
+                  required
+                >
+
+              </div>
+
+
+              <div class="form-group">
+
+                <label for="couponTitle">
+                  Título
+                </label>
+
+                <input
+                  id="couponTitle"
+                  type="text"
+                  placeholder="Cupón exclusivo"
+                >
+
+              </div>
+
+
+              <div class="form-group">
+
+                <label for="couponType">
+                  Tipo
+                </label>
+
+                <select id="couponType">
+
+                  <option value="flash">
+                    ⚡ Relámpago
+                  </option>
+
+                  <option value="meli">
+                    🟡 Meli+
+                  </option>
+
+                  <option value="bank">
+                    🏦 Bancario
+                  </option>
+
+                  <option value="exclusive">
+                    💎 Exclusivo
+                  </option>
+
+                  <option value="other">
+                    🎟️ Otro
+                  </option>
+
+                </select>
+
+              </div>
+
+
+              <div class="form-group">
+
+                <label for="couponDiscount">
+                  Descuento
+                </label>
+
+                <input
+                  id="couponDiscount"
+                  type="text"
+                  placeholder="20% OFF o $500 OFF"
+                >
+
+              </div>
+
+
+              <div class="two-columns">
+
+                <div class="form-group">
+
+                  <label for="couponMinimum">
+                    Compra mínima
+                  </label>
+
+                  <input
+                    id="couponMinimum"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="1000"
+                  >
+
+                </div>
+
+
+                <div class="form-group">
+
+                  <label for="couponTop">
+                    Tope de descuento
+                  </label>
+
+                  <input
+                    id="couponTop"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="300"
+                  >
+
+                </div>
+
+              </div>
+
+
+              <div class="form-group">
+
+                <label for="couponLink">
+                  Link
+                </label>
+
+                <input
+                  id="couponLink"
+                  type="url"
+                  placeholder="https://www.mercadolibre.com.mx/"
+                >
+
+              </div>
+
+
+              <button
+                type="submit"
+                class="primary-button"
+              >
+                🚀 PUBLICAR CUPÓN
+              </button>
+
+            </form>
+
+          </div>
+
+
+          <div class="list-card">
+
+            <div class="card-heading">
+
+              <h3>
+                🎟️ Cupones activos
+              </h3>
+
+              <p>
+                Los cupones eliminados dejarán de aparecer.
+              </p>
+
+            </div>
+
+
+            <div
+              id="adminCouponsList"
+              class="admin-list"
+            >
+
+              <div class="empty-state">
+                Cargando cupones...
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+
+      <!-- =================================================
+           USUARIOS
+      ================================================== -->
+
+      <section class="admin-section">
+
+        <div class="section-title">
+
+          <div>
+
+            <span class="section-kicker">
+              COMUNIDAD
+            </span>
+
+            <h2>
+              👥 Usuarios
+            </h2>
+
+          </div>
+
+        </div>
+
+
+        <div class="panel-grid">
+
+          <div class="form-card">
+
+            <div class="card-heading">
+
+              <h3>
+                ➕ Agregar usuario
+              </h3>
+
+            </div>
+
+
+            <form id="userForm">
+
+              <div class="form-group">
+
+                <label for="userName">
+                  Nombre
+                </label>
+
+                <input
+                  id="userName"
+                  type="text"
+                  placeholder="Nombre completo"
+                  required
+                >
+
+              </div>
+
+
+              <div class="form-group">
+
+                <label for="userEmail">
+                  Correo
+                </label>
+
+                <input
+                  id="userEmail"
+                  type="email"
+                  placeholder="correo@email.com"
+                >
+
+              </div>
+
+
+              <div class="form-group">
+
+                <label for="userPhone">
+                  Teléfono
+                </label>
+
+                <input
+                  id="userPhone"
+                  type="tel"
+                  placeholder="228..."
+                >
+
+              </div>
+
+
+              <div class="form-group">
+
+                <label for="userStatus">
+                  Estado
+                </label>
+
+                <select id="userStatus">
+
+                  <option value="pendiente">
+                    Pendiente
+                  </option>
+
+                  <option value="activo">
+                    Activo
+                  </option>
+
+                  <option value="verificado">
+                    Verificado
+                  </option>
+
+                  <option value="bloqueado">
+                    Bloqueado
+                  </option>
+
+                </select>
+
+              </div>
+
+
+              <button
+                type="submit"
+                class="primary-button"
+              >
+                👤 AGREGAR USUARIO
+              </button>
+
+            </form>
+
+          </div>
+
+
+          <div class="list-card">
+
+            <div class="card-heading">
+
+              <h3>
+                👥 Usuarios registrados
+              </h3>
+
+            </div>
+
+
+            <div
+              id="adminUsersList"
+              class="admin-list"
+            >
+
+              <div class="empty-state">
+                Cargando usuarios...
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+
+      <!-- =================================================
+           COMPRAS
+      ================================================== -->
+
+      <section class="admin-section">
+
+        <div class="section-title">
+
+          <div>
+
+            <span class="section-kicker">
+              ACTIVIDAD
+            </span>
+
+            <h2>
+              🛒 Compras
+            </h2>
+
+          </div>
+
+        </div>
+
+
+        <div class="list-card full-width">
+
+          <div class="card-heading">
+
+            <h3>
+              📋 Registro de compras
+            </h3>
+
+            <p>
+              Información registrada en Firestore.
+            </p>
+
+          </div>
+
+
+          <div
+            id="adminPurchasesList"
+            class="admin-list"
+          >
+
+            <div class="empty-state">
+              Cargando compras...
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+
+      <!-- =================================================
+           PIE
+      ================================================== -->
+
+      <footer class="admin-footer">
+
+        ⚡ EL PATRÓN DE LAS OFERTAS · ADMIN PRO
+
+      </footer>
+
+    </main>
+
+  </section>
+
+
+  <!-- =====================================================
+       JAVASCRIPT
+  ====================================================== -->
+
+  <script
+    type="module"
+    src="admin.js"
+  ></script>
+
+</body>
+</html>
