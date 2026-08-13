@@ -13,19 +13,20 @@
 
   <link rel="stylesheet" href="style.css">
 
+  <!-- =====================================================
+       MEJORA TÁCTIL DE CARRUSELES
+       No modifica el diseño.
+  ====================================================== -->
   <style>
     /*
-    =========================================================
-    MEJORAS TÁCTILES
-    =========================================================
-    No modifica el diseño visual.
-    Solamente mejora la interacción de los carruseles.
-    =========================================================
+      El carrusel ahora permite desplazamiento horizontal
+      con el dedo sin bloquear el scroll vertical de la página.
     */
-
     .carousel-wrapper {
       overflow: hidden;
       width: 100%;
+      touch-action: pan-y;
+      -webkit-overflow-scrolling: touch;
     }
 
     .offer-carousel,
@@ -37,21 +38,36 @@
       backface-visibility: hidden;
       -webkit-backface-visibility: hidden;
       touch-action: pan-y;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
-    .offer-carousel.is-dragging,
-    .category-carousel.is-dragging,
-    .coupon-carousel.is-dragging,
-    .bank-carousel.is-dragging {
+    /*
+      Durante el arrastre evitamos transiciones CSS que puedan
+      provocar sensación de que el carrusel se "atora".
+    */
+    .is-dragging {
       transition: none !important;
-      scroll-behavior: auto !important;
+      cursor: grabbing;
     }
 
-    .offer-carousel > *,
-    .category-carousel > *,
-    .coupon-carousel > *,
-    .bank-carousel > * {
-      flex-shrink: 0;
+    /*
+      Las imágenes no deben interferir con el gesto.
+    */
+    .carousel-wrapper img {
+      -webkit-user-drag: none;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    /*
+      El botón de copiar siempre conserva la interacción táctil.
+    */
+    .copy-coupon,
+    .offer-button,
+    .category-card,
+    .bank-button {
+      touch-action: manipulation;
     }
   </style>
 </head>
@@ -568,7 +584,7 @@
 
       <a
         href="https://www.mercadopago.com.mx/"
-        class="mp-button"
+        class="mp-button mercado-link"
       >
         OBTENER BENEFICIO →
       </a>
@@ -578,8 +594,6 @@
   </div>
 
 </section>
-
-
 <!-- =========================================================
      CATEGORÍAS
 ========================================================= -->
@@ -641,6 +655,7 @@
           <span>Ver ofertas →</span>
         </a>
 
+
         <a
           href="https://listado.mercadolibre.com.mx/electronica"
           class="category-card mercado-link"
@@ -649,6 +664,7 @@
           <strong>Electrónica</strong>
           <span>Ver ofertas →</span>
         </a>
+
 
         <a
           href="https://listado.mercadolibre.com.mx/hogar"
@@ -659,6 +675,7 @@
           <span>Ver ofertas →</span>
         </a>
 
+
         <a
           href="https://listado.mercadolibre.com.mx/moda"
           class="category-card mercado-link"
@@ -667,6 +684,7 @@
           <strong>Moda</strong>
           <span>Ver ofertas →</span>
         </a>
+
 
         <a
           href="https://listado.mercadolibre.com.mx/belleza"
@@ -677,6 +695,7 @@
           <span>Ver ofertas →</span>
         </a>
 
+
         <a
           href="https://listado.mercadolibre.com.mx/videojuegos"
           class="category-card mercado-link"
@@ -686,6 +705,7 @@
           <span>Ver ofertas →</span>
         </a>
 
+
         <a
           href="https://listado.mercadolibre.com.mx/deportes"
           class="category-card mercado-link"
@@ -694,6 +714,7 @@
           <strong>Deportes</strong>
           <span>Ver ofertas →</span>
         </a>
+
 
         <a
           href="https://listado.mercadolibre.com.mx/autos"
@@ -1011,6 +1032,7 @@
           <span>✓</span>
 
           <div>
+
             <strong>
               Registra tus cupones
             </strong>
@@ -1018,6 +1040,7 @@
             <small>
               Guarda tus compras y cupones utilizados.
             </small>
+
           </div>
 
         </div>
@@ -1027,6 +1050,7 @@
           <span>✓</span>
 
           <div>
+
             <strong>
               Demuestra tu ahorro
             </strong>
@@ -1034,6 +1058,7 @@
             <small>
               Sube la captura de tu compra.
             </small>
+
           </div>
 
         </div>
@@ -1043,6 +1068,7 @@
           <span>✓</span>
 
           <div>
+
             <strong>
               Participa por premios
             </strong>
@@ -1050,6 +1076,7 @@
             <small>
               Compite por ser comprador del mes.
             </small>
+
           </div>
 
         </div>
@@ -1084,6 +1111,7 @@
 
         </label>
 
+
         <label>
 
           Correo electrónico
@@ -1097,6 +1125,7 @@
           >
 
         </label>
+
 
         <label>
 
@@ -1112,6 +1141,7 @@
 
         </label>
 
+
         <label>
 
           Foto
@@ -1124,6 +1154,7 @@
 
         </label>
 
+
         <button
           type="submit"
           class="register-button"
@@ -1131,6 +1162,7 @@
         >
           CREAR MI CUENTA
         </button>
+
 
         <div
           id="registerMessage"
@@ -1261,8 +1293,6 @@
   </div>
 
 </section>
-
-
 <!-- =========================================================
      FINAL CTA
 ========================================================= -->
@@ -1777,8 +1807,7 @@ if (modalRegister) {
 
 
 /* =========================================================
-   CARRUSEL
-   VERSIÓN OPTIMIZADA PARA TÁCTIL
+   CARRUSEL — VERSIÓN TÁCTIL FLUIDA
 ========================================================= */
 
 function createCarousel(
@@ -1790,19 +1819,48 @@ function createCarousel(
 ) {
 
   if (!element) {
+
     return null;
+
   }
 
 
-  let current = 0;
+  const cards =
+    Array.from(
+      element.children
+    );
 
-  let startX = 0;
-  let startY = 0;
 
-  let currentX = 0;
-  let currentY = 0;
+  if (!cards.length) {
 
-  let dragging = false;
+    return null;
+
+  }
+
+
+  let current =
+    0;
+
+  let startX =
+    0;
+
+  let startY =
+    0;
+
+  let currentX =
+    0;
+
+  let dragging =
+    false;
+
+  let horizontalDrag =
+    false;
+
+  let moved =
+    false;
+
+  let animationFrame =
+    null;
 
 
   function getVisible() {
@@ -1836,8 +1894,11 @@ function createCarousel(
     const firstCard =
       element.children[0];
 
+
     if (!firstCard) {
+
       return 0;
+
     }
 
 
@@ -1862,7 +1923,7 @@ function createCarousel(
     return Math.max(
       0,
       element.children.length -
-      getVisible()
+        getVisible()
     );
 
   }
@@ -1870,9 +1931,7 @@ function createCarousel(
 
   function renderDots() {
 
-    if (!dotsElement) {
-      return;
-    }
+    if (!dotsElement) return;
 
 
     dotsElement.innerHTML =
@@ -1884,7 +1943,9 @@ function createCarousel(
 
 
     if (total <= 1) {
+
       return;
+
     }
 
 
@@ -1938,7 +1999,9 @@ function createCarousel(
   }
 
 
-  function render() {
+  function render(
+    immediate = false
+  ) {
 
     const max =
       getMax();
@@ -1967,6 +2030,19 @@ function createCarousel(
     const distance =
       current *
       getStep();
+
+
+    if (immediate) {
+
+      element.style.transition =
+        "none";
+
+    } else {
+
+      element.style.transition =
+        "transform 0.32s cubic-bezier(.22,.61,.36,1)";
+
+    }
 
 
     element.style.transform =
@@ -1998,15 +2074,98 @@ function createCarousel(
   }
 
 
+  function setDragPosition(
+    delta
+  ) {
+
+    if (animationFrame) {
+
+      cancelAnimationFrame(
+        animationFrame
+      );
+
+    }
+
+
+    animationFrame =
+      requestAnimationFrame(
+        () => {
+
+          const step =
+            getStep();
+
+
+          const base =
+            current *
+            step;
+
+
+          const max =
+            getMax();
+
+
+          let position =
+            base +
+            delta;
+
+
+          /*
+            Resistencia al arrastrar más allá
+            de los límites.
+          */
+
+          if (
+            position < 0
+          ) {
+
+            position =
+              position *
+              0.25;
+
+          }
+
+
+          const maxPosition =
+            max *
+            step;
+
+
+          if (
+            position >
+            maxPosition
+          ) {
+
+            position =
+              maxPosition +
+              (
+                position -
+                maxPosition
+              ) *
+              0.25;
+
+          }
+
+
+          element.style.transition =
+            "none";
+
+
+          element.style.transform =
+            `translate3d(-${position}px,0,0)`;
+
+        }
+      );
+
+  }
+
+
   function next() {
 
     const max =
       getMax();
 
 
-    if (
-      max <= 0
-    ) {
+    if (max <= 0) {
 
       return;
 
@@ -2038,9 +2197,7 @@ function createCarousel(
       getMax();
 
 
-    if (
-      max <= 0
-    ) {
+    if (max <= 0) {
 
       return;
 
@@ -2087,9 +2244,7 @@ function createCarousel(
 
 
   /*
-  =========================================================
-  TOUCH START
-  =========================================================
+    TOUCH START
   */
 
   element.addEventListener(
@@ -2105,25 +2260,36 @@ function createCarousel(
       }
 
 
+      const touch =
+        event.touches[0];
+
+
       startX =
-        event.touches[0].clientX;
+        touch.clientX;
 
       startY =
-        event.touches[0].clientY;
+        touch.clientY;
 
       currentX =
         startX;
 
-      currentY =
-        startY;
-
       dragging =
         true;
+
+      horizontalDrag =
+        false;
+
+      moved =
+        false;
 
 
       element.classList.add(
         "is-dragging"
       );
+
+
+      element.style.transition =
+        "none";
 
     },
     {
@@ -2133,9 +2299,10 @@ function createCarousel(
 
 
   /*
-  =========================================================
-  TOUCH MOVE
-  =========================================================
+    TOUCH MOVE
+
+    Aquí se determina si el usuario realmente
+    está deslizando horizontalmente.
   */
 
   element.addEventListener(
@@ -2143,35 +2310,59 @@ function createCarousel(
     event => {
 
       if (!dragging) {
+
         return;
+
       }
 
 
+      const touch =
+        event.touches[0];
+
+
       currentX =
-        event.touches[0].clientX;
-
-      currentY =
-        event.touches[0].clientY;
+        touch.clientX;
 
 
-      const diffX =
+      const currentY =
+        touch.clientY;
+
+
+      const deltaX =
         currentX -
         startX;
 
 
-      const diffY =
+      const deltaY =
         currentY -
         startY;
 
 
       /*
-      Si el movimiento es vertical,
-      dejamos que la página haga scroll.
+        Esperamos unos píxeles antes de decidir
+        la dirección del gesto.
       */
 
       if (
-        Math.abs(diffY) >
-        Math.abs(diffX)
+        !horizontalDrag &&
+        Math.abs(deltaX) < 8 &&
+        Math.abs(deltaY) < 8
+      ) {
+
+        return;
+
+      }
+
+
+      /*
+        Si el movimiento es principalmente vertical,
+        dejamos que la página haga scroll normalmente.
+      */
+
+      if (
+        !horizontalDrag &&
+        Math.abs(deltaY) >
+        Math.abs(deltaX)
       ) {
 
         dragging =
@@ -2185,17 +2376,35 @@ function createCarousel(
 
       }
 
+
+      horizontalDrag =
+        true;
+
+      moved =
+        true;
+
+
+      /*
+        Evita que el navegador intente
+        arrastrar/seleccionar contenido.
+      */
+
+      event.preventDefault();
+
+
+      setDragPosition(
+        deltaX
+      );
+
     },
     {
-      passive: true
+      passive: false
     }
   );
 
 
   /*
-  =========================================================
-  TOUCH END
-  =========================================================
+    TOUCH END
   */
 
   element.addEventListener(
@@ -2203,7 +2412,9 @@ function createCarousel(
     () => {
 
       if (!dragging) {
+
         return;
+
       }
 
 
@@ -2216,34 +2427,54 @@ function createCarousel(
       );
 
 
-      const difference =
-        startX -
-        currentX;
-
-
-      /*
-      Sensibilidad más rápida.
-      */
-
-      if (
-        Math.abs(difference) <
-        35
-      ) {
+      if (!horizontalDrag) {
 
         return;
 
       }
 
 
+      const difference =
+        startX -
+        currentX;
+
+
+      const threshold =
+        Math.min(
+          80,
+          Math.max(
+            35,
+            getStep() * 0.15
+          )
+        );
+
+
       if (
-        difference > 0
+        Math.abs(
+          difference
+        ) >= threshold
       ) {
 
-        next();
+        if (
+          difference > 0
+        ) {
+
+          next();
+
+        } else {
+
+          prev();
+
+        }
 
       } else {
 
-        prev();
+        /*
+          Si no alcanzó el mínimo,
+          vuelve suavemente a su posición.
+        */
+
+        render();
 
       }
 
@@ -2255,9 +2486,7 @@ function createCarousel(
 
 
   /*
-  =========================================================
-  TOUCH CANCEL
-  =========================================================
+    Si el dedo sale del carrusel.
   */
 
   element.addEventListener(
@@ -2267,9 +2496,14 @@ function createCarousel(
       dragging =
         false;
 
+      horizontalDrag =
+        false;
+
       element.classList.remove(
         "is-dragging"
       );
+
+      render();
 
     },
     {
@@ -2278,31 +2512,33 @@ function createCarousel(
   );
 
 
-  /*
-  =========================================================
-  RESIZE
-  =========================================================
-  */
-
   window.addEventListener(
     "resize",
     () => {
 
       renderDots();
-      render();
+
+      render(
+        true
+      );
 
     }
   );
 
 
   renderDots();
-  render();
+
+  render(
+    true
+  );
 
 
   return {
 
     next,
+
     prev,
+
     render
 
   };
@@ -2311,14 +2547,23 @@ function createCarousel(
 
 
 /* =========================================================
-   VARIABLES
+   VARIABLES DE CARRUSELES
 ========================================================= */
 
-let offerCarousel = null;
-let categoryCarousel = null;
-let flashCarousel = null;
-let exclusiveCarousel = null;
-let bankCarousel = null;
+let offerCarousel =
+  null;
+
+let categoryCarousel =
+  null;
+
+let flashCarousel =
+  null;
+
+let exclusiveCarousel =
+  null;
+
+let bankCarousel =
+  null;
 
 
 /* =========================================================
@@ -2343,743 +2588,939 @@ categoryCarousel =
       desktopVisible: 6
     }
   );
+  <!-- =========================================================
+     BANCARIOS
+========================================================= -->
+
+<section
+  class="section"
+  id="bancos"
+>
+
+  <div class="container">
+
+    <div class="section-header">
+
+      <div>
+
+        <span class="section-label">
+          PROMOCIONES BANCARIAS
+        </span>
+
+        <h2>
+          🏦 Cupones bancarios
+        </h2>
+
+        <p>
+          Aprovecha las promociones de tu tarjeta.
+        </p>
+
+      </div>
+
+      <div class="carousel-controls">
+
+        <button
+          id="bankPrev"
+          type="button"
+          aria-label="Anterior"
+        >
+          ←
+        </button>
+
+        <button
+          id="bankNext"
+          type="button"
+          aria-label="Siguiente"
+        >
+          →
+        </button>
+
+      </div>
+
+    </div>
+
+    <div class="carousel-wrapper">
+
+      <div
+        class="bank-carousel"
+        id="bankCarousel"
+      ></div>
+
+    </div>
+
+    <div
+      class="carousel-dots"
+      id="bankDots"
+    ></div>
+
+  </div>
+
+</section>
+
+
+<!-- =========================================================
+     COMPRADOR DEL MES
+========================================================= -->
+
+<section
+  class="winner-section"
+  id="ranking"
+>
+
+  <div class="container">
+
+    <div class="winner-card">
+
+      <div class="winner-trophy">
+        🏆
+      </div>
+
+      <div class="winner-content">
+
+        <span>
+          RECONOCIMIENTO DE LA COMUNIDAD
+        </span>
+
+        <h2>
+          Comprador del mes
+        </h2>
+
+        <div class="winner-user">
+
+          <div class="winner-avatar">
+            👤
+          </div>
+
+          <div>
+
+            <strong id="winnerName">
+              Próximamente
+            </strong>
+
+            <small id="winnerMonth">
+              Comprador destacado
+            </small>
+
+          </div>
+
+        </div>
+
+        <p id="winnerDescription">
+          El comprador que consiga los mejores ahorros
+          utilizando nuestros cupones y ofertas.
+        </p>
+
+        <div class="winner-prize">
+
+          🎁 Premio:
+          <strong id="winnerPrize">
+            $1,000 MXN
+          </strong>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =========================================================
+     REGISTRO
+========================================================= -->
+
+<section
+  class="section register-section"
+  id="registro"
+>
+
+  <div class="container">
+
+    <div class="register-layout">
+
+      <div class="register-copy">
+
+        <span class="section-label">
+          FORMA PARTE
+        </span>
+
+        <h2>
+          🏆 Regístrate y participa
+        </h2>
+
+        <p>
+          Registra tus compras, demuestra cuánto has ahorrado
+          y participa para convertirte en nuestro comprador del mes.
+        </p>
+
+        <div class="register-benefit">
+
+          <span>✓</span>
+
+          <div>
+
+            <strong>
+              Registra tus cupones
+            </strong>
+
+            <small>
+              Guarda tus compras y cupones utilizados.
+            </small>
+
+          </div>
+
+        </div>
+
+        <div class="register-benefit">
+
+          <span>✓</span>
+
+          <div>
+
+            <strong>
+              Demuestra tu ahorro
+            </strong>
+
+            <small>
+              Sube la captura de tu compra.
+            </small>
+
+          </div>
+
+        </div>
+
+        <div class="register-benefit">
+
+          <span>✓</span>
+
+          <div>
+
+            <strong>
+              Participa por premios
+            </strong>
+
+            <small>
+              Compite por ser comprador del mes.
+            </small>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <form
+        class="register-form"
+        id="registerForm"
+      >
+
+        <h3>
+          Crear mi cuenta
+        </h3>
+
+        <p>
+          Es rápido y gratis.
+        </p>
+
+        <label>
+
+          Nombre completo
+
+          <input
+            id="registerName"
+            type="text"
+            required
+            placeholder="Tu nombre"
+            maxlength="100"
+          >
+
+        </label>
+
+        <label>
+
+          Correo electrónico
+
+          <input
+            id="registerEmail"
+            type="email"
+            required
+            placeholder="correo@ejemplo.com"
+            maxlength="150"
+          >
+
+        </label>
+
+        <label>
+
+          Número de teléfono
+
+          <input
+            id="registerPhone"
+            type="tel"
+            required
+            placeholder="10 dígitos"
+            maxlength="15"
+          >
+
+        </label>
+
+        <label>
+
+          Foto
+
+          <input
+            id="registerPhoto"
+            type="file"
+            accept="image/*"
+          >
+
+        </label>
+
+        <button
+          type="submit"
+          class="register-button"
+          id="registerButton"
+        >
+          CREAR MI CUENTA
+        </button>
+
+        <div
+          id="registerMessage"
+          class="form-message"
+        ></div>
+
+      </form>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =========================================================
+     TESTIMONIOS
+========================================================= -->
+
+<section
+  class="section testimonials"
+  id="testimonios"
+>
+
+  <div class="container">
+
+    <div class="section-header">
+
+      <div>
+
+        <span class="section-label">
+          NUESTRA COMUNIDAD
+        </span>
+
+        <h2>
+          ❤️ Gracias a El Patrón de las Ofertas
+        </h2>
+
+        <p>
+          Usuarios que están aprovechando nuestros descuentos.
+        </p>
+
+      </div>
+
+    </div>
+
+
+    <div class="testimonial-grid">
+
+      <article class="testimonial-card">
+
+        <div class="testimonial-avatar">
+          👨🏻
+        </div>
+
+        <strong>
+          Luis M.
+        </strong>
+
+        <span>
+          Veracruz
+        </span>
+
+        <p>
+          “Gracias a El Patrón de las Ofertas he ahorrado
+          muchísimo en mis compras.”
+        </p>
+
+        <div class="testimonial-stars">
+          ⭐⭐⭐⭐⭐
+        </div>
+
+      </article>
+
+
+      <article class="testimonial-card">
+
+        <div class="testimonial-avatar">
+          👩🏻
+        </div>
+
+        <strong>
+          Andrea R.
+        </strong>
+
+        <span>
+          Oaxaca
+        </span>
+
+        <p>
+          “Los cupones relámpago son buenísimos.
+          Siempre reviso la página antes de comprar.”
+        </p>
+
+        <div class="testimonial-stars">
+          ⭐⭐⭐⭐⭐
+        </div>
+
+      </article>
+
+
+      <article class="testimonial-card">
+
+        <div class="testimonial-avatar">
+          👨🏻
+        </div>
+
+        <strong>
+          Miguel G.
+        </strong>
+
+        <span>
+          Puebla
+        </span>
+
+        <p>
+          “Ya llevo varios meses usando los cupones.
+          Realmente se nota el ahorro.”
+        </p>
+
+        <div class="testimonial-stars">
+          ⭐⭐⭐⭐⭐
+        </div>
+
+      </article>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =========================================================
+     FINAL CTA
+========================================================= -->
+
+<section class="final-cta">
+
+  <div class="container">
+
+    <div class="final-card">
+
+      <div class="final-icon">
+        ⚡
+      </div>
+
+      <h2>
+        ¿Listo para pagar menos?
+      </h2>
+
+      <p>
+        Revisa los cupones antes de hacer tu próxima compra.
+      </p>
+
+      <a
+        href="#cupones"
+        class="button-primary"
+      >
+        VER CUPONES ACTIVOS
+      </a>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =========================================================
+     FOOTER
+========================================================= -->
+
+<footer class="footer">
+
+  <div class="container">
+
+    <div class="footer-grid">
+
+      <div>
+
+        <a
+          href="#"
+          class="logo footer-logo"
+        >
+
+          <span class="logo-icon">
+            ⚡
+          </span>
+
+          <div>
+
+            <strong>
+              EL PATRÓN
+            </strong>
+
+            <small>
+              DE LAS OFERTAS
+            </small>
+
+          </div>
+
+        </a>
+
+        <p>
+          Cupones, ofertas y promociones
+          para Mercado Libre México.
+        </p>
+
+      </div>
+
+
+      <div>
+
+        <h4>
+          Navegación
+        </h4>
+
+        <a href="#ofertas">
+          Ofertas
+        </a>
+
+        <a href="#cupones">
+          Cupones
+        </a>
+
+        <a href="#categorias">
+          Categorías
+        </a>
+
+        <a href="#bancos">
+          Bancos
+        </a>
+
+      </div>
+
+
+      <div>
+
+        <h4>
+          Comunidad
+        </h4>
+
+        <a href="#ranking">
+          Comprador del mes
+        </a>
+
+        <a href="#registro">
+          Registrarme
+        </a>
+
+        <a href="#testimonios">
+          Testimonios
+        </a>
+
+      </div>
+
+
+      <div>
+
+        <h4>
+          Síguenos
+        </h4>
+
+        <a href="#">
+          📱 WhatsApp
+        </a>
+
+        <a href="#">
+          📘 Facebook
+        </a>
+
+        <a href="#">
+          📸 Instagram
+        </a>
+
+      </div>
+
+    </div>
+
+
+    <div class="footer-bottom">
+
+      <span>
+        © 2026 El Patrón de las Ofertas
+      </span>
+
+      <span>
+        Todos los derechos reservados.
+      </span>
+
+    </div>
+
+  </div>
+
+</footer>
+
+
+<!-- =========================================================
+     MODAL MI CUENTA
+========================================================= -->
+
+<div
+  class="modal"
+  id="accountModal"
+>
+
+  <div class="modal-box">
+
+    <button
+      class="modal-close"
+      id="closeModal"
+      type="button"
+      aria-label="Cerrar"
+    >
+      ×
+    </button>
+
+    <div class="modal-icon">
+      👤
+    </div>
+
+    <h2>
+      Mi cuenta
+    </h2>
+
+    <p>
+      Regístrate para participar en el comprador del mes
+      y registrar tus compras.
+    </p>
+
+    <a
+      href="#registro"
+      class="button-primary"
+      id="modalRegister"
+    >
+      CREAR MI CUENTA
+    </a>
+
+  </div>
+
+</div>
+
+
+<!-- =========================================================
+     TOAST
+========================================================= -->
+
+<div
+  class="toast"
+  id="toast"
+  role="status"
+  aria-live="polite"
+></div>
+
+
+<!-- =========================================================
+     FIREBASE
+========================================================= -->
+
+<script type="module">
+
+import {
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  addDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+
+const firebaseConfig = {
+
+  apiKey:
+    "AIzaSyDOoYZZhaTn6hbBQ0ml--mq8ByT0KdF9e0",
+
+  authDomain:
+    "el-patron-de-las-ofertas.firebaseapp.com",
+
+  projectId:
+    "el-patron-de-las-ofertas",
+
+  storageBucket:
+    "el-patron-de-las-ofertas.firebasestorage.app",
+
+  messagingSenderId:
+    "996329026447",
+
+  appId:
+    "1:996329026447:web:dde5b6748aff41e087d1fa",
+
+  measurementId:
+    "G-GTD9375PRW"
+
+};
+
+
+const app =
+  initializeApp(
+    firebaseConfig
+  );
+
+const db =
+  getFirestore(
+    app
+  );
 
 
 /* =========================================================
-   ABRIR MERCADO LIBRE
+   TOAST
 ========================================================= */
 
-function openMercadoLibre(
-  link
-) {
-
-  if (!link) {
-
-    link =
-      "https://www.mercadolibre.com.mx/";
-
-  }
+const toast =
+  document.getElementById(
+    "toast"
+  );
 
 
-  link =
-    String(
-      link
-    ).trim();
+function showToast(message) {
 
+  if (!toast) return;
 
-  /*
-  Los enlaces meli.la son enlaces de
-  Mercado Libre y pueden activar la app
-  cuando iOS tiene la asociación correspondiente.
-  */
+  toast.textContent =
+    message;
 
-  window.location.href =
-    link;
+  toast.classList.add(
+    "show"
+  );
+
+  clearTimeout(
+    window.toastTimer
+  );
+
+  window.toastTimer =
+    setTimeout(
+      () => {
+
+        toast.classList.remove(
+          "show"
+        );
+
+      },
+      2800
+    );
 
 }
 
 
 /* =========================================================
-   COPIAR CUPÓN
+   MENÚ MÓVIL
 ========================================================= */
 
-async function copyCoupon(
-  button
+const mobileButton =
+  document.getElementById(
+    "mobileMenuButton"
+  );
+
+const mobileMenu =
+  document.getElementById(
+    "mobileMenu"
+  );
+
+
+if (
+  mobileButton &&
+  mobileMenu
 ) {
 
-  if (!button) {
-    return;
-  }
+  mobileButton.addEventListener(
+    "click",
+    () => {
 
-
-  if (
-    button.dataset.busy ===
-    "true"
-  ) {
-
-    return;
-
-  }
-
-
-  button.dataset.busy =
-    "true";
-
-  button.disabled =
-    true;
-
-
-  const code =
-    String(
-      button.dataset.code ||
-      ""
-    )
-      .trim()
-      .toUpperCase();
-
-
-  const link =
-    String(
-      button.dataset.link ||
-      "https://www.mercadolibre.com.mx/"
-    )
-      .trim();
-
-
-  if (!code) {
-
-    button.dataset.busy =
-      "false";
-
-    button.disabled =
-      false;
-
-
-    showToast(
-      "❌ Cupón no disponible"
-    );
-
-
-    return;
-
-  }
-
-
-  /*
-  =========================================================
-   COPIAR
-  =========================================================
-  */
-
-  let copied =
-    false;
-
-
-  try {
-
-    if (
-      navigator.clipboard &&
-      window.isSecureContext
-    ) {
-
-      await navigator.clipboard.writeText(
-        code
+      mobileMenu.classList.toggle(
+        "show"
       );
-
-      copied =
-        true;
 
     }
-
-  } catch (
-    error
-  ) {
-
-    copied =
-      false;
-
-  }
-
-
-  /*
-  =========================================================
-   RESPALDO
-  =========================================================
-  */
-
-  if (!copied) {
-
-    try {
-
-      const textarea =
-        document.createElement(
-          "textarea"
-        );
-
-
-      textarea.value =
-        code;
-
-
-      textarea.setAttribute(
-        "readonly",
-        ""
-      );
-
-
-      textarea.style.position =
-        "fixed";
-
-      textarea.style.top =
-        "0";
-
-      textarea.style.left =
-        "-9999px";
-
-      textarea.style.opacity =
-        "0";
-
-
-      document.body.appendChild(
-        textarea
-      );
-
-
-      textarea.focus();
-
-      textarea.select();
-
-
-      textarea.setSelectionRange(
-        0,
-        textarea.value.length
-      );
-
-
-      copied =
-        document.execCommand(
-          "copy"
-        );
-
-
-      textarea.remove();
-
-    } catch (
-      error
-    ) {
-
-      copied =
-        false;
-
-    }
-
-  }
-
-
-  /*
-  =========================================================
-   MENSAJE
-  =========================================================
-  */
-
-  if (copied) {
-
-    showToast(
-      `✅ Cupón ${code} copiado`
-    );
-
-  } else {
-
-    showToast(
-      `🎟️ Cupón: ${code}`
-    );
-
-  }
-
-
-  /*
-  =========================================================
-   BOTÓN
-  =========================================================
-  */
-
-  const originalHTML =
-    button.innerHTML;
-
-
-  button.innerHTML =
-    `✓ ${code} COPIADO`;
-
-
-  button.classList.add(
-    "copied"
   );
 
 
-  /*
-  =========================================================
-   ABRIR MERCADO LIBRE INMEDIATAMENTE
-  =========================================================
+  mobileMenu
+    .querySelectorAll(
+      "a"
+    )
+    .forEach(
+      link => {
 
-   IMPORTANTE:
+        link.addEventListener(
+          "click",
+          () => {
 
-   Ya no esperamos a Firestore.
-   =========================================================
-  */
+            mobileMenu.classList.remove(
+              "show"
+            );
 
-  openMercadoLibre(
-    link
-  );
-
-
-  /*
-  =========================================================
-   REGISTRAR COPIA
-  =========================================================
-  */
-
-  try {
-
-    await addDoc(
-      collection(
-        db,
-        "copias"
-      ),
-      {
-
-        codigo:
-          code,
-
-        fecha:
-          serverTimestamp(),
-
-        pagina:
-          location.pathname
+          }
+        );
 
       }
     );
 
-  } catch (
-    error
-  ) {
+}
 
-    console.log(
-      "No se pudo registrar la copia:",
-      error
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+const modal =
+  document.getElementById(
+    "accountModal"
+  );
+
+
+function openAccountModal() {
+
+  if (modal) {
+
+    modal.classList.add(
+      "show"
     );
 
   }
 
+}
 
-  /*
-  =========================================================
-   RESTAURAR
-  =========================================================
-  */
 
-  setTimeout(
-    () => {
+function closeAccountModal() {
 
-      button.innerHTML =
-        originalHTML;
+  if (modal) {
 
-      button.classList.remove(
-        "copied"
-      );
+    modal.classList.remove(
+      "show"
+    );
 
-      button.dataset.busy =
-        "false";
+  }
 
-      button.disabled =
-        false;
+}
 
-    },
-    3000
+
+const accountButton =
+  document.getElementById(
+    "accountButton"
+  );
+
+const mobileAccountButton =
+  document.getElementById(
+    "mobileAccountButton"
+  );
+
+const closeModal =
+  document.getElementById(
+    "closeModal"
+  );
+
+
+if (accountButton) {
+
+  accountButton.addEventListener(
+    "click",
+    openAccountModal
   );
 
 }
 
 
-/* =========================================================
-   EVENT DELEGATION CUPONES
-========================================================= */
+if (mobileAccountButton) {
 
-document.addEventListener(
-  "click",
-  event => {
+  mobileAccountButton.addEventListener(
+    "click",
+    () => {
 
-    const button =
-      event.target.closest(
-        ".copy-coupon"
-      );
+      openAccountModal();
 
+      if (mobileMenu) {
 
-    if (!button) {
-      return;
+        mobileMenu.classList.remove(
+          "show"
+        );
+
+      }
+
     }
+  );
 
+}
 
-    event.preventDefault();
-    event.stopPropagation();
 
+if (closeModal) {
 
-    copyCoupon(
-      button
-    );
+  closeModal.addEventListener(
+    "click",
+    closeAccountModal
+  );
 
-  }
-);
+}
 
 
-/* =========================================================
-   CREAR CARD CUPÓN
-========================================================= */
+if (modal) {
 
-function createCouponCard(
-  data,
-  type = "flash"
-) {
+  modal.addEventListener(
+    "click",
+    event => {
 
-  const article =
-    document.createElement(
-      "article"
-    );
+      if (
+        event.target === modal
+      ) {
 
+        closeAccountModal();
 
-  article.className =
-    `coupon-card ${type}`;
+      }
 
-
-  const codigo =
-    String(
-      data.codigo ||
-      data.code ||
-      ""
-    )
-      .trim()
-      .toUpperCase();
-
-
-  const descuento =
-    data.descuento ||
-    data.descuentoTexto ||
-    "";
-
-
-  const titulo =
-    data.titulo ||
-    data.nombre ||
-    "Cupón disponible";
-
-
-  const minimo =
-    data.compraMinima ||
-    data.minimo ||
-    data.compra_minima ||
-    "";
-
-
-  const tope =
-    data.tope ||
-    data.topeMaximo ||
-    "";
-
-
-  const link =
-    data.link ||
-    data.enlace ||
-    "https://www.mercadolibre.com.mx/";
-
-
-  const categoria =
-    data.categoria ||
-    "";
-
-
-  let badge =
-    "⚡ RELÁMPAGO";
-
-
-  if (
-    type === "exclusive"
-  ) {
-
-    badge =
-      data.badge ||
-      "🎁 EXCLUSIVO";
-
-  }
-
-
-  if (
-    type === "bank"
-  ) {
-
-    badge =
-      data.badge ||
-      "🏦 BANCARIO";
-
-  }
-
-
-  let status =
-    data.estado ||
-    data.status ||
-    "activo";
-
-
-  status =
-    String(
-      status
-    )
-      .toLowerCase();
-
-
-  let statusClass =
-    "active";
-
-
-  let statusText =
-    "🟢 ACTIVO";
-
-
-  if (
-    status.includes(
-      "agot"
-    )
-  ) {
-
-    statusClass =
-      "expired";
-
-    statusText =
-      "🔴 AGOTADO";
-
-  } else if (
-    status.includes(
-      "por"
-    ) ||
-    status.includes(
-      "warning"
-    ) ||
-    status.includes(
-      "proximo"
-    )
-  ) {
-
-    statusClass =
-      "warning";
-
-    statusText =
-      "🟠 POR AGOTARSE";
-
-  }
-
-
-  let masked =
-    "●●●●●";
-
-
-  if (
-    codigo.length > 0
-  ) {
-
-    masked =
-      codigo.charAt(0) +
-      "●●●●●";
-
-  }
-
-
-  /*
-  =========================================================
-   BANCARIO
-  =========================================================
-  */
-
-  if (
-    type === "bank"
-  ) {
-
-    article.className =
-      "bank-card";
-
-
-    article.innerHTML = `
-
-      <div class="bank-logo">
-        ${escapeHtml(
-          data.banco ||
-          data.nombre ||
-          "BANCO"
-        )}
-      </div>
-
-      <div>
-
-        <span class="bank-badge">
-          ${escapeHtml(
-            descuento ||
-            data.porcentaje ||
-            ""
-          )}
-        </span>
-
-        <h3>
-          ${escapeHtml(
-            titulo
-          )}
-        </h3>
-
-        ${
-          minimo
-            ? `
-              <p>
-                Compra mínima:
-                <strong>
-                  $${formatMoney(
-                    minimo
-                  )}
-                </strong>
-              </p>
-            `
-            : ""
-        }
-
-        ${
-          tope
-            ? `
-              <p>
-                Tope:
-                <strong>
-                  $${formatMoney(
-                    tope
-                  )}
-                </strong>
-              </p>
-            `
-            : ""
-        }
-
-      </div>
-
-      <button
-        type="button"
-        class="copy-coupon bank-button"
-        data-code="${escapeAttribute(
-          codigo
-        )}"
-        data-link="${escapeAttribute(
-          link
-        )}"
-      >
-        📋 COPIAR CUPÓN
-      </button>
-
-    `;
-
-
-    return article;
-
-  }
-
-
-  /*
-  =========================================================
-   CUPÓN NORMAL
-  =========================================================
-  */
-
-  article.innerHTML = `
-
-    <div class="coupon-top">
-
-      <span class="coupon-badge ${
-        type === "exclusive"
-          ? "purple"
-          : ""
-      }">
-
-        ${escapeHtml(
-          badge
-        )}
-
-      </span>
-
-      <span
-        class="coupon-status ${statusClass}"
-      >
-        ${statusText}
-      </span>
-
-    </div>
-
-    <div class="coupon-discount">
-
-      ${escapeHtml(
-        descuento ||
-        "CUPÓN"
-      )}
-
-    </div>
-
-    <h3>
-      ${escapeHtml(
-        titulo
-      )}
-    </h3>
-
-    ${
-      minimo
-        ? `
-          <p>
-            Compra mínima:
-            <strong>
-              $${formatMoney(
-                minimo
-              )}
-            </strong>
-          </p>
-        `
-        : ""
     }
+  );
 
-    ${
-      tope
-        ? `
-          <p>
-            Tope:
-            <strong>
-              $${formatMoney(
-                tope
-              )}
-            </strong>
-          </p>
-        `
-        : ""
-    }
-
-    ${
-      categoria
-        ? `
-          <small class="coupon-category">
-            ${escapeHtml(
-              categoria
-            )}
-          </small>
-        `
-        : ""
-    }
-
-    <div class="coupon-code">
-
-      ${escapeHtml(
-        masked
-      )}
-
-    </div>
-
-    <button
-      type="button"
-      class="copy-coupon"
-      data-code="${escapeAttribute(
-        codigo
-      )}"
-      data-link="${escapeAttribute(
-        link
-      )}"
-    >
-      📋 COPIAR CUPÓN
-    </button>
-
-    <small class="coupon-note">
-      El código se mostrará al copiar.
-    </small>
-
-  `;
+}
 
 
-  return article;
+const modalRegister =
+  document.getElementById(
+    "modalRegister"
+  );
+
+
+if (modalRegister) {
+
+  modalRegister.addEventListener(
+    "click",
+    closeAccountModal
+  );
 
 }
 
@@ -3088,15 +3529,11 @@ function createCouponCard(
    FORMATO DINERO
 ========================================================= */
 
-function formatMoney(
-  value
-) {
+function formatMoney(value) {
 
   const number =
     Number(
-      String(
-        value
-      )
+      String(value)
         .replace(
           /[$,\s]/g,
           ""
@@ -3105,14 +3542,10 @@ function formatMoney(
 
 
   if (
-    Number.isNaN(
-      number
-    )
+    Number.isNaN(number)
   ) {
 
-    return String(
-      value
-    );
+    return String(value);
 
   }
 
@@ -3128,9 +3561,7 @@ function formatMoney(
    ESCAPE HTML
 ========================================================= */
 
-function escapeHtml(
-  value
-) {
+function escapeHtml(value) {
 
   return String(
     value ?? ""
@@ -3164,815 +3595,46 @@ function escapeHtml(
 }
 
 
-/* =========================================================
-   ESCAPE ATRIBUTO
-========================================================= */
+function escapeAttribute(value) {
 
-function escapeAttribute(
-  value
-) {
-
-  return escapeHtml(
-    value
-  );
+  return escapeHtml(value);
 
 }
 
 
 /* =========================================================
-   CARGAR CUPONES
+   FILE → BASE64
 ========================================================= */
 
-async function loadCoupons() {
+function fileToBase64(file) {
 
-  const flash =
-    document.getElementById(
-      "flashCouponCarousel"
-    );
+  return new Promise(
+    (
+      resolve,
+      reject
+    ) => {
 
-
-  const exclusive =
-    document.getElementById(
-      "exclusiveCarousel"
-    );
+      const reader =
+        new FileReader();
 
 
-  const bank =
-    document.getElementById(
-      "bankCarousel"
-    );
+      reader.onload =
+        () => {
+
+          resolve(
+            reader.result
+          );
+
+        };
 
 
-  if (flash) {
-    flash.innerHTML = "";
-  }
-
-  if (exclusive) {
-    exclusive.innerHTML = "";
-  }
-
-  if (bank) {
-    bank.innerHTML = "";
-  }
+      reader.onerror =
+        reject;
 
 
-  let flashCount = 0;
-
-
-  try {
-
-    const snapshot =
-      await getDocs(
-        collection(
-          db,
-          "cupones"
-        )
+      reader.readAsDataURL(
+        file
       );
-
-
-    snapshot.forEach(
-      documentSnapshot => {
-
-        const data =
-          documentSnapshot.data();
-
-
-        const tipo =
-          String(
-            data.tipo ||
-            data.categoria ||
-            "flash"
-          )
-            .toLowerCase();
-
-
-        const estado =
-          String(
-            data.estado ||
-            "activo"
-          )
-            .toLowerCase();
-
-
-        if (
-          estado.includes(
-            "agot"
-          )
-        ) {
-
-          return;
-
-        }
-
-
-        let target =
-          flash;
-
-        let cardType =
-          "flash";
-
-
-        if (
-          tipo.includes(
-            "banc"
-          )
-        ) {
-
-          target =
-            bank;
-
-          cardType =
-            "bank";
-
-        } else if (
-          tipo.includes(
-            "exclus"
-          ) ||
-          tipo.includes(
-            "tienda"
-          ) ||
-          tipo.includes(
-            "meli+"
-          ) ||
-          tipo.includes(
-            "especial"
-          )
-        ) {
-
-          target =
-            exclusive;
-
-          cardType =
-            "exclusive";
-
-        }
-
-
-        if (!target) {
-          return;
-        }
-
-
-        const card =
-          createCouponCard(
-            data,
-            cardType
-          );
-
-
-        target.appendChild(
-          card
-        );
-
-
-        if (
-          cardType === "flash"
-        ) {
-
-          flashCount++;
-
-        }
-
-      }
-    );
-
-
-  } catch (
-    error
-  ) {
-
-    console.error(
-      "Error cargando cupones:",
-      error
-    );
-
-  }
-
-
-  const counter =
-    document.getElementById(
-      "activeCouponCounter"
-    );
-
-
-  const heroCount =
-    document.getElementById(
-      "heroCouponCount"
-    );
-
-
-  if (counter) {
-
-    counter.textContent =
-      `🟢 ${flashCount} activos`;
-
-  }
-
-
-  if (heroCount) {
-
-    heroCount.textContent =
-      flashCount > 0
-        ? `${flashCount}+`
-        : "0";
-
-  }
-
-
-  if (
-    flash &&
-    !flash.children.length
-  ) {
-
-    flash.innerHTML = `
-
-      <article class="coupon-card flash">
-
-        <div class="coupon-top">
-
-          <span class="coupon-badge">
-            ⚡ RELÁMPAGO
-          </span>
-
-          <span class="coupon-status warning">
-            🟠 ESPERA
-          </span>
-
-        </div>
-
-        <div class="coupon-discount">
-          PRÓXIMAMENTE
-        </div>
-
-        <h3>
-          Estamos actualizando los cupones
-        </h3>
-
-        <p>
-          Revisa nuevamente en unos momentos.
-        </p>
-
-      </article>
-
-    `;
-
-  }
-
-
-  flashCarousel =
-    createCarousel(
-      flash,
-      null,
-      null,
-      document.getElementById(
-        "flashDots"
-      ),
-      {
-        desktopVisible: 4
-      }
-    );
-
-
-  exclusiveCarousel =
-    createCarousel(
-      exclusive,
-      document.getElementById(
-        "exclusiveNext"
-      ),
-      document.getElementById(
-        "exclusivePrev"
-      ),
-      document.getElementById(
-        "exclusiveDots"
-      ),
-      {
-        desktopVisible: 3
-      }
-    );
-
-
-  bankCarousel =
-    createCarousel(
-      bank,
-      document.getElementById(
-        "bankNext"
-      ),
-      document.getElementById(
-        "bankPrev"
-      ),
-      document.getElementById(
-        "bankDots"
-      ),
-      {
-        desktopVisible: 4
-      }
-    );
-
-
-  startFlashAuto();
-
-}
-
-
-/* =========================================================
-   AUTO CARRUSEL RELÁMPAGO
-========================================================= */
-
-let flashAutoTimer =
-  null;
-
-let flashMoves =
-  0;
-
-
-function startFlashAuto() {
-
-  clearInterval(
-    flashAutoTimer
-  );
-
-
-  if (!flashCarousel) {
-    return;
-  }
-
-
-  flashMoves =
-    0;
-
-
-  flashAutoTimer =
-    setInterval(
-      () => {
-
-        if (
-          flashMoves >= 3
-        ) {
-
-          clearInterval(
-            flashAutoTimer
-          );
-
-          return;
-
-        }
-
-
-        if (flashCarousel) {
-
-          flashCarousel.next();
-
-        }
-
-
-        flashMoves++;
-
-      },
-      2500
-    );
-
-}
-
-
-/* =========================================================
-   OFERTAS FIRESTORE
-========================================================= */
-
-async function loadFirebaseOffers() {
-
-  const carousel =
-    document.getElementById(
-      "offerCarousel"
-    );
-
-
-  if (!carousel) {
-    return;
-  }
-
-
-  try {
-
-    const snapshot =
-      await getDocs(
-        collection(
-          db,
-          "ofertas"
-        )
-      );
-
-
-    if (
-      snapshot.empty
-    ) {
-
-      offerCarousel =
-        createCarousel(
-          carousel,
-          document.getElementById(
-            "offerNext"
-          ),
-          document.getElementById(
-            "offerPrev"
-          ),
-          document.getElementById(
-            "offerDots"
-          ),
-          {
-            desktopVisible: 3
-          }
-        );
-
-      return;
-
-    }
-
-
-    carousel.innerHTML =
-      "";
-
-
-    snapshot.forEach(
-      documentSnapshot => {
-
-        const data =
-          documentSnapshot.data();
-
-
-        const card =
-          document.createElement(
-            "article"
-          );
-
-
-        card.className =
-          "offer-card";
-
-
-        const precioAntes =
-          Number(
-            data.precioAntes ||
-            0
-          );
-
-
-        const precioActual =
-          Number(
-            data.precioActual ||
-            0
-          );
-
-
-        let descuento =
-          0;
-
-
-        if (
-          precioAntes > 0 &&
-          precioActual > 0 &&
-          precioActual <
-          precioAntes
-        ) {
-
-          descuento =
-            Math.round(
-              (
-                1 -
-                precioActual /
-                precioAntes
-              ) *
-              100
-            );
-
-        }
-
-
-        const titulo =
-          data.titulo ||
-          "Oferta especial";
-
-
-        const categoria =
-          data.categoria ||
-          "Oferta";
-
-
-        const link =
-          data.link ||
-          "https://www.mercadolibre.com.mx/";
-
-
-        const imagen =
-          data.imagenBase64 ||
-          data.imagen ||
-          "";
-
-
-        card.innerHTML = `
-
-          <div class="offer-image">
-
-            ${
-              descuento > 0
-                ? `
-                  <span class="offer-discount">
-                    -${descuento}%
-                  </span>
-                `
-                : ""
-            }
-
-            ${
-              imagen
-                ? `
-                  <img
-                    src="${escapeAttribute(
-                      imagen
-                    )}"
-                    alt="${escapeAttribute(
-                      titulo
-                    )}"
-                    loading="lazy"
-                  >
-                `
-                : `
-                  <div class="product-placeholder">
-                    🔥
-                  </div>
-                `
-            }
-
-          </div>
-
-
-          <div class="offer-content">
-
-            <span class="offer-category">
-              ${escapeHtml(
-                categoria
-              )}
-            </span>
-
-
-            <h3>
-              ${escapeHtml(
-                titulo
-              )}
-            </h3>
-
-
-            <div class="prices">
-
-              ${
-                precioAntes > 0
-                  ? `
-                    <span class="old-price">
-                      $${formatMoney(
-                        precioAntes
-                      )}
-                    </span>
-                  `
-                  : ""
-              }
-
-
-              <strong>
-                $${formatMoney(
-                  precioActual
-                )}
-              </strong>
-
-            </div>
-
-
-            ${
-              precioAntes >
-              precioActual
-                ? `
-                  <div class="offer-save">
-                    Ahorras
-                    $${formatMoney(
-                      precioAntes -
-                      precioActual
-                    )}
-                  </div>
-                `
-                : ""
-            }
-
-
-            <a
-              href="${escapeAttribute(
-                link
-              )}"
-              class="offer-button mercado-link"
-            >
-              VER OFERTA
-            </a>
-
-          </div>
-
-        `;
-
-
-        carousel.appendChild(
-          card
-        );
-
-      }
-    );
-
-
-    offerCarousel =
-      createCarousel(
-        carousel,
-        document.getElementById(
-          "offerNext"
-        ),
-        document.getElementById(
-          "offerPrev"
-        ),
-        document.getElementById(
-          "offerDots"
-        ),
-        {
-          desktopVisible: 3
-        }
-      );
-
-
-  } catch (
-    error
-  ) {
-
-    console.error(
-      "Firebase ofertas:",
-      error
-    );
-
-
-    offerCarousel =
-      createCarousel(
-        carousel,
-        document.getElementById(
-          "offerNext"
-        ),
-        document.getElementById(
-          "offerPrev"
-        ),
-        document.getElementById(
-          "offerDots"
-        ),
-        {
-          desktopVisible: 3
-        }
-      );
-
-  }
-
-}
-
-
-/* =========================================================
-   BUSCADOR
-========================================================= */
-
-const searchInput =
-  document.getElementById(
-    "searchInput"
-  );
-
-
-const searchButton =
-  document.getElementById(
-    "searchButton"
-  );
-
-
-function searchSite() {
-
-  if (!searchInput) {
-    return;
-  }
-
-
-  const value =
-    searchInput.value
-      .trim()
-      .toLowerCase();
-
-
-  if (!value) {
-
-    showToast(
-      "Escribe algo para buscar 🔎"
-    );
-
-    return;
-
-  }
-
-
-  const cards =
-    document.querySelectorAll(
-      ".offer-card, .coupon-card, .category-card, .bank-card"
-    );
-
-
-  let found =
-    false;
-
-
-  cards.forEach(
-    card => {
-
-      const text =
-        (
-          card.innerText ||
-          ""
-        )
-          .toLowerCase();
-
-
-      if (
-        text.includes(
-          value
-        )
-      ) {
-
-        card.style.outline =
-          "4px solid #ffe600";
-
-        card.style.outlineOffset =
-          "3px";
-
-
-        if (!found) {
-
-          card.scrollIntoView({
-            behavior:
-              "smooth",
-            block:
-              "center"
-          });
-
-        }
-
-
-        found =
-          true;
-
-      } else {
-
-        card.style.outline =
-          "";
-
-      }
-
-    }
-  );
-
-
-  if (!found) {
-
-    showToast(
-      "No encontramos resultados 😕"
-    );
-
-  } else {
-
-    showToast(
-      "Oferta encontrada 🔥"
-    );
-
-  }
-
-}
-
-
-if (searchButton) {
-
-  searchButton.addEventListener(
-    "click",
-    searchSite
-  );
-
-}
-
-
-if (searchInput) {
-
-  searchInput.addEventListener(
-    "keydown",
-    event => {
-
-      if (
-        event.key === "Enter"
-      ) {
-
-        searchSite();
-
-      }
 
     }
   );
@@ -3981,7 +3643,7 @@ if (searchInput) {
 
 
 /* =========================================================
-   REGISTRO DE USUARIOS
+   REGISTRO
 ========================================================= */
 
 const registerForm =
@@ -4148,9 +3810,7 @@ if (registerForm) {
         registerForm.reset();
 
 
-      } catch (
-        error
-      ) {
+      } catch (error) {
 
         console.error(
           "Registro:",
@@ -4182,48 +3842,6 @@ if (registerForm) {
         }
 
       }
-
-    }
-  );
-
-}
-
-
-/* =========================================================
-   FILE → BASE64
-========================================================= */
-
-function fileToBase64(
-  file
-) {
-
-  return new Promise(
-    (
-      resolve,
-      reject
-    ) => {
-
-      const reader =
-        new FileReader();
-
-
-      reader.onload =
-        () => {
-
-          resolve(
-            reader.result
-          );
-
-        };
-
-
-      reader.onerror =
-        reject;
-
-
-      reader.readAsDataURL(
-        file
-      );
 
     }
   );
@@ -4307,7 +3925,9 @@ async function loadWinner() {
 
 
     if (!winner) {
+
       return;
+
     }
 
 
@@ -4357,9 +3977,7 @@ async function loadWinner() {
     }
 
 
-  } catch (
-    error
-  ) {
+  } catch (error) {
 
     console.log(
       "Ranking:",
@@ -4370,64 +3988,1017 @@ async function loadWinner() {
 
 }
 
+</script>
+<script type="module">
 
 /* =========================================================
-   ENLACES MERCADO LIBRE
+   CARRUSELES OPTIMIZADOS PARA TÁCTIL
+   - Sin arrastre manual con transform
+   - Usa scroll nativo del navegador
+   - Mucho más fluido en iPhone
+   - No interfiere con botones ni enlaces
 ========================================================= */
 
-document.addEventListener(
-  "click",
-  event => {
+function createSmoothCarousel(
+  element,
+  nextButton,
+  prevButton,
+  dotsElement
+) {
 
-    const link =
-      event.target.closest(
-        "a.mercado-link"
+  if (!element) {
+    return null;
+  }
+
+
+  let cards = [];
+
+
+  function updateCards() {
+
+    cards =
+      Array.from(
+        element.children
       );
-
-
-    if (!link) {
-      return;
-    }
-
-
-    const href =
-      link.getAttribute(
-        "href"
-      );
-
-
-    if (!href) {
-      return;
-    }
-
-
-    /*
-    Dejamos que iOS/Safari procese directamente
-    el enlace de Mercado Libre.
-    */
-
-    event.preventDefault();
-
-    window.location.href =
-      href;
 
   }
-);
+
+
+  function getStep() {
+
+    if (!cards.length) {
+      return 0;
+    }
+
+
+    const first =
+      cards[0];
+
+
+    const style =
+      getComputedStyle(
+        element
+      );
+
+
+    const gap =
+      parseFloat(
+        style.columnGap ||
+        style.gap
+      ) || 0;
+
+
+    return (
+      first.getBoundingClientRect().width +
+      gap
+    );
+
+  }
+
+
+  function getMaxScroll() {
+
+    return Math.max(
+      0,
+      element.scrollWidth -
+      element.clientWidth
+    );
+
+  }
+
+
+  function scrollNext() {
+
+    const step =
+      getStep();
+
+
+    if (!step) {
+      return;
+    }
+
+
+    const max =
+      getMaxScroll();
+
+
+    const next =
+      element.scrollLeft +
+      step;
+
+
+    element.scrollTo({
+
+      left:
+        next >= max - 5
+          ? 0
+          : next,
+
+      behavior:
+        "smooth"
+
+    });
+
+  }
+
+
+  function scrollPrev() {
+
+    const step =
+      getStep();
+
+
+    if (!step) {
+      return;
+    }
+
+
+    const max =
+      getMaxScroll();
+
+
+    const previous =
+      element.scrollLeft -
+      step;
+
+
+    element.scrollTo({
+
+      left:
+        previous <= 5
+          ? max
+          : previous,
+
+      behavior:
+        "smooth"
+
+    });
+
+  }
+
+
+  function createDots() {
+
+    if (!dotsElement) {
+      return;
+    }
+
+
+    dotsElement.innerHTML =
+      "";
+
+
+    updateCards();
+
+
+    if (
+      cards.length <= 1
+    ) {
+
+      return;
+
+    }
+
+
+    const width =
+      element.clientWidth;
+
+
+    const scrollWidth =
+      element.scrollWidth;
+
+
+    const pages =
+      Math.max(
+        1,
+        Math.ceil(
+          scrollWidth /
+          width
+        )
+      );
+
+
+    for (
+      let i = 0;
+      i < pages;
+      i++
+    ) {
+
+      const dot =
+        document.createElement(
+          "button"
+        );
+
+
+      dot.type =
+        "button";
+
+
+      dot.setAttribute(
+        "aria-label",
+        `Página ${i + 1}`
+      );
+
+
+      if (i === 0) {
+
+        dot.classList.add(
+          "active"
+        );
+
+      }
+
+
+      dot.addEventListener(
+        "click",
+        () => {
+
+          const destination =
+            i *
+            width;
+
+
+          element.scrollTo({
+
+            left:
+              destination,
+
+            behavior:
+              "smooth"
+
+          });
+
+        }
+      );
+
+
+      dotsElement.appendChild(
+        dot
+      );
+
+    }
+
+  }
+
+
+  function updateDots() {
+
+    if (!dotsElement) {
+      return;
+    }
+
+
+    const dots =
+      Array.from(
+        dotsElement.children
+      );
+
+
+    if (!dots.length) {
+      return;
+    }
+
+
+    const width =
+      element.clientWidth;
+
+
+    if (!width) {
+      return;
+    }
+
+
+    const index =
+      Math.round(
+        element.scrollLeft /
+        width
+      );
+
+
+    dots.forEach(
+      (
+        dot,
+        i
+      ) => {
+
+        dot.classList.toggle(
+          "active",
+          i === index
+        );
+
+      }
+    );
+
+  }
+
+
+  if (nextButton) {
+
+    nextButton.addEventListener(
+      "click",
+      event => {
+
+        event.preventDefault();
+
+        scrollNext();
+
+      }
+    );
+
+  }
+
+
+  if (prevButton) {
+
+    prevButton.addEventListener(
+      "click",
+      event => {
+
+        event.preventDefault();
+
+        scrollPrev();
+
+      }
+    );
+
+  }
+
+
+  element.addEventListener(
+    "scroll",
+    updateDots,
+    {
+      passive: true
+    }
+  );
+
+
+  window.addEventListener(
+    "resize",
+    () => {
+
+      createDots();
+
+      updateDots();
+
+    },
+    {
+      passive: true
+    }
+  );
+
+
+  /*
+    IMPORTANTE:
+
+    NO usamos touchstart,
+    touchmove ni touchend.
+
+    El navegador controla
+    completamente el gesto.
+  */
+
+
+  createDots();
+
+
+  return {
+
+    next:
+      scrollNext,
+
+    prev:
+      scrollPrev,
+
+    refresh() {
+
+      updateCards();
+
+      createDots();
+
+      updateDots();
+
+    }
+
+  };
+
+}
 
 
 /* =========================================================
-   INICIALIZACIÓN
+   CARGAR CUPONES DESDE FIRESTORE
 ========================================================= */
 
-document.addEventListener(
-  "DOMContentLoaded",
-  () => {
+async function loadCouponsOptimized() {
 
-    offerCarousel =
-      createCarousel(
-        document.getElementById(
-          "offerCarousel"
-        ),
+  const flash =
+    document.getElementById(
+      "flashCouponCarousel"
+    );
+
+
+  const exclusive =
+    document.getElementById(
+      "exclusiveCarousel"
+    );
+
+
+  const bank =
+    document.getElementById(
+      "bankCarousel"
+    );
+
+
+  if (flash) {
+    flash.innerHTML = "";
+  }
+
+
+  if (exclusive) {
+    exclusive.innerHTML = "";
+  }
+
+
+  if (bank) {
+    bank.innerHTML = "";
+  }
+
+
+  let flashCount =
+    0;
+
+
+  try {
+
+    const snapshot =
+      await getDocs(
+        collection(
+          db,
+          "cupones"
+        )
+      );
+
+
+    snapshot.forEach(
+      documentSnapshot => {
+
+        const data =
+          documentSnapshot.data();
+
+
+        const tipo =
+          String(
+            data.tipo ||
+            data.categoria ||
+            "flash"
+          )
+            .toLowerCase();
+
+
+        const estado =
+          String(
+            data.estado ||
+            "activo"
+          )
+            .toLowerCase();
+
+
+        if (
+          estado.includes(
+            "agot"
+          )
+        ) {
+
+          return;
+
+        }
+
+
+        let target =
+          flash;
+
+
+        let cardType =
+          "flash";
+
+
+        if (
+          tipo.includes(
+            "banc"
+          )
+        ) {
+
+          target =
+            bank;
+
+          cardType =
+            "bank";
+
+        }
+        else if (
+          tipo.includes(
+            "exclus"
+          ) ||
+          tipo.includes(
+            "tienda"
+          ) ||
+          tipo.includes(
+            "meli+"
+          ) ||
+          tipo.includes(
+            "especial"
+          )
+        ) {
+
+          target =
+            exclusive;
+
+          cardType =
+            "exclusive";
+
+        }
+
+
+        if (!target) {
+          return;
+        }
+
+
+        const card =
+          createCouponCard(
+            data,
+            cardType
+          );
+
+
+        target.appendChild(
+          card
+        );
+
+
+        if (
+          cardType ===
+          "flash"
+        ) {
+
+          flashCount++;
+
+        }
+
+      }
+    );
+
+
+  }
+  catch (error) {
+
+    console.error(
+      "Error cargando cupones:",
+      error
+    );
+
+  }
+
+
+  const counter =
+    document.getElementById(
+      "activeCouponCounter"
+    );
+
+
+  const heroCount =
+    document.getElementById(
+      "heroCouponCount"
+    );
+
+
+  if (counter) {
+
+    counter.textContent =
+      `🟢 ${flashCount} activos`;
+
+  }
+
+
+  if (heroCount) {
+
+    heroCount.textContent =
+      flashCount > 0
+        ? `${flashCount}+`
+        : "0";
+
+  }
+
+
+  if (
+    flash &&
+    !flash.children.length
+  ) {
+
+    flash.innerHTML = `
+
+      <article class="coupon-card flash">
+
+        <div class="coupon-top">
+
+          <span class="coupon-badge">
+            ⚡ RELÁMPAGO
+          </span>
+
+          <span class="coupon-status warning">
+            🟠 ESPERA
+          </span>
+
+        </div>
+
+        <div class="coupon-discount">
+          PRÓXIMAMENTE
+        </div>
+
+        <h3>
+          Estamos actualizando los cupones
+        </h3>
+
+        <p>
+          Revisa nuevamente en unos momentos.
+        </p>
+
+      </article>
+
+    `;
+
+  }
+
+
+  /*
+    Carruseles nativos.
+  */
+
+  window.flashCarousel =
+    createSmoothCarousel(
+      flash,
+      null,
+      null,
+      document.getElementById(
+        "flashDots"
+      )
+    );
+
+
+  window.exclusiveCarousel =
+    createSmoothCarousel(
+      exclusive,
+      document.getElementById(
+        "exclusiveNext"
+      ),
+      document.getElementById(
+        "exclusivePrev"
+      ),
+      document.getElementById(
+        "exclusiveDots"
+      )
+    );
+
+
+  window.bankCarousel =
+    createSmoothCarousel(
+      bank,
+      document.getElementById(
+        "bankNext"
+      ),
+      document.getElementById(
+        "bankPrev"
+      ),
+      document.getElementById(
+        "bankDots"
+      )
+    );
+
+
+  startFlashAutoOptimized();
+
+}
+
+
+/* =========================================================
+   AUTO CARRUSEL CUPONES
+========================================================= */
+
+let flashAutoTimerOptimized =
+  null;
+
+let flashMovesOptimized =
+  0;
+
+
+function startFlashAutoOptimized() {
+
+  clearInterval(
+    flashAutoTimerOptimized
+  );
+
+
+  if (
+    !window.flashCarousel
+  ) {
+
+    return;
+
+  }
+
+
+  flashMovesOptimized =
+    0;
+
+
+  flashAutoTimerOptimized =
+    setInterval(
+      () => {
+
+        if (
+          flashMovesOptimized >= 3
+        ) {
+
+          clearInterval(
+            flashAutoTimerOptimized
+          );
+
+          return;
+
+        }
+
+
+        if (
+          window.flashCarousel
+        ) {
+
+          window.flashCarousel.next();
+
+        }
+
+
+        flashMovesOptimized++;
+
+      },
+      3500
+    );
+
+}
+
+
+/* =========================================================
+   OFERTAS DESDE FIRESTORE
+========================================================= */
+
+async function loadFirebaseOffersOptimized() {
+
+  const carousel =
+    document.getElementById(
+      "offerCarousel"
+    );
+
+
+  if (!carousel) {
+    return;
+  }
+
+
+  try {
+
+    const snapshot =
+      await getDocs(
+        collection(
+          db,
+          "ofertas"
+        )
+      );
+
+
+    if (
+      snapshot.empty
+    ) {
+
+      window.offerCarousel =
+        createSmoothCarousel(
+          carousel,
+          document.getElementById(
+            "offerNext"
+          ),
+          document.getElementById(
+            "offerPrev"
+          ),
+          document.getElementById(
+            "offerDots"
+          )
+        );
+
+      return;
+
+    }
+
+
+    carousel.innerHTML =
+      "";
+
+
+    snapshot.forEach(
+      documentSnapshot => {
+
+        const data =
+          documentSnapshot.data();
+
+
+        const card =
+          document.createElement(
+            "article"
+          );
+
+
+        card.className =
+          "offer-card";
+
+
+        const precioAntes =
+          Number(
+            data.precioAntes ||
+            0
+          );
+
+
+        const precioActual =
+          Number(
+            data.precioActual ||
+            0
+          );
+
+
+        let descuento =
+          0;
+
+
+        if (
+          precioAntes > 0 &&
+          precioActual > 0 &&
+          precioActual <
+            precioAntes
+        ) {
+
+          descuento =
+            Math.round(
+              (
+                1 -
+                precioActual /
+                  precioAntes
+              ) *
+              100
+            );
+
+        }
+
+
+        const titulo =
+          data.titulo ||
+          "Oferta especial";
+
+
+        const categoria =
+          data.categoria ||
+          "Oferta";
+
+
+        const link =
+          data.link ||
+          "https://www.mercadolibre.com.mx/";
+
+
+        const imagen =
+          data.imagenBase64 ||
+          data.imagen ||
+          "";
+
+
+        card.innerHTML = `
+
+          <div class="offer-image">
+
+            ${
+              descuento > 0
+                ? `
+                  <span class="offer-discount">
+                    -${descuento}%
+                  </span>
+                `
+                : ""
+            }
+
+            ${
+              imagen
+                ? `
+                  <img
+                    src="${escapeAttribute(
+                      imagen
+                    )}"
+                    alt="${escapeAttribute(
+                      titulo
+                    )}"
+                    loading="lazy"
+                    decoding="async"
+                  >
+                `
+                : `
+                  <div class="product-placeholder">
+                    🔥
+                  </div>
+                `
+            }
+
+          </div>
+
+
+          <div class="offer-content">
+
+            <span class="offer-category">
+              ${escapeHtml(
+                categoria
+              )}
+            </span>
+
+
+            <h3>
+              ${escapeHtml(
+                titulo
+              )}
+            </h3>
+
+
+            <div class="prices">
+
+              ${
+                precioAntes > 0
+                  ? `
+                    <span class="old-price">
+                      $${formatMoney(
+                        precioAntes
+                      )}
+                    </span>
+                  `
+                  : ""
+              }
+
+
+              <strong>
+                $${formatMoney(
+                  precioActual
+                )}
+              </strong>
+
+            </div>
+
+
+            ${
+              precioAntes >
+              precioActual
+                ? `
+                  <div class="offer-save">
+                    Ahorras
+                    $${formatMoney(
+                      precioAntes -
+                      precioActual
+                    )}
+                  </div>
+                `
+                : ""
+            }
+
+
+            <a
+              href="${escapeAttribute(
+                link
+              )}"
+              class="offer-button ml-app-link"
+              data-ml-link="${escapeAttribute(
+                link
+              )}"
+            >
+              VER OFERTA
+            </a>
+
+          </div>
+
+        `;
+
+
+        carousel.appendChild(
+          card
+        );
+
+      }
+    );
+
+
+    window.offerCarousel =
+      createSmoothCarousel(
+        carousel,
         document.getElementById(
           "offerNext"
         ),
@@ -4436,23 +5007,700 @@ document.addEventListener(
         ),
         document.getElementById(
           "offerDots"
-        ),
-        {
-          desktopVisible: 3
-        }
+        )
       );
 
 
-    loadFirebaseOffers();
+    setupMercadoLibreLinks();
 
-    loadCoupons();
+
+  }
+  catch (error) {
+
+    console.error(
+      "Firebase ofertas:",
+      error
+    );
+
+
+    window.offerCarousel =
+      createSmoothCarousel(
+        carousel,
+        document.getElementById(
+          "offerNext"
+        ),
+        document.getElementById(
+          "offerPrev"
+        ),
+        document.getElementById(
+          "offerDots"
+        )
+      );
+
+  }
+
+}
+
+
+/* =========================================================
+   MERCADO LIBRE APP
+========================================================= */
+
+function openMercadoLibre(
+  url
+) {
+
+  if (!url) {
+    return;
+  }
+
+
+  const cleanUrl =
+    String(url)
+      .trim();
+
+
+  /*
+    Intentamos abrir Mercado Libre
+    inmediatamente.
+
+    En iPhone/iOS el sistema decide
+    si el enlace se abre en la app.
+    */
+
+  window.location.href =
+    cleanUrl;
+
+}
+
+
+/* =========================================================
+   ENLACES DE MERCADO LIBRE
+========================================================= */
+
+function setupMercadoLibreLinks() {
+
+  document
+    .querySelectorAll(
+      ".ml-app-link"
+    )
+    .forEach(
+      link => {
+
+        if (
+          link.dataset.mlReady ===
+          "true"
+        ) {
+
+          return;
+
+        }
+
+
+        link.dataset.mlReady =
+          "true";
+
+
+        link.addEventListener(
+          "click",
+          event => {
+
+            const url =
+              link.dataset.mlLink ||
+              link.href;
+
+
+            if (!url) {
+              return;
+            }
+
+
+            event.preventDefault();
+
+            event.stopPropagation();
+
+
+            openMercadoLibre(
+              url
+            );
+
+          }
+        );
+
+      }
+    );
+
+}
+
+
+/* =========================================================
+   ENLACES DE CATEGORÍAS
+========================================================= */
+
+document
+  .querySelectorAll(
+    ".category-card"
+  )
+  .forEach(
+    link => {
+
+      link.addEventListener(
+        "click",
+        event => {
+
+          const url =
+            link.href;
+
+
+          if (!url) {
+            return;
+          }
+
+
+          event.preventDefault();
+
+          event.stopPropagation();
+
+
+          openMercadoLibre(
+            url
+          );
+
+        }
+      );
+
+    }
+  );
+
+
+/* =========================================================
+   COPIAR CUPÓN + ABRIR MERCADO LIBRE
+   INMEDIATAMENTE AL PRESIONAR
+========================================================= */
+
+async function copyCouponFast(
+  button
+) {
+
+  if (!button) {
+    return;
+  }
+
+
+  if (
+    button.dataset.busy ===
+    "true"
+  ) {
+
+    return;
+
+  }
+
+
+  button.dataset.busy =
+    "true";
+
+  button.disabled =
+    true;
+
+
+  const code =
+    String(
+      button.dataset.code ||
+      ""
+    )
+      .trim()
+      .toUpperCase();
+
+
+  const link =
+    String(
+      button.dataset.link ||
+      "https://www.mercadolibre.com.mx/"
+    )
+      .trim();
+
+
+  if (!code) {
+
+    button.dataset.busy =
+      "false";
+
+    button.disabled =
+      false;
+
+
+    showToast(
+      "❌ Cupón no disponible"
+    );
+
+
+    return;
+
+  }
+
+
+  /*
+    COPIAR CUPÓN.
+
+    No esperamos Firebase antes de abrir
+    Mercado Libre.
+  */
+
+  try {
+
+    if (
+      navigator.clipboard &&
+      window.isSecureContext
+    ) {
+
+      await navigator.clipboard.writeText(
+        code
+      );
+
+    }
+    else {
+
+      const textarea =
+        document.createElement(
+          "textarea"
+        );
+
+
+      textarea.value =
+        code;
+
+
+      textarea.style.position =
+        "fixed";
+
+      textarea.style.left =
+        "-9999px";
+
+
+      document.body.appendChild(
+        textarea
+      );
+
+
+      textarea.focus();
+
+      textarea.select();
+
+
+      document.execCommand(
+        "copy"
+      );
+
+
+      textarea.remove();
+
+    }
+
+  }
+  catch (error) {
+
+    console.log(
+      "No se pudo copiar automáticamente:",
+      error
+    );
+
+  }
+
+
+  button.innerHTML =
+    `✓ ${code} COPIADO`;
+
+
+  button.classList.add(
+    "copied"
+  );
+
+
+  showToast(
+    `✅ Cupón ${code} copiado`
+  );
+
+
+  /*
+    REGISTRO EN SEGUNDO PLANO.
+
+    NO BLOQUEA LA APERTURA.
+  */
+
+  addDoc(
+    collection(
+      db,
+      "copias"
+    ),
+    {
+
+      codigo:
+        code,
+
+      fecha:
+        serverTimestamp(),
+
+      pagina:
+        location.pathname
+
+    }
+  )
+    .catch(
+      error => {
+
+        console.log(
+          "No se pudo registrar la copia:",
+          error
+        );
+
+      }
+    );
+
+
+  /*
+    ABRIR MERCADO LIBRE
+    ENSEGUIDA.
+
+    Ya no esperamos 550 ms.
+  */
+
+  setTimeout(
+    () => {
+
+      openMercadoLibre(
+        link
+      );
+
+    },
+    30
+  );
+
+
+  setTimeout(
+    () => {
+
+      button.dataset.busy =
+        "false";
+
+      button.disabled =
+        false;
+
+    },
+    1500
+  );
+
+}
+
+
+/* =========================================================
+   EVENTO CUPONES
+========================================================= */
+
+document.addEventListener(
+  "click",
+  event => {
+
+    const button =
+      event.target.closest(
+        ".copy-coupon"
+      );
+
+
+    if (!button) {
+      return;
+    }
+
+
+    event.preventDefault();
+
+    event.stopPropagation();
+
+
+    copyCouponFast(
+      button
+    );
+
+  },
+  true
+);
+
+
+/* =========================================================
+   CARRUSEL CATEGORÍAS
+========================================================= */
+
+window.categoryCarousel =
+  createSmoothCarousel(
+    document.getElementById(
+      "categoryCarousel"
+    ),
+    document.getElementById(
+      "categoryNext"
+    ),
+    document.getElementById(
+      "categoryPrev"
+    ),
+    document.getElementById(
+      "categoryDots"
+    )
+  );
+
+
+/* =========================================================
+   BUSCADOR
+========================================================= */
+
+const searchInput =
+  document.getElementById(
+    "searchInput"
+  );
+
+
+const searchButton =
+  document.getElementById(
+    "searchButton"
+  );
+
+
+function searchSite() {
+
+  if (!searchInput) {
+    return;
+  }
+
+
+  const value =
+    searchInput.value
+      .trim()
+      .toLowerCase();
+
+
+  if (!value) {
+
+    showToast(
+      "Escribe algo para buscar 🔎"
+    );
+
+    return;
+
+  }
+
+
+  const cards =
+    document.querySelectorAll(
+      ".offer-card, .coupon-card, .category-card, .bank-card"
+    );
+
+
+  let found =
+    false;
+
+
+  cards.forEach(
+    card => {
+
+      const text =
+        (
+          card.innerText ||
+          ""
+        )
+          .toLowerCase();
+
+
+      if (
+        text.includes(
+          value
+        )
+      ) {
+
+        card.style.outline =
+          "4px solid #ffe600";
+
+
+        card.style.outlineOffset =
+          "3px";
+
+
+        if (!found) {
+
+          card.scrollIntoView({
+
+            behavior:
+              "smooth",
+
+            block:
+              "center"
+
+          });
+
+        }
+
+
+        found =
+          true;
+
+      }
+      else {
+
+        card.style.outline =
+          "";
+
+      }
+
+    }
+  );
+
+
+  if (!found) {
+
+    showToast(
+      "No encontramos resultados 😕"
+    );
+
+  }
+  else {
+
+    showToast(
+      "Oferta encontrada 🔥"
+    );
+
+  }
+
+}
+
+
+if (searchButton) {
+
+  searchButton.addEventListener(
+    "click",
+    searchSite
+  );
+
+}
+
+
+if (searchInput) {
+
+  searchInput.addEventListener(
+    "keydown",
+    event => {
+
+      if (
+        event.key ===
+        "Enter"
+      ) {
+
+        searchSite();
+
+      }
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   INICIALIZACIÓN FINAL
+========================================================= */
+
+document.addEventListener(
+  "DOMContentLoaded",
+  () => {
+
+    /*
+      Cargamos Firebase.
+    */
+
+    loadFirebaseOffersOptimized();
+
+    loadCouponsOptimized();
 
     loadWinner();
+
+
+    /*
+      Configuramos enlaces existentes.
+    */
+
+    setupMercadoLibreLinks();
+
+  }
+);
+
+
+/* =========================================================
+   EVITAR DOBLE CREACIÓN DE CARRUSELES
+========================================================= */
+
+window.addEventListener(
+  "load",
+  () => {
+
+    /*
+      Refresca únicamente los carruseles
+      que ya existen.
+    */
+
+    if (
+      window.categoryCarousel &&
+      window.categoryCarousel.refresh
+    ) {
+
+      window.categoryCarousel.refresh();
+
+    }
+
+
+    if (
+      window.offerCarousel &&
+      window.offerCarousel.refresh
+    ) {
+
+      window.offerCarousel.refresh();
+
+    }
+
+
+    if (
+      window.flashCarousel &&
+      window.flashCarousel.refresh
+    ) {
+
+      window.flashCarousel.refresh();
+
+    }
+
+
+    if (
+      window.exclusiveCarousel &&
+      window.exclusiveCarousel.refresh
+    ) {
+
+      window.exclusiveCarousel.refresh();
+
+    }
+
+
+    if (
+      window.bankCarousel &&
+      window.bankCarousel.refresh
+    ) {
+
+      window.bankCarousel.refresh();
+
+    }
 
   }
 );
 
 </script>
+
+
+<!-- =========================================================
+     FIN DE INDEX.HTML
+========================================================= -->
 
 </body>
 </html>
