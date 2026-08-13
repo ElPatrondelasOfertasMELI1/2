@@ -3,7 +3,7 @@
    ADMIN PRO
    Firebase nuevo
    SIN FIREBASE STORAGE
-   IMÁGENES / VIDEOS EN BASE64
+   Imágenes y videos → Base64 → Firestore
 ========================================================= */
 
 import {
@@ -26,12 +26,7 @@ import {
   doc,
   updateDoc,
   deleteDoc,
-  setDoc,
-  query,
-  orderBy,
-  onSnapshot,
-  serverTimestamp,
-  increment
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 
@@ -80,45 +75,24 @@ const db =
 
 
 /* =========================================================
-   CONFIGURACIÓN MULTIMEDIA
+   CONFIGURACIÓN GENERAL
 ========================================================= */
 
-/*
-   Firestore tiene límite aproximado de 1 MiB por documento.
+const MAX_IMAGE_MB = 1.5;
 
-   Por eso:
-
-   IMAGEN:
-   máximo recomendado: 700 KB
-
-   VIDEO:
-   máximo recomendado: 500 KB
-
-   Los archivos se convierten a Base64.
-
-   IMPORTANTE:
-   Base64 aumenta el tamaño aproximadamente 33%.
-*/
-
-const MAX_IMAGE_BYTES =
-  700 * 1024;
-
-const MAX_VIDEO_BYTES =
-  500 * 1024;
+const MAX_VIDEO_MB = 5;
 
 
 /* =========================================================
-   UTILIDADES
+   UTILIDADES DOM
 ========================================================= */
 
-const $ =
-  selector =>
-    document.querySelector(selector);
+const $ = selector =>
+  document.querySelector(selector);
 
 
-const $$ =
-  selector =>
-    document.querySelectorAll(selector);
+const $$ = selector =>
+  document.querySelectorAll(selector);
 
 
 /* =========================================================
@@ -157,7 +131,7 @@ function money(value) {
 
 
 /* =========================================================
-   CÓDIGO CUPÓN MAYÚSCULAS
+   CÓDIGO CUPÓN
 ========================================================= */
 
 function codeUpper(value) {
@@ -170,7 +144,23 @@ function codeUpper(value) {
 
 
 /* =========================================================
-   MENSAJES
+   NÚMERO
+========================================================= */
+
+function numberValue(value) {
+
+  const number =
+    Number(value);
+
+  return Number.isFinite(number)
+    ? number
+    : 0;
+
+}
+
+
+/* =========================================================
+   MENSAJE ADMIN
 ========================================================= */
 
 function showMessage(
@@ -215,7 +205,7 @@ function showMessage(
       "14px";
 
     box.style.boxShadow =
-      "0 8px 30px rgba(0,0,0,.25)";
+      "0 10px 30px rgba(0,0,0,.25)";
 
     document.body.appendChild(
       box
@@ -232,7 +222,6 @@ function showMessage(
     type === "error"
       ? "#e53935"
       : "#00a650";
-
 
   box.style.color =
     "#fff";
@@ -273,22 +262,24 @@ function fileToBase64(file) {
         new FileReader();
 
 
-      reader.onload =
-        () => {
+      reader.onload = () => {
 
-          resolve(
-            reader.result
-          );
+        resolve(
+          reader.result
+        );
 
-        };
+      };
 
 
-      reader.onerror =
-        error => {
+      reader.onerror = () => {
 
-          reject(error);
+        reject(
+          new Error(
+            "No se pudo leer el archivo."
+          )
+        );
 
-        };
+      };
 
 
       reader.readAsDataURL(
@@ -305,7 +296,10 @@ function fileToBase64(file) {
    VALIDAR ARCHIVO
 ========================================================= */
 
-function validateMediaFile(file) {
+function validateFile(
+  file,
+  type
+) {
 
   if (!file) {
 
@@ -316,35 +310,19 @@ function validateMediaFile(file) {
   }
 
 
-  const isImage =
-    file.type.startsWith(
-      "image/"
-    );
+  const maxMB =
+    type === "video"
+      ? MAX_VIDEO_MB
+      : MAX_IMAGE_MB;
 
 
-  const isVideo =
-    file.type.startsWith(
-      "video/"
-    );
-
-
-  if (!isImage && !isVideo) {
-
-    return {
-
-      valid: false,
-
-      message:
-        "❌ Solo puedes subir imágenes o videos."
-
-    };
-
-  }
+  const maxBytes =
+    maxMB * 1024 * 1024;
 
 
   if (
-    isImage &&
-    file.size > MAX_IMAGE_BYTES
+    file.size >
+    maxBytes
   ) {
 
     return {
@@ -352,7 +330,7 @@ function validateMediaFile(file) {
       valid: false,
 
       message:
-        "❌ La imagen supera 700 KB. Comprímela antes de subirla."
+        `El archivo es demasiado grande. Máximo ${maxMB} MB.`
 
     };
 
@@ -360,8 +338,8 @@ function validateMediaFile(file) {
 
 
   if (
-    isVideo &&
-    file.size > MAX_VIDEO_BYTES
+    type === "image" &&
+    !file.type.startsWith("image/")
   ) {
 
     return {
@@ -369,7 +347,24 @@ function validateMediaFile(file) {
       valid: false,
 
       message:
-        "❌ El video supera 500 KB. Debe estar muy comprimido para guardarlo en Firestore."
+        "Selecciona una imagen válida."
+
+    };
+
+  }
+
+
+  if (
+    type === "video" &&
+    !file.type.startsWith("video/")
+  ) {
+
+    return {
+
+      valid: false,
+
+      message:
+        "Selecciona un video válido."
 
     };
 
@@ -377,73 +372,7 @@ function validateMediaFile(file) {
 
 
   return {
-
     valid: true
-
-  };
-
-}
-
-
-/* =========================================================
-   OBTENER ARCHIVO BASE64
-========================================================= */
-
-async function getMediaBase64(
-  inputSelector
-) {
-
-  const input =
-    $(inputSelector);
-
-
-  if (!input) {
-
-    return null;
-
-  }
-
-
-  const file =
-    input.files?.[0];
-
-
-  if (!file) {
-
-    return null;
-
-  }
-
-
-  const validation =
-    validateMediaFile(
-      file
-    );
-
-
-  if (!validation.valid) {
-
-    throw new Error(
-      validation.message
-    );
-
-  }
-
-
-  return {
-
-    base64:
-      await fileToBase64(file),
-
-    tipo:
-      file.type,
-
-    nombre:
-      file.name,
-
-    tamaño:
-      file.size
-
   };
 
 }
@@ -535,7 +464,6 @@ onAuthStateChanged(
     const loginView =
       $("#adminLoginView");
 
-
     const adminView =
       $("#adminPanelView");
 
@@ -602,12 +530,14 @@ if (logoutButton) {
         await signOut(auth);
 
         showMessage(
-          "👋 Sesión cerrada."
+          "Sesión cerrada."
         );
 
       } catch (error) {
 
-        console.error(error);
+        console.error(
+          error
+        );
 
       }
 
@@ -621,20 +551,13 @@ if (logoutButton) {
    VARIABLES
 ========================================================= */
 
-let editingOfferId =
-  null;
+let editingOfferId = null;
 
+let editingCouponId = null;
 
-let editingCouponId =
-  null;
+let editingUserId = null;
 
-
-let editingUserId =
-  null;
-
-
-let adminStarted =
-  false;
+let adminStarted = false;
 
 
 /* =========================================================
@@ -650,8 +573,7 @@ function startAdmin() {
   }
 
 
-  adminStarted =
-    true;
+  adminStarted = true;
 
 
   bindOfferForm();
@@ -704,16 +626,16 @@ function bindOfferForm() {
 
 
       const precioAntes =
-        Number(
+        numberValue(
           $("#offerPriceBefore")
-            ?.value || 0
+            ?.value
         );
 
 
       const precioActual =
-        Number(
+        numberValue(
           $("#offerPriceCurrent")
-            ?.value || 0
+            ?.value
         );
 
 
@@ -723,30 +645,37 @@ function bindOfferForm() {
           .trim();
 
 
+      /*
+        IMPORTANTE:
+
+        Ya no utilizamos links de imágenes.
+        El link de la OFERTA sigue siendo
+        el enlace que llevará al producto.
+
+        La imagen se guarda como Base64.
+      */
+
       const link =
         $("#offerLink")
           ?.value
           .trim();
 
 
-      /*
-        NOTA:
-        El link del producto puede seguir existiendo
-        como enlace del producto.
+      const imageInput =
+        $("#offerImageFile");
 
-        Lo que NO usamos son enlaces externos
-        para alojar imágenes/videos.
-      */
+
+      const videoInput =
+        $("#offerVideoFile");
 
 
       if (
         !titulo ||
-        !precioActual ||
-        !link
+        !precioActual
       ) {
 
         showMessage(
-          "Completa título, precio y enlace del producto.",
+          "Completa título y precio.",
           "error"
         );
 
@@ -755,115 +684,170 @@ function bindOfferForm() {
       }
 
 
+      /*
+        El enlace del producto
+        puede quedar vacío si
+        todavía no lo vas a utilizar.
+      */
+
+      let imagenBase64 =
+        null;
+
+      let videoBase64 =
+        null;
+
+
+      /* =====================================================
+         IMAGEN
+      ===================================================== */
+
+      const imageFile =
+        imageInput?.files?.[0];
+
+
+      if (imageFile) {
+
+        const validation =
+          validateFile(
+            imageFile,
+            "image"
+          );
+
+
+        if (!validation.valid) {
+
+          showMessage(
+            validation.message,
+            "error"
+          );
+
+          return;
+
+        }
+
+
+        try {
+
+          imagenBase64 =
+            await fileToBase64(
+              imageFile
+            );
+
+        } catch (error) {
+
+          console.error(
+            error
+          );
+
+          showMessage(
+            "No se pudo convertir la imagen.",
+            "error"
+          );
+
+          return;
+
+        }
+
+      }
+
+
+      /* =====================================================
+         VIDEO
+      ===================================================== */
+
+      const videoFile =
+        videoInput?.files?.[0];
+
+
+      if (videoFile) {
+
+        const validation =
+          validateFile(
+            videoFile,
+            "video"
+          );
+
+
+        if (!validation.valid) {
+
+          showMessage(
+            validation.message,
+            "error"
+          );
+
+          return;
+
+        }
+
+
+        try {
+
+          videoBase64 =
+            await fileToBase64(
+              videoFile
+            );
+
+        } catch (error) {
+
+          console.error(
+            error
+          );
+
+          showMessage(
+            "No se pudo convertir el video.",
+            "error"
+          );
+
+          return;
+
+        }
+
+      }
+
+
+      const data = {
+
+        titulo,
+
+        precioAntes,
+
+        precioActual,
+
+        categoria,
+
+        link,
+
+        activo: true,
+
+        actualizado:
+          serverTimestamp()
+
+      };
+
+
+      /*
+        Solo modificamos imagen
+        si realmente se seleccionó
+        una nueva.
+      */
+
+      if (imagenBase64) {
+
+        data.imagen =
+          imagenBase64;
+
+      }
+
+
+      if (videoBase64) {
+
+        data.video =
+          videoBase64;
+
+      }
+
+
       try {
-
-        showMessage(
-          "⏳ Guardando oferta..."
-        );
-
-
-        let multimedia =
-          null;
-
-
-        /*
-          Buscar input multimedia.
-
-          Puede llamarse:
-
-          #offerMedia
-          #offerImage
-          #offerVideo
-
-          El primero que exista será utilizado.
-        */
-
-        const mediaInput =
-          $("#offerMedia") ||
-          $("#offerImageFile") ||
-          $("#offerImage") ||
-          $("#offerVideo");
-
-
-        if (
-          mediaInput &&
-          mediaInput.files &&
-          mediaInput.files.length
-        ) {
-
-          const file =
-            mediaInput.files[0];
-
-
-          const validation =
-            validateMediaFile(
-              file
-            );
-
-
-          if (!validation.valid) {
-
-            showMessage(
-              validation.message,
-              "error"
-            );
-
-            return;
-
-          }
-
-
-          multimedia = {
-
-            base64:
-              await fileToBase64(file),
-
-            tipo:
-              file.type,
-
-            nombre:
-              file.name,
-
-            tamaño:
-              file.size
-
-          };
-
-        }
-
-
-        const data = {
-
-          titulo,
-
-          precioAntes,
-
-          precioActual,
-
-          categoria,
-
-          link,
-
-          activo: true,
-
-          actualizado:
-            serverTimestamp()
-
-        };
-
-
-        /*
-          Solo agregamos multimedia
-          cuando realmente se seleccionó.
-        */
-
-        if (multimedia) {
-
-          data.multimedia =
-            multimedia;
-
-        }
-
 
         if (editingOfferId) {
 
@@ -882,6 +866,31 @@ function bindOfferForm() {
           );
 
         } else {
+
+          /*
+            Si es nueva y no hay imagen,
+            se guarda como cadena vacía.
+          */
+
+          if (
+            !data.imagen
+          ) {
+
+            data.imagen =
+              "";
+
+          }
+
+
+          if (
+            !data.video
+          ) {
+
+            data.video =
+              "";
+
+          }
+
 
           await addDoc(
             collection(
@@ -915,7 +924,6 @@ function bindOfferForm() {
 
         loadOffers();
 
-
         loadStatistics();
 
 
@@ -928,7 +936,6 @@ function bindOfferForm() {
 
 
         showMessage(
-          error.message ||
           "❌ No se pudo guardar la oferta.",
           "error"
         );
@@ -973,16 +980,6 @@ async function loadOffers() {
       "";
 
 
-    if (snapshot.empty) {
-
-      container.innerHTML =
-        "<p>No hay ofertas todavía.</p>";
-
-      return;
-
-    }
-
-
     snapshot.forEach(
       item => {
 
@@ -1000,81 +997,34 @@ async function loadOffers() {
           "admin-item";
 
 
-        const multimedia =
-          data.multimedia;
-
-
-        let mediaHTML =
-          "";
-
-
-        if (
-          multimedia &&
-          multimedia.base64
-        ) {
-
-          if (
-            String(
-              multimedia.tipo || ""
-            )
-            .startsWith("video/")
-          ) {
-
-            mediaHTML = `
-
-              <video
-                src="${multimedia.base64}"
-                controls
-                muted
-                playsinline
-                style="
-                  width:90px;
-                  height:70px;
-                  object-fit:cover;
-                  border-radius:8px;
-                "
-              ></video>
-
-            `;
-
-          } else {
-
-            mediaHTML = `
-
-              <img
-                src="${multimedia.base64}"
-                alt=""
-                style="
-                  width:90px;
-                  height:70px;
-                  object-fit:cover;
-                  border-radius:8px;
-                "
-              >
-
-            `;
-
-          }
-
-        }
-
-
         card.innerHTML = `
-
-          ${mediaHTML}
 
           <div>
 
+            ${
+              data.imagen
+                ? `
+                  <img
+                    src="${data.imagen}"
+                    alt=""
+                    style="
+                      width:70px;
+                      height:70px;
+                      object-fit:cover;
+                      border-radius:10px;
+                      margin-bottom:8px;
+                    "
+                  >
+                `
+                : ""
+            }
+
             <strong>
-              ${escapeHtml(
-                data.titulo
-              )}
+              ${escapeHtml(data.titulo)}
             </strong>
 
             <small>
-              ${money(
-                data.precioActual
-              )}
+              ${money(data.precioActual)}
             </small>
 
             <small>
@@ -1088,12 +1038,14 @@ async function loadOffers() {
           <div>
 
             <button
+              type="button"
               data-edit-offer="${item.id}"
             >
               ✏️ Editar
             </button>
 
             <button
+              type="button"
               data-delete-offer="${item.id}"
             >
               🗑️ Eliminar
@@ -1253,7 +1205,9 @@ async function editOffer(id) {
 
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      error
+    );
 
   }
 
@@ -1300,7 +1254,9 @@ async function deleteOffer(id) {
 
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      error
+    );
 
 
     showMessage(
@@ -1363,18 +1319,26 @@ function bindCouponForm() {
 
 
       const minimo =
-        Number(
+        numberValue(
           $("#couponMinimum")
-            ?.value || 0
+            ?.value
         );
 
 
       const tope =
-        Number(
+        numberValue(
           $("#couponTop")
-            ?.value || 0
+            ?.value
         );
 
+
+      /*
+        NO utilizamos un link
+        de imagen.
+
+        El cupón solamente necesita
+        sus datos.
+      */
 
       const link =
         $("#couponLink")
@@ -1395,31 +1359,31 @@ function bindCouponForm() {
       }
 
 
+      const data = {
+
+        codigo,
+
+        titulo,
+
+        tipo,
+
+        descuento,
+
+        minimo,
+
+        tope,
+
+        link,
+
+        activo: true,
+
+        actualizado:
+          serverTimestamp()
+
+      };
+
+
       try {
-
-        const data = {
-
-          codigo,
-
-          titulo,
-
-          tipo,
-
-          descuento,
-
-          minimo,
-
-          tope,
-
-          link,
-
-          activo: true,
-
-          actualizado:
-            serverTimestamp()
-
-        };
-
 
         if (editingCouponId) {
 
@@ -1541,14 +1505,6 @@ async function loadCoupons() {
         );
 
 
-    /*
-       ORDEN:
-
-       1. Monto fijo menor
-       2. Monto fijo mayor
-       3. Porcentaje por mínimo
-    */
-
     coupons.sort(
       (a, b) => {
 
@@ -1612,16 +1568,6 @@ async function loadCoupons() {
       "";
 
 
-    if (!coupons.length) {
-
-      container.innerHTML =
-        "<p>No hay cupones activos.</p>";
-
-      return;
-
-    }
-
-
     coupons.forEach(
       coupon => {
 
@@ -1657,7 +1603,7 @@ async function loadCoupons() {
 
             <small>
               ${escapeHtml(
-                coupon.tipo || ""
+                coupon.titulo || ""
               )}
             </small>
 
@@ -1666,12 +1612,14 @@ async function loadCoupons() {
           <div>
 
             <button
+              type="button"
               data-edit-coupon="${coupon.id}"
             >
               ✏️ Editar
             </button>
 
             <button
+              type="button"
               data-delete-coupon="${coupon.id}"
             >
               🗑️ Eliminar
@@ -1856,7 +1804,9 @@ async function editCoupon(id) {
 
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      error
+    );
 
   }
 
@@ -1903,7 +1853,9 @@ async function deleteCoupon(id) {
 
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      error
+    );
 
 
     showMessage(
@@ -2021,7 +1973,10 @@ function bindUserForm() {
 
       } catch (error) {
 
-        console.error(error);
+        console.error(
+          "USUARIO:",
+          error
+        );
 
 
         showMessage(
@@ -2067,16 +2022,6 @@ async function loadUsers() {
 
     container.innerHTML =
       "";
-
-
-    if (snapshot.empty) {
-
-      container.innerHTML =
-        "<p>No hay usuarios todavía.</p>";
-
-      return;
-
-    }
 
 
     snapshot.forEach(
@@ -2130,16 +2075,12 @@ async function loadUsers() {
             </strong>
 
             <small>
-              ${Number(
-                data.compras || 0
-              )}
+              ${data.compras || 0}
               compras
             </small>
 
             <small>
-              ${Number(
-                data.cuponesUsados || 0
-              )}
+              ${data.cuponesUsados || 0}
               cupones
             </small>
 
@@ -2200,16 +2141,6 @@ async function loadPurchases() {
       "";
 
 
-    if (snapshot.empty) {
-
-      container.innerHTML =
-        "<p>No hay compras todavía.</p>";
-
-      return;
-
-    }
-
-
     snapshot.forEach(
       item => {
 
@@ -2243,6 +2174,13 @@ async function loadPurchases() {
               Cupón:
               ${escapeHtml(
                 data.cupon || "-"
+              )}
+            </small>
+
+            <small>
+              Producto:
+              ${escapeHtml(
+                data.producto || "-"
               )}
             </small>
 
@@ -2297,17 +2235,11 @@ async function loadStatistics() {
   try {
 
     const [
-
       offers,
-
       coupons,
-
       users,
-
       purchases,
-
       copies
-
     ] =
       await Promise.all([
 
@@ -2379,12 +2311,11 @@ async function loadStatistics() {
     );
 
 
-    /*
+    /* =====================================================
        CUPÓN MÁS COPIADO
-    */
+    ===================================================== */
 
-    const counter =
-      {};
+    const counter = {};
 
 
     copies.forEach(
@@ -2437,7 +2368,7 @@ async function loadStatistics() {
 
       setText(
         "#topCoupon",
-        "Sin datos"
+        "Sin copias todavía"
       );
 
     }
@@ -2479,131 +2410,7 @@ function setText(
 
 
 /* =========================================================
-   ACTUALIZACIÓN AUTOMÁTICA
-========================================================= */
-
-function listenCollection(
-  collectionName,
-  callback
-) {
-
-  try {
-
-    return onSnapshot(
-      collection(
-        db,
-        collectionName
-      ),
-      callback,
-      error => {
-
-        console.error(
-          `Firestore ${collectionName}:`,
-          error
-        );
-
-      }
-    );
-
-  } catch (error) {
-
-    console.error(error);
-
-  }
-
-}
-
-
-/* =========================================================
-   ESCUCHAR OFERTAS
-========================================================= */
-
-listenCollection(
-  "ofertas",
-  () => {
-
-    if (
-      auth.currentUser
-    ) {
-
-      loadOffers();
-
-      loadStatistics();
-
-    }
-
-  }
-);
-
-
-/* =========================================================
-   ESCUCHAR CUPONES
-========================================================= */
-
-listenCollection(
-  "cupones",
-  () => {
-
-    if (
-      auth.currentUser
-    ) {
-
-      loadCoupons();
-
-      loadStatistics();
-
-    }
-
-  }
-);
-
-
-/* =========================================================
-   ESCUCHAR USUARIOS
-========================================================= */
-
-listenCollection(
-  "usuarios",
-  () => {
-
-    if (
-      auth.currentUser
-    ) {
-
-      loadUsers();
-
-      loadStatistics();
-
-    }
-
-  }
-);
-
-
-/* =========================================================
-   ESCUCHAR COMPRAS
-========================================================= */
-
-listenCollection(
-  "compras",
-  () => {
-
-    if (
-      auth.currentUser
-    ) {
-
-      loadPurchases();
-
-      loadStatistics();
-
-    }
-
-  }
-);
-
-
-/* =========================================================
-   EXPORTAR ADMIN PRO
+   EXPORTAR FUNCIONES
 ========================================================= */
 
 window.AdminPRO = {
@@ -2624,13 +2431,6 @@ window.AdminPRO = {
 
   deleteOffer,
 
-  deleteCoupon,
-
-  showMessage
+  deleteCoupon
 
 };
-
-
-/* =========================================================
-   FIN ADMIN PRO
-========================================================= */
