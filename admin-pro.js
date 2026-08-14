@@ -1,7 +1,8 @@
 /* =========================================================
    ⚡ EL PATRÓN DE LAS OFERTAS
-   ADMIN PRO JS
-   Archivo: admin-pro.js
+   ADMIN PRO
+   Firebase + Firestore + Authentication
+   Compatible con admin-pro.html ACTUAL
    ========================================================= */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -16,12 +17,13 @@ import {
 import {
   getFirestore,
   collection,
-  addDoc,
   getDocs,
   getDoc,
-  doc,
+  addDoc,
+  setDoc,
   updateDoc,
   deleteDoc,
+  doc,
   query,
   orderBy,
   limit,
@@ -44,30 +46,70 @@ const firebaseConfig = {
   measurementId: "G-1LYNHBZVDM"
 };
 
-const app = initializeApp(firebaseConfig);
 
-const auth = getAuth(app);
-const db = getFirestore(app);
+/* =========================================================
+   INICIALIZAR FIREBASE
+   ========================================================= */
+
+let firebaseApp;
+let auth;
+let db;
+
+try {
+
+  firebaseApp = initializeApp(firebaseConfig);
+
+  auth = getAuth(firebaseApp);
+
+  db = getFirestore(firebaseApp);
+
+  console.log("🔥 Firebase inicializado correctamente.");
+
+} catch (error) {
+
+  console.error(
+    "❌ Error inicializando Firebase:",
+    error
+  );
+
+  mostrarErrorCarga(
+    "No se pudo conectar con Firebase."
+  );
+}
 
 
 /* =========================================================
-   ESTADO GLOBAL
+   ESTADO
    ========================================================= */
 
 let usuarioActual = null;
+
+let ofertas = [];
+
+let cupones = [];
+
+let usuarios = [];
+
+let copias = [];
+
+let visitas = [];
+
+let compras = [];
+
 let ofertaEditando = null;
+
 let cuponEditando = null;
 
 
 /* =========================================================
-   UTILIDADES
+   UTILIDADES DOM
    ========================================================= */
 
-function $(id) {
-  return document.getElementById(id);
-}
+const $ = (id) => document.getElementById(id);
 
-function mostrar(id) {
+
+function mostrarElemento(id) {
+
   const elemento = $(id);
 
   if (elemento) {
@@ -75,7 +117,9 @@ function mostrar(id) {
   }
 }
 
-function ocultar(id) {
+
+function ocultarElemento(id) {
+
   const elemento = $(id);
 
   if (elemento) {
@@ -83,52 +127,45 @@ function ocultar(id) {
   }
 }
 
-function textoSeguro(valor) {
-  if (valor === undefined || valor === null) {
+
+function texto(valor) {
+
+  if (
+    valor === null ||
+    valor === undefined
+  ) {
     return "";
   }
 
   return String(valor);
 }
 
+
 function numero(valor) {
+
   const n = Number(valor);
 
-  return Number.isFinite(n) ? n : 0;
+  return Number.isFinite(n)
+    ? n
+    : 0;
 }
+
 
 function dinero(valor) {
-  return new Intl.NumberFormat("es-MX", {
-    style: "currency",
-    currency: "MXN"
-  }).format(numero(valor));
+
+  return new Intl.NumberFormat(
+    "es-MX",
+    {
+      style: "currency",
+      currency: "MXN"
+    }
+  ).format(numero(valor));
 }
 
-function fechaFirebase(timestamp) {
 
-  if (!timestamp) {
-    return "Sin fecha";
-  }
+function escapar(valor) {
 
-  try {
-
-    const fecha = timestamp.toDate
-      ? timestamp.toDate()
-      : new Date(timestamp);
-
-    return fecha.toLocaleString("es-MX", {
-      dateStyle: "short",
-      timeStyle: "short"
-    });
-
-  } catch {
-    return "Sin fecha";
-  }
-}
-
-function escaparHTML(texto) {
-
-  return textoSeguro(texto)
+  return texto(valor)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -137,138 +174,517 @@ function escaparHTML(texto) {
 }
 
 
-/* =========================================================
-   NOTIFICACIONES
-   ========================================================= */
+function fecha(valor) {
 
-function notificacion(mensaje, tipo = "success") {
-
-  let caja = $("admin-notificacion");
-
-  if (!caja) {
-
-    caja = document.createElement("div");
-
-    caja.id = "admin-notificacion";
-
-    caja.style.position = "fixed";
-    caja.style.top = "20px";
-    caja.style.right = "20px";
-    caja.style.zIndex = "99999";
-    caja.style.padding = "14px 18px";
-    caja.style.borderRadius = "12px";
-    caja.style.fontWeight = "700";
-    caja.style.boxShadow = "0 8px 30px rgba(0,0,0,.18)";
-    caja.style.maxWidth = "360px";
-
-    document.body.appendChild(caja);
+  if (!valor) {
+    return "—";
   }
 
-  caja.textContent = mensaje;
+  try {
 
-  if (tipo === "error") {
-    caja.style.background = "#dc2626";
-    caja.style.color = "#fff";
-  } else {
-    caja.style.background = "#16a34a";
-    caja.style.color = "#fff";
+    const fechaReal =
+      typeof valor.toDate === "function"
+        ? valor.toDate()
+        : new Date(valor);
+
+    return fechaReal.toLocaleDateString(
+      "es-MX",
+      {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
+      }
+    );
+
+  } catch {
+
+    return "—";
   }
-
-  clearTimeout(caja._timer);
-
-  caja._timer = setTimeout(() => {
-    caja.remove();
-  }, 3500);
 }
 
 
 /* =========================================================
-   AUTENTICACIÓN
+   PANTALLA DE CARGA
    ========================================================= */
 
-onAuthStateChanged(auth, async (user) => {
+function ocultarCarga() {
 
-  usuarioActual = user;
+  const loading = $("loadingScreen");
 
-  if (user) {
+  if (loading) {
 
-    console.log("Administrador conectado:", user.email);
+    loading.style.opacity = "0";
 
-    mostrar("admin-panel");
-    ocultar("login-panel");
+    setTimeout(() => {
 
-    const emailElement = $("admin-email");
+      loading.style.display = "none";
 
-    if (emailElement) {
-      emailElement.textContent = user.email;
+    }, 250);
+  }
+}
+
+
+function mostrarErrorCarga(mensaje) {
+
+  const loading = $("loadingScreen");
+
+  if (!loading) {
+    return;
+  }
+
+  const textoCarga =
+    loading.querySelector("p");
+
+  if (textoCarga) {
+
+    textoCarga.textContent =
+      mensaje;
+
+    textoCarga.style.color =
+      "#dc2626";
+  }
+
+  const spinner =
+    loading.querySelector(
+      ".loading-spinner"
+    );
+
+  if (spinner) {
+    spinner.style.display = "none";
+  }
+}
+
+
+/* =========================================================
+   TOAST
+   ========================================================= */
+
+function toast(
+  mensaje,
+  tipo = "success"
+) {
+
+  const caja = $("toast");
+
+  const icono = $("toastIcon");
+
+  const textoToast =
+    $("toastMessage");
+
+  if (!caja) {
+    return;
+  }
+
+  if (textoToast) {
+    textoToast.textContent =
+      mensaje;
+  }
+
+  if (icono) {
+
+    icono.textContent =
+      tipo === "error"
+        ? "❌"
+        : tipo === "warning"
+          ? "⚠️"
+          : "✅";
+  }
+
+  caja.classList.add("show");
+
+  clearTimeout(
+    caja._timeout
+  );
+
+  caja._timeout =
+    setTimeout(() => {
+
+      caja.classList.remove("show");
+
+    }, 3500);
+}
+
+
+/* =========================================================
+   AUTH STATE
+   ========================================================= */
+
+if (auth) {
+
+  onAuthStateChanged(
+    auth,
+    async (user) => {
+
+      try {
+
+        usuarioActual = user;
+
+        if (user) {
+
+          console.log(
+            "👤 Administrador:",
+            user.email
+          );
+
+          await iniciarAdmin(
+            user
+          );
+
+        } else {
+
+          mostrarLogin();
+
+        }
+
+      } catch (error) {
+
+        console.error(
+          "Error iniciando Admin:",
+          error
+        );
+
+        mostrarErrorCarga(
+          "Error cargando el administrador."
+        );
+      }
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   MOSTRAR LOGIN
+   ========================================================= */
+
+function mostrarLogin() {
+
+  ocultarElemento(
+    "adminApp"
+  );
+
+  mostrarElemento(
+    "loginScreen"
+  );
+
+  ocultarCarga();
+
+}
+
+
+/* =========================================================
+   INICIAR ADMIN
+   ========================================================= */
+
+async function iniciarAdmin(
+  user
+) {
+
+  ocultarElemento(
+    "loginScreen"
+  );
+
+  mostrarElemento(
+    "adminApp"
+  );
+
+  ocultarCarga();
+
+  actualizarUsuarioUI(
+    user
+  );
+
+  actualizarConexion(
+    true
+  );
+
+  await cargarTodo();
+
+}
+
+
+/* =========================================================
+   USUARIO UI
+   ========================================================= */
+
+function actualizarUsuarioUI(
+  user
+) {
+
+  const email =
+    user?.email || "";
+
+  const adminEmail =
+    $("adminEmail");
+
+  if (adminEmail) {
+    adminEmail.textContent =
+      email;
+  }
+
+  const settingsEmail =
+    $("settingsEmail");
+
+  if (settingsEmail) {
+    settingsEmail.textContent =
+      email;
+  }
+
+}
+
+
+/* =========================================================
+   CONEXIÓN
+   ========================================================= */
+
+function actualizarConexion(
+  conectado
+) {
+
+  const dot =
+    $("connectionDot");
+
+  const textoConexion =
+    $("connectionText");
+
+  const authStatus =
+    $("authStatus");
+
+  if (conectado) {
+
+    if (dot) {
+
+      dot.classList.add(
+        "online"
+      );
     }
 
-    await cargarDashboard();
-    await cargarOfertas();
-    await cargarCupones();
+    if (textoConexion) {
+
+      textoConexion.textContent =
+        "Firebase conectado";
+    }
+
+    if (authStatus) {
+
+      authStatus.textContent =
+        "Activo";
+    }
 
   } else {
 
-    console.log("No hay administrador conectado.");
+    if (dot) {
 
-    ocultar("admin-panel");
-    mostrar("login-panel");
+      dot.classList.remove(
+        "online"
+      );
+    }
+
+    if (textoConexion) {
+
+      textoConexion.textContent =
+        "Sin conexión";
+    }
+
+    if (authStatus) {
+
+      authStatus.textContent =
+        "Desconectado";
+    }
   }
-});
+
+}
 
 
 /* =========================================================
    LOGIN
    ========================================================= */
 
-async function iniciarSesion() {
+$("loginForm")?.addEventListener(
+  "submit",
+  async (event) => {
 
-  const email = $("login-email")?.value.trim();
-  const password = $("login-password")?.value;
+    event.preventDefault();
 
-  if (!email || !password) {
+    const email =
+      $("loginEmail")?.value.trim();
 
-    notificacion(
-      "Escribe tu correo y contraseña.",
-      "error"
-    );
+    const password =
+      $("loginPassword")?.value;
 
+    const errorBox =
+      $("loginError");
+
+    if (errorBox) {
+
+      errorBox.textContent = "";
+
+      errorBox.style.display =
+        "none";
+    }
+
+    if (!email || !password) {
+
+      mostrarLoginError(
+        "Escribe tu correo y contraseña."
+      );
+
+      return;
+    }
+
+    const boton =
+      $("loginForm")
+        .querySelector(
+          'button[type="submit"]'
+        );
+
+    if (boton) {
+
+      boton.disabled = true;
+
+      boton.textContent =
+        "⏳ ENTRANDO...";
+    }
+
+    try {
+
+      await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Login:",
+        error
+      );
+
+      let mensaje =
+        "No se pudo iniciar sesión.";
+
+      switch (error.code) {
+
+        case "auth/invalid-credential":
+          mensaje =
+            "Correo o contraseña incorrectos.";
+          break;
+
+        case "auth/user-not-found":
+          mensaje =
+            "El usuario no existe.";
+          break;
+
+        case "auth/wrong-password":
+          mensaje =
+            "Contraseña incorrecta.";
+          break;
+
+        case "auth/invalid-email":
+          mensaje =
+            "El correo no es válido.";
+          break;
+
+        case "auth/too-many-requests":
+          mensaje =
+            "Demasiados intentos. Espera unos minutos.";
+          break;
+
+        case "auth/network-request-failed":
+          mensaje =
+            "No hay conexión con Firebase.";
+          break;
+
+      }
+
+      mostrarLoginError(
+        mensaje
+      );
+
+      if (boton) {
+
+        boton.disabled = false;
+
+        boton.textContent =
+          "🔐 ENTRAR";
+      }
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   ERROR LOGIN
+   ========================================================= */
+
+function mostrarLoginError(
+  mensaje
+) {
+
+  const errorBox =
+    $("loginError");
+
+  if (!errorBox) {
     return;
   }
 
-  try {
+  errorBox.textContent =
+    mensaje;
 
-    await signInWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
-
-    notificacion("Sesión iniciada correctamente.");
-
-  } catch (error) {
-
-    console.error(error);
-
-    let mensaje = "No se pudo iniciar sesión.";
-
-    if (
-      error.code === "auth/invalid-credential" ||
-      error.code === "auth/wrong-password" ||
-      error.code === "auth/user-not-found"
-    ) {
-      mensaje = "Correo o contraseña incorrectos.";
-    }
-
-    if (error.code === "auth/too-many-requests") {
-      mensaje = "Demasiados intentos. Espera un momento.";
-    }
-
-    notificacion(mensaje, "error");
-  }
+  errorBox.style.display =
+    "block";
 }
 
-window.iniciarSesion = iniciarSesion;
+
+/* =========================================================
+   MOSTRAR / OCULTAR CONTRASEÑA
+   ========================================================= */
+
+$("togglePassword")?.addEventListener(
+  "click",
+  () => {
+
+    const password =
+      $("loginPassword");
+
+    const boton =
+      $("togglePassword");
+
+    if (!password) {
+      return;
+    }
+
+    if (
+      password.type ===
+      "password"
+    ) {
+
+      password.type =
+        "text";
+
+      if (boton) {
+        boton.textContent =
+          "🙈";
+      }
+
+    } else {
+
+      password.type =
+        "password";
+
+      if (boton) {
+        boton.textContent =
+          "👁️";
+      }
+
+    }
+
+  }
+);
 
 
 /* =========================================================
@@ -281,1179 +697,3355 @@ async function cerrarSesion() {
 
     await signOut(auth);
 
-    notificacion("Sesión cerrada.");
+    toast(
+      "Sesión cerrada."
+    );
 
   } catch (error) {
 
     console.error(error);
 
-    notificacion(
-      "No se pudo cerrar la sesión.",
+    toast(
+      "No se pudo cerrar sesión.",
       "error"
     );
   }
+
 }
 
-window.cerrarSesion = cerrarSesion;
+
+$("logoutBtn")?.addEventListener(
+  "click",
+  cerrarSesion
+);
+
+
+$("settingsLogoutBtn")
+  ?.addEventListener(
+    "click",
+    cerrarSesion
+  );
+
+
+/* =========================================================
+   NAVEGACIÓN
+   ========================================================= */
+
+const menuItems =
+  document.querySelectorAll(
+    ".menu-item"
+  );
+
+
+const sections =
+  document.querySelectorAll(
+    ".admin-section"
+  );
+
+
+function cambiarSeccion(
+  nombre
+) {
+
+  menuItems.forEach(
+    (item) => {
+
+      item.classList.toggle(
+        "active",
+        item.dataset.section ===
+          nombre
+      );
+
+    }
+  );
+
+
+  sections.forEach(
+    (section) => {
+
+      section.classList.toggle(
+        "active",
+        section.id ===
+          `section-${nombre}`
+      );
+
+    }
+  );
+
+
+  const titulos = {
+
+    dashboard: [
+      "Dashboard",
+      "Resumen general de tu página"
+    ],
+
+    ofertas: [
+      "Ofertas",
+      "Administra tus ofertas"
+    ],
+
+    cupones: [
+      "Cupones",
+      "Gestiona tus cupones"
+    ],
+
+    usuarios: [
+      "Usuarios",
+      "Usuarios registrados"
+    ],
+
+    estadisticas: [
+      "Estadísticas",
+      "Analiza el rendimiento"
+    ],
+
+    configuracion: [
+      "Configuración",
+      "Configuración general"
+    ]
+
+  };
+
+
+  const datos =
+    titulos[nombre] ||
+    titulos.dashboard;
+
+
+  const title =
+    $("pageTitle");
+
+  const subtitle =
+    $("pageSubtitle");
+
+
+  if (title) {
+    title.textContent =
+      datos[0];
+  }
+
+  if (subtitle) {
+    subtitle.textContent =
+      datos[1];
+  }
+
+
+  if (nombre === "usuarios") {
+    cargarUsuarios();
+  }
+
+  if (nombre === "estadisticas") {
+    cargarEstadisticas();
+  }
+
+}
+
+
+menuItems.forEach(
+  (item) => {
+
+    item.addEventListener(
+      "click",
+      () => {
+
+        cambiarSeccion(
+          item.dataset.section
+        );
+
+      }
+    );
+
+  }
+);
+
+
+document
+  .querySelectorAll(
+    "[data-section]"
+  )
+  .forEach(
+    (elemento) => {
+
+      if (
+        !elemento.classList.contains(
+          "menu-item"
+        )
+      ) {
+
+        elemento.addEventListener(
+          "click",
+          () => {
+
+            cambiarSeccion(
+              elemento.dataset.section
+            );
+
+          }
+        );
+
+      }
+
+    }
+  );
+
+
+/* =========================================================
+   MENÚ MÓVIL
+   ========================================================= */
+
+$("mobileMenu")
+  ?.addEventListener(
+    "click",
+    () => {
+
+      const sidebar =
+        $("sidebar");
+
+      if (sidebar) {
+
+        sidebar.classList.toggle(
+          "open"
+        );
+
+      }
+
+    }
+  );
+
+
+/* =========================================================
+   BOTÓN ACTUALIZAR
+   ========================================================= */
+
+$("refreshBtn")
+  ?.addEventListener(
+    "click",
+    async () => {
+
+      if (!usuarioActual) {
+        return;
+      }
+
+      const boton =
+        $("refreshBtn");
+
+      if (boton) {
+
+        boton.disabled = true;
+
+        boton.textContent =
+          "⏳";
+      }
+
+      try {
+
+        await cargarTodo();
+
+        toast(
+          "Información actualizada."
+        );
+
+      } catch (error) {
+
+        console.error(error);
+
+        toast(
+          "Error actualizando.",
+          "error"
+        );
+
+      } finally {
+
+        if (boton) {
+
+          boton.disabled = false;
+
+          boton.textContent =
+            "🔄";
+        }
+
+      }
+
+    }
+  );
+
+
+/* =========================================================
+   CARGAR TODO
+   ========================================================= */
+
+async function cargarTodo() {
+
+  await Promise.all([
+
+    cargarOfertas(),
+
+    cargarCupones(),
+
+    cargarUsuarios(),
+
+    cargarCopias(),
+
+    cargarVisitas(),
+
+    cargarCompras()
+
+  ]);
+
+  actualizarDashboard();
+
+  cargarEstadisticas();
+
+}
 
 
 /* =========================================================
    OFERTAS
    ========================================================= */
 
-async function guardarOferta() {
-
-  if (!usuarioActual) {
-    notificacion("Debes iniciar sesión.", "error");
-    return;
-  }
-
-  const titulo = $("oferta-titulo")?.value.trim();
-  const precioAntes = numero($("oferta-precio-antes")?.value);
-  const precioActual = numero($("oferta-precio-actual")?.value);
-  const imagen = $("oferta-imagen")?.value.trim();
-  const link = $("oferta-link")?.value.trim();
-  const categoria = $("oferta-categoria")?.value.trim();
-  const tipo = $("oferta-tipo")?.value.trim();
-
-  if (!titulo) {
-    notificacion("Escribe el título de la oferta.", "error");
-    return;
-  }
-
-  if (!precioActual) {
-    notificacion("Escribe el precio actual.", "error");
-    return;
-  }
-
-  if (!link) {
-    notificacion("Agrega el enlace de Mercado Libre.", "error");
-    return;
-  }
-
-  const datos = {
-
-    titulo,
-
-    precioAntes,
-
-    precioActual,
-
-    ahorro:
-      precioAntes > precioActual
-        ? precioAntes - precioActual
-        : 0,
-
-    imagen,
-
-    link,
-
-    categoria,
-
-    tipo,
-
-    actualizadoPor:
-      usuarioActual.email,
-
-    actualizadoEn:
-      serverTimestamp()
-  };
-
+async function cargarOfertas() {
 
   try {
 
-    if (ofertaEditando) {
-
-      await updateDoc(
-        doc(db, "ofertas", ofertaEditando),
-        datos
+    const referencia =
+      collection(
+        db,
+        "ofertas"
       );
 
-      notificacion(
-        "Oferta actualizada correctamente."
+    const snapshot =
+      await getDocs(
+        referencia
       );
 
-    } else {
+    ofertas = [];
 
-      await addDoc(
-        collection(db, "ofertas"),
-        {
-          ...datos,
-          creadoEn: serverTimestamp()
-        }
-      );
+    snapshot.forEach(
+      (item) => {
 
-      notificacion(
-        "Oferta publicada correctamente."
-      );
-    }
+        ofertas.push({
 
-    limpiarFormularioOferta();
+          id: item.id,
 
-    await cargarOfertas();
-    await cargarDashboard();
+          ...item.data()
+
+        });
+
+      }
+    );
+
+
+    ofertas.sort(
+      (a, b) => {
+
+        const aFecha =
+          obtenerFecha(
+            a.creadoEn
+          );
+
+        const bFecha =
+          obtenerFecha(
+            b.creadoEn
+          );
+
+        return (
+          bFecha - aFecha
+        );
+
+      }
+    );
+
+
+    renderOfertas();
+
+    renderOfertasRecientes();
+
+    llenarCategorias();
 
   } catch (error) {
 
-    console.error(error);
-
-    notificacion(
-      "Error al guardar la oferta: " + error.message,
-      "error"
+    console.error(
+      "Error ofertas:",
+      error
     );
-  }
-}
 
-window.guardarOferta = guardarOferta;
+    renderErrorTabla(
+      "offersTable",
+      6,
+      "No se pudieron cargar las ofertas."
+    );
+
+  }
+
+}
 
 
 /* =========================================================
-   CARGAR OFERTAS
+   RENDER OFERTAS
    ========================================================= */
 
-async function cargarOfertas() {
+function renderOfertas() {
+
+  const tbody =
+    $("offersTable");
+
+  if (!tbody) {
+    return;
+  }
+
+  const busqueda =
+    texto(
+      $("offerSearch")?.value
+    )
+      .toLowerCase()
+      .trim();
+
+  const categoria =
+    $("offerCategoryFilter")
+      ?.value || "";
+
+
+  const filtradas =
+    ofertas.filter(
+      (oferta) => {
+
+        const titulo =
+          texto(
+            oferta.titulo ||
+            oferta.title
+          ).toLowerCase();
+
+        const cat =
+          texto(
+            oferta.categoria ||
+            oferta.category
+          );
+
+
+        const coincideTexto =
+          !busqueda ||
+          titulo.includes(
+            busqueda
+          );
+
+        const coincideCategoria =
+          !categoria ||
+          cat === categoria;
+
+
+        return (
+          coincideTexto &&
+          coincideCategoria
+        );
+
+      }
+    );
+
+
+  if (!filtradas.length) {
+
+    tbody.innerHTML = `
+      <tr>
+        <td
+          colspan="6"
+          class="table-loading"
+        >
+          No hay ofertas.
+        </td>
+      </tr>
+    `;
+
+    return;
+  }
+
+
+  tbody.innerHTML =
+    filtradas.map(
+      (oferta) => {
+
+        const titulo =
+          oferta.titulo ||
+          oferta.title ||
+          "Sin título";
+
+        const precioAntes =
+          numero(
+            oferta.precioAntes ??
+            oferta.precioAnterior ??
+            oferta.oldPrice
+          );
+
+        const precio =
+          numero(
+            oferta.precioActual ??
+            oferta.precio ??
+            oferta.price
+          );
+
+        const categoria =
+          oferta.categoria ||
+          oferta.category ||
+          "—";
+
+        const clicks =
+          numero(
+            oferta.clics ??
+            oferta.clicks
+          );
+
+
+        return `
+
+          <tr>
+
+            <td>
+
+              <div
+                style="
+                  display:flex;
+                  align-items:center;
+                  gap:10px;
+                "
+              >
+
+                ${
+                  oferta.imagen
+                    ? `
+                      <img
+                        src="${escapar(
+                          oferta.imagen
+                        )}"
+                        style="
+                          width:48px;
+                          height:48px;
+                          object-fit:cover;
+                          border-radius:8px;
+                        "
+                      >
+                    `
+                    : `
+                      <div
+                        style="
+                          width:48px;
+                          height:48px;
+                          display:flex;
+                          align-items:center;
+                          justify-content:center;
+                          border-radius:8px;
+                          background:#f1f5f9;
+                        "
+                      >
+                        🛒
+                      </div>
+                    `
+                }
+
+                <strong>
+                  ${escapar(
+                    titulo
+                  )}
+                </strong>
+
+              </div>
+
+            </td>
+
+
+            <td>
+              ${
+                precioAntes
+                  ? dinero(
+                      precioAntes
+                    )
+                  : "—"
+              }
+            </td>
+
+
+            <td>
+              <strong>
+                ${dinero(
+                  precio
+                )}
+              </strong>
+            </td>
+
+
+            <td>
+              ${escapar(
+                categoria
+              )}
+            </td>
+
+
+            <td>
+              ${clicks.toLocaleString(
+                "es-MX"
+              )}
+            </td>
+
+
+            <td>
+
+              <div
+                style="
+                  display:flex;
+                  gap:6px;
+                "
+              >
+
+                <button
+                  class="secondary-button"
+                  onclick="editarOferta('${oferta.id}')"
+                  title="Editar"
+                >
+                  ✏️
+                </button>
+
+                <button
+                  class="danger-button"
+                  onclick="eliminarOferta('${oferta.id}')"
+                  title="Eliminar"
+                >
+                  🗑️
+                </button>
+
+              </div>
+
+            </td>
+
+          </tr>
+
+        `;
+
+      }
+    ).join("");
+
+}
+
+
+/* =========================================================
+   OFERTAS RECIENTES
+   ========================================================= */
+
+function renderOfertasRecientes() {
 
   const contenedor =
-    $("lista-ofertas") ||
-    $("ofertas-lista");
+    $("recentOffers");
 
   if (!contenedor) {
     return;
   }
 
-  try {
-
-    const consulta = query(
-      collection(db, "ofertas"),
-      orderBy("creadoEn", "desc")
+  const recientes =
+    ofertas.slice(
+      0,
+      5
     );
 
-    const snapshot = await getDocs(consulta);
 
-    if (snapshot.empty) {
+  if (!recientes.length) {
 
-      contenedor.innerHTML =
-        `<div class="admin-empty">
-          No hay ofertas publicadas.
-        </div>`;
+    contenedor.innerHTML = `
+      <div class="empty-state">
+        No hay ofertas publicadas.
+      </div>
+    `;
 
-      actualizarContador("total-ofertas", 0);
+    return;
+  }
 
-      return;
-    }
 
-    let html = "";
+  contenedor.innerHTML =
+    recientes.map(
+      (oferta) => {
 
-    snapshot.forEach((item) => {
+        const titulo =
+          oferta.titulo ||
+          oferta.title ||
+          "Sin título";
 
-      const oferta = item.data();
+        const precio =
+          numero(
+            oferta.precioActual ??
+            oferta.precio ??
+            oferta.price
+          );
 
-      html += `
-        <div class="admin-item">
 
-          <div class="admin-item-image">
+        return `
+
+          <div
+            class="recent-item"
+            style="
+              display:flex;
+              align-items:center;
+              gap:12px;
+            "
+          >
 
             ${
               oferta.imagen
-                ? `<img
-                    src="${escaparHTML(oferta.imagen)}"
-                    alt=""
-                    onerror="this.style.display='none'"
-                  >`
-                : "🛒"
+                ? `
+                  <img
+                    src="${escapar(
+                      oferta.imagen
+                    )}"
+                    style="
+                      width:48px;
+                      height:48px;
+                      object-fit:cover;
+                      border-radius:8px;
+                    "
+                  >
+                `
+                : "🔥"
             }
-
-          </div>
-
-          <div class="admin-item-info">
-
-            <strong>
-              ${escaparHTML(oferta.titulo)}
-            </strong>
 
             <div>
-              ${dinero(oferta.precioActual)}
+
+              <strong>
+                ${escapar(
+                  titulo
+                )}
+              </strong>
+
+              <small>
+                ${dinero(
+                  precio
+                )}
+              </small>
+
             </div>
 
-            ${
-              oferta.precioAntes
-                ? `<small>
-                    Antes:
-                    ${dinero(oferta.precioAntes)}
-                  </small>`
-                : ""
-            }
-
           </div>
 
-          <div class="admin-item-actions">
+        `;
 
-            <button
-              onclick="editarOferta('${item.id}')"
-            >
-              ✏️
-            </button>
+      }
+    ).join("");
 
-            <button
-              onclick="eliminarOferta('${item.id}')"
-            >
-              🗑️
-            </button>
-
-          </div>
-
-        </div>
-      `;
-    });
-
-    contenedor.innerHTML = html;
-
-    actualizarContador(
-      "total-ofertas",
-      snapshot.size
-    );
-
-  } catch (error) {
-
-    console.error(error);
-
-    contenedor.innerHTML =
-      `<div class="admin-error">
-        No se pudieron cargar las ofertas.
-      </div>`;
-  }
 }
 
-window.cargarOfertas = cargarOfertas;
+
+/* =========================================================
+   CATEGORÍAS
+   ========================================================= */
+
+function llenarCategorias() {
+
+  const select =
+    $("offerCategoryFilter");
+
+  if (!select) {
+    return;
+  }
+
+  const categorias =
+    [
+      ...new Set(
+        ofertas
+          .map(
+            o =>
+              o.categoria ||
+              o.category
+          )
+          .filter(Boolean)
+      )
+    ]
+    .sort();
+
+
+  select.innerHTML = `
+    <option value="">
+      Todas las categorías
+    </option>
+  `;
+
+
+  categorias.forEach(
+    (categoria) => {
+
+      const option =
+        document.createElement(
+          "option"
+        );
+
+      option.value =
+        categoria;
+
+      option.textContent =
+        categoria;
+
+      select.appendChild(
+        option
+      );
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   NUEVA OFERTA
+   ========================================================= */
+
+$("newOfferBtn")
+  ?.addEventListener(
+    "click",
+    () => {
+
+      abrirModalOferta();
+
+    }
+  );
+
+
+function abrirModalOferta(
+  oferta = null
+) {
+
+  ofertaEditando =
+    oferta?.id || null;
+
+
+  $("offerId").value =
+    oferta?.id || "";
+
+
+  $("offerTitle").value =
+    oferta?.titulo ||
+    oferta?.title ||
+    "";
+
+
+  $("offerOldPrice").value =
+    oferta?.precioAntes ??
+    oferta?.precioAnterior ??
+    oferta?.oldPrice ??
+    "";
+
+
+  $("offerPrice").value =
+    oferta?.precioActual ??
+    oferta?.precio ??
+    oferta?.price ??
+    "";
+
+
+  $("offerCategory").value =
+    oferta?.categoria ||
+    oferta?.category ||
+    "";
+
+
+  $("offerClicks").value =
+    oferta?.clics ??
+    oferta?.clicks ??
+    0;
+
+
+  $("offerLink").value =
+    oferta?.link ||
+    oferta?.url ||
+    "";
+
+
+  const preview =
+    $("offerImagePreview");
+
+  if (preview) {
+
+    if (oferta?.imagen) {
+
+      preview.innerHTML = `
+        <img
+          src="${escapar(
+            oferta.imagen
+          )}"
+          style="
+            max-width:100%;
+            max-height:220px;
+            border-radius:12px;
+          "
+        >
+      `;
+
+    } else {
+
+      preview.innerHTML =
+        "";
+    }
+
+  }
+
+
+  const titulo =
+    $("offerModalTitle");
+
+  if (titulo) {
+
+    titulo.textContent =
+      oferta
+        ? "Editar oferta"
+        : "Nueva oferta";
+
+  }
+
+
+  abrirModal(
+    "offerModal"
+  );
+
+}
+
+
+/* =========================================================
+   GUARDAR OFERTA
+   ========================================================= */
+
+$("offerForm")
+  ?.addEventListener(
+    "submit",
+    async (event) => {
+
+      event.preventDefault();
+
+      if (!usuarioActual) {
+        toast(
+          "Debes iniciar sesión.",
+          "error"
+        );
+        return;
+      }
+
+
+      const titulo =
+        $("offerTitle")
+          ?.value.trim();
+
+      const precioAntes =
+        numero(
+          $("offerOldPrice")
+            ?.value
+        );
+
+      const precioActual =
+        numero(
+          $("offerPrice")
+            ?.value
+        );
+
+      const categoria =
+        $("offerCategory")
+          ?.value.trim();
+
+      const clicks =
+        numero(
+          $("offerClicks")
+            ?.value
+        );
+
+      const link =
+        $("offerLink")
+          ?.value.trim();
+
+      const archivo =
+        $("offerImage")
+          ?.files?.[0];
+
+
+      if (!titulo) {
+
+        toast(
+          "Escribe el título.",
+          "error"
+        );
+
+        return;
+      }
+
+
+      if (!precioActual) {
+
+        toast(
+          "Escribe el precio actual.",
+          "error"
+        );
+
+        return;
+      }
+
+
+      if (!link) {
+
+        toast(
+          "Agrega el link de Mercado Libre.",
+          "error"
+        );
+
+        return;
+      }
+
+
+      const boton =
+        event.target.querySelector(
+          'button[type="submit"]'
+        );
+
+      if (boton) {
+
+        boton.disabled = true;
+
+        boton.textContent =
+          "⏳ Guardando...";
+      }
+
+
+      try {
+
+        let imagen =
+          ofertaEditando
+            ? (
+                ofertas.find(
+                  o =>
+                    o.id ===
+                    ofertaEditando
+                )?.imagen || ""
+              )
+            : "";
+
+
+        if (archivo) {
+
+          imagen =
+            await archivoABase64(
+              archivo
+            );
+
+        }
+
+
+        const datos = {
+
+          titulo,
+
+          precioAntes,
+
+          precioActual,
+
+          categoria,
+
+          clics: clicks,
+
+          link,
+
+          imagen,
+
+          ahorro:
+            Math.max(
+              precioAntes -
+              precioActual,
+              0
+            ),
+
+          actualizadoPor:
+            usuarioActual.email,
+
+          actualizadoEn:
+            serverTimestamp()
+
+        };
+
+
+        if (ofertaEditando) {
+
+          await updateDoc(
+            doc(
+              db,
+              "ofertas",
+              ofertaEditando
+            ),
+            datos
+          );
+
+          toast(
+            "Oferta actualizada."
+          );
+
+        } else {
+
+          await addDoc(
+            collection(
+              db,
+              "ofertas"
+            ),
+            {
+
+              ...datos,
+
+              creadoPor:
+                usuarioActual.email,
+
+              creadoEn:
+                serverTimestamp()
+
+            }
+          );
+
+          toast(
+            "Oferta publicada correctamente."
+          );
+
+        }
+
+
+        cerrarModal(
+          "offerModal"
+        );
+
+
+        limpiarOfertaForm();
+
+        await cargarOfertas();
+
+        actualizarDashboard();
+
+
+      } catch (error) {
+
+        console.error(
+          "Guardar oferta:",
+          error
+        );
+
+        toast(
+          "Error guardando oferta: " +
+          error.message,
+          "error"
+        );
+
+      } finally {
+
+        if (boton) {
+
+          boton.disabled = false;
+
+          boton.textContent =
+            "💾 Guardar oferta";
+
+        }
+
+      }
+
+    }
+  );
 
 
 /* =========================================================
    EDITAR OFERTA
    ========================================================= */
 
-async function editarOferta(id) {
+window.editarOferta =
+  function(id) {
 
-  try {
+    const oferta =
+      ofertas.find(
+        o =>
+          o.id === id
+      );
 
-    const referencia =
-      doc(db, "ofertas", id);
+    if (!oferta) {
 
-    const snapshot =
-      await getDoc(referencia);
-
-    if (!snapshot.exists()) {
-      notificacion(
-        "La oferta ya no existe.",
+      toast(
+        "Oferta no encontrada.",
         "error"
       );
+
       return;
     }
 
-    const oferta = snapshot.data();
-
-    ofertaEditando = id;
-
-    asignarValor(
-      "oferta-titulo",
-      oferta.titulo
+    abrirModalOferta(
+      oferta
     );
 
-    asignarValor(
-      "oferta-precio-antes",
-      oferta.precioAntes
-    );
-
-    asignarValor(
-      "oferta-precio-actual",
-      oferta.precioActual
-    );
-
-    asignarValor(
-      "oferta-imagen",
-      oferta.imagen
-    );
-
-    asignarValor(
-      "oferta-link",
-      oferta.link
-    );
-
-    asignarValor(
-      "oferta-categoria",
-      oferta.categoria
-    );
-
-    asignarValor(
-      "oferta-tipo",
-      oferta.tipo
-    );
-
-    const boton =
-      $("btn-guardar-oferta");
-
-    if (boton) {
-      boton.textContent =
-        "💾 ACTUALIZAR OFERTA";
-    }
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-    notificacion(
-      "No se pudo editar la oferta.",
-      "error"
-    );
-  }
-}
-
-window.editarOferta = editarOferta;
+  };
 
 
 /* =========================================================
    ELIMINAR OFERTA
    ========================================================= */
 
-async function eliminarOferta(id) {
+window.eliminarOferta =
+  async function(id) {
 
-  if (!confirm(
-    "¿Seguro que quieres eliminar esta oferta?"
-  )) {
-    return;
-  }
+    if (!usuarioActual) {
+      return;
+    }
 
-  try {
+    const oferta =
+      ofertas.find(
+        o =>
+          o.id === id
+      );
 
-    await deleteDoc(
-      doc(db, "ofertas", id)
-    );
 
-    notificacion(
-      "Oferta eliminada correctamente."
-    );
+    if (!confirm(
+      `¿Eliminar la oferta "${
+        oferta?.titulo ||
+        oferta?.title ||
+        ""
+      }"?`
+    )) {
 
-    await cargarOfertas();
-    await cargarDashboard();
+      return;
+    }
 
-  } catch (error) {
 
-    console.error(error);
+    try {
 
-    notificacion(
-      "No se pudo eliminar la oferta.",
-      "error"
-    );
-  }
+      await deleteDoc(
+        doc(
+          db,
+          "ofertas",
+          id
+        )
+      );
+
+
+      toast(
+        "Oferta eliminada."
+      );
+
+
+      await cargarOfertas();
+
+      actualizarDashboard();
+
+
+    } catch (error) {
+
+      console.error(error);
+
+      toast(
+        "No se pudo eliminar.",
+        "error"
+      );
+
+    }
+
+  };
+
+
+/* =========================================================
+   PREVISUALIZACIÓN IMAGEN
+   ========================================================= */
+
+$("offerImage")
+  ?.addEventListener(
+    "change",
+    async () => {
+
+      const archivo =
+        $("offerImage")
+          ?.files?.[0];
+
+      const preview =
+        $("offerImagePreview");
+
+      if (!archivo || !preview) {
+        return;
+      }
+
+
+      if (
+        !archivo.type.startsWith(
+          "image/"
+        )
+      ) {
+
+        preview.innerHTML =
+          "Archivo no válido.";
+
+        return;
+      }
+
+
+      try {
+
+        const base64 =
+          await archivoABase64(
+            archivo
+          );
+
+        preview.innerHTML = `
+          <img
+            src="${base64}"
+            style="
+              max-width:100%;
+              max-height:220px;
+              border-radius:12px;
+            "
+          >
+        `;
+
+      } catch {
+
+        preview.innerHTML =
+          "No se pudo mostrar la imagen.";
+
+      }
+
+    }
+  );
+
+
+/* =========================================================
+   ARCHIVO A BASE64
+   ========================================================= */
+
+function archivoABase64(
+  archivo
+) {
+
+  return new Promise(
+    (resolve, reject) => {
+
+      const lector =
+        new FileReader();
+
+      lector.onload =
+        () =>
+          resolve(
+            lector.result
+          );
+
+      lector.onerror =
+        reject;
+
+      lector.readAsDataURL(
+        archivo
+      );
+
+    }
+  );
+
 }
-
-window.eliminarOferta = eliminarOferta;
 
 
 /* =========================================================
    CUPONES
    ========================================================= */
 
-async function guardarCupon() {
-
-  if (!usuarioActual) {
-    notificacion(
-      "Debes iniciar sesión.",
-      "error"
-    );
-    return;
-  }
-
-  const nombre =
-    $("cupon-nombre")?.value.trim();
-
-  const codigo =
-    $("cupon-codigo")?.value.trim();
-
-  const descuento =
-    $("cupon-descuento")?.value.trim();
-
-  const minimo =
-    numero($("cupon-minimo")?.value);
-
-  const tope =
-    numero($("cupon-tope")?.value);
-
-  const link =
-    $("cupon-link")?.value.trim();
-
-  const tipo =
-    $("cupon-tipo")?.value.trim();
-
-  const estado =
-    $("cupon-estado")?.value || "activo";
-
-  if (!nombre) {
-
-    notificacion(
-      "Escribe el nombre del cupón.",
-      "error"
-    );
-
-    return;
-  }
-
-  if (!codigo) {
-
-    notificacion(
-      "Escribe el código del cupón.",
-      "error"
-    );
-
-    return;
-  }
-
-  const datos = {
-
-    nombre,
-
-    codigo,
-
-    descuento,
-
-    minimo,
-
-    tope,
-
-    link,
-
-    tipo,
-
-    estado,
-
-    actualizadoPor:
-      usuarioActual.email,
-
-    actualizadoEn:
-      serverTimestamp()
-  };
-
+async function cargarCupones() {
 
   try {
 
-    if (cuponEditando) {
-
-      await updateDoc(
-        doc(db, "cupones", cuponEditando),
-        datos
+    const snapshot =
+      await getDocs(
+        collection(
+          db,
+          "cupones"
+        )
       );
 
-      notificacion(
-        "Cupón actualizado correctamente."
-      );
 
-    } else {
+    cupones = [];
 
-      await addDoc(
-        collection(db, "cupones"),
-        {
-          ...datos,
-          copias: 0,
-          creadoEn: serverTimestamp()
-        }
-      );
 
-      notificacion(
-        "Cupón publicado correctamente."
-      );
-    }
+    snapshot.forEach(
+      (item) => {
 
-    limpiarFormularioCupon();
+        cupones.push({
 
-    await cargarCupones();
-    await cargarDashboard();
+          id: item.id,
+
+          ...item.data()
+
+        });
+
+      }
+    );
+
+
+    cupones.sort(
+      (a, b) => {
+
+        return (
+          obtenerFecha(
+            b.creadoEn
+          ) -
+          obtenerFecha(
+            a.creadoEn
+          )
+        );
+
+      }
+    );
+
+
+    renderCupones();
+
+    renderTopCupones();
 
   } catch (error) {
 
-    console.error(error);
-
-    notificacion(
-      "Error al guardar cupón: " +
-      error.message,
-      "error"
+    console.error(
+      "Error cupones:",
+      error
     );
-  }
-}
 
-window.guardarCupon = guardarCupon;
+    renderErrorTabla(
+      "couponsTable",
+      7,
+      "No se pudieron cargar los cupones."
+    );
+
+  }
+
+}
 
 
 /* =========================================================
-   CARGAR CUPONES
+   RENDER CUPONES
    ========================================================= */
 
-async function cargarCupones() {
+function renderCupones() {
+
+  const tbody =
+    $("couponsTable");
+
+  if (!tbody) {
+    return;
+  }
+
+
+  const busqueda =
+    texto(
+      $("couponSearch")
+        ?.value
+    )
+      .toLowerCase()
+      .trim();
+
+
+  const tipo =
+    $("couponTypeFilter")
+      ?.value || "";
+
+
+  const filtrados =
+    cupones.filter(
+      (cupon) => {
+
+        const codigo =
+          texto(
+            cupon.codigo ||
+            cupon.code
+          ).toLowerCase();
+
+        const descripcion =
+          texto(
+            cupon.descripcion ||
+            cupon.description
+          ).toLowerCase();
+
+        const tipoCupon =
+          cupon.tipo ||
+          cupon.type ||
+          "";
+
+
+        const coincideBusqueda =
+          !busqueda ||
+          codigo.includes(
+            busqueda
+          ) ||
+          descripcion.includes(
+            busqueda
+          );
+
+
+        const coincideTipo =
+          !tipo ||
+          tipoCupon === tipo;
+
+
+        return (
+          coincideBusqueda &&
+          coincideTipo
+        );
+
+      }
+    );
+
+
+  if (!filtrados.length) {
+
+    tbody.innerHTML = `
+      <tr>
+        <td
+          colspan="7"
+          class="table-loading"
+        >
+          No hay cupones.
+        </td>
+      </tr>
+    `;
+
+    return;
+
+  }
+
+
+  tbody.innerHTML =
+    filtrados.map(
+      (cupon) => {
+
+        const codigo =
+          cupon.codigo ||
+          cupon.code ||
+          "—";
+
+        const tipoCupon =
+          cupon.tipo ||
+          cupon.type ||
+          "—";
+
+        const descuento =
+          cupon.descuento ||
+          cupon.discount ||
+          "—";
+
+        const minimo =
+          numero(
+            cupon.minimo ??
+            cupon.minimum
+          );
+
+        const tope =
+          numero(
+            cupon.tope ??
+            cupon.maximum
+          );
+
+        const copias =
+          numero(
+            cupon.copias ??
+            cupon.copies
+          );
+
+
+        return `
+
+          <tr>
+
+            <td>
+
+              <strong>
+                🎟️ ${escapar(
+                  codigo
+                )}
+              </strong>
+
+            </td>
+
+
+            <td>
+              ${tipoIcono(
+                tipoCupon
+              )}
+              ${escapar(
+                tipoCupon
+              )}
+            </td>
+
+
+            <td>
+              ${escapar(
+                descuento
+              )}
+            </td>
+
+
+            <td>
+              ${
+                minimo
+                  ? dinero(
+                      minimo
+                    )
+                  : "—"
+              }
+            </td>
+
+
+            <td>
+              ${
+                tope
+                  ? dinero(
+                      tope
+                    )
+                  : "—"
+              }
+            </td>
+
+
+            <td>
+              ${copias.toLocaleString(
+                "es-MX"
+              )}
+            </td>
+
+
+            <td>
+
+              <div
+                style="
+                  display:flex;
+                  gap:6px;
+                "
+              >
+
+                <button
+                  class="secondary-button"
+                  onclick="editarCupon('${cupon.id}')"
+                >
+                  ✏️
+                </button>
+
+                <button
+                  class="danger-button"
+                  onclick="eliminarCupon('${cupon.id}')"
+                >
+                  🗑️
+                </button>
+
+              </div>
+
+            </td>
+
+          </tr>
+
+        `;
+
+      }
+    ).join("");
+
+}
+
+
+/* =========================================================
+   ICONO CUPÓN
+   ========================================================= */
+
+function tipoIcono(
+  tipo
+) {
+
+  switch (tipo) {
+
+    case "relampago":
+      return "⚡";
+
+    case "bancario":
+      return "🏦";
+
+    case "meliplus":
+      return "💛";
+
+    default:
+      return "🎟️";
+
+  }
+
+}
+
+
+/* =========================================================
+   CUPONES MÁS USADOS
+   ========================================================= */
+
+function renderTopCupones() {
 
   const contenedor =
-    $("lista-cupones") ||
-    $("cupones-lista");
+    $("topCoupons");
 
   if (!contenedor) {
     return;
   }
 
-  try {
 
-    const consulta = query(
-      collection(db, "cupones"),
-      orderBy("creadoEn", "desc")
-    );
-
-    const snapshot =
-      await getDocs(consulta);
-
-    if (snapshot.empty) {
-
-      contenedor.innerHTML =
-        `<div class="admin-empty">
-          No hay cupones publicados.
-        </div>`;
-
-      actualizarContador(
-        "total-cupones",
-        0
+  const ordenados =
+    [...cupones]
+      .sort(
+        (a, b) =>
+          numero(
+            b.copias ??
+            b.copies
+          ) -
+          numero(
+            a.copias ??
+            a.copies
+          )
+      )
+      .slice(
+        0,
+        5
       );
 
-      return;
-    }
 
-    let html = "";
+  if (!ordenados.length) {
 
-    snapshot.forEach((item) => {
+    contenedor.innerHTML = `
+      <div class="empty-state">
+        No hay cupones.
+      </div>
+    `;
 
-      const cupon = item.data();
+    return;
+  }
 
-      const estado =
-        cupon.estado || "activo";
 
-      html += `
-        <div class="admin-item">
+  contenedor.innerHTML =
+    ordenados.map(
+      (cupon) => {
 
-          <div class="admin-coupon-icon">
-            🎟️
-          </div>
+        const codigo =
+          cupon.codigo ||
+          cupon.code ||
+          "—";
 
-          <div class="admin-item-info">
+        const copias =
+          numero(
+            cupon.copias ??
+            cupon.copies
+          );
+
+
+        return `
+
+          <div
+            class="recent-item"
+          >
 
             <strong>
-              ${escaparHTML(cupon.nombre)}
+              ${tipoIcono(
+                cupon.tipo ||
+                cupon.type
+              )}
+              ${escapar(
+                codigo
+              )}
             </strong>
 
-            <div>
-              Código:
-              <b>
-                ${escaparHTML(cupon.codigo)}
-              </b>
-            </div>
-
             <small>
-              ${escaparHTML(cupon.descuento || "")}
-              ${
-                cupon.minimo
-                  ? ` · Mín. ${dinero(cupon.minimo)}`
-                  : ""
-              }
+              ${copias.toLocaleString(
+                "es-MX"
+              )}
+              copias
             </small>
 
-            <span class="estado-${estado}">
-              ${estado.toUpperCase()}
-            </span>
-
           </div>
 
-          <div class="admin-item-actions">
+        `;
 
-            <button
-              onclick="editarCupon('${item.id}')"
-            >
-              ✏️
-            </button>
+      }
+    ).join("");
 
-            <button
-              onclick="eliminarCupon('${item.id}')"
-            >
-              🗑️
-            </button>
-
-          </div>
-
-        </div>
-      `;
-    });
-
-    contenedor.innerHTML = html;
-
-    actualizarContador(
-      "total-cupones",
-      snapshot.size
-    );
-
-  } catch (error) {
-
-    console.error(error);
-
-    contenedor.innerHTML =
-      `<div class="admin-error">
-        No se pudieron cargar los cupones.
-      </div>`;
-  }
 }
 
-window.cargarCupones = cargarCupones;
+
+/* =========================================================
+   NUEVO CUPÓN
+   ========================================================= */
+
+$("newCouponBtn")
+  ?.addEventListener(
+    "click",
+    () => {
+
+      abrirModalCupon();
+
+    }
+  );
+
+
+function abrirModalCupon(
+  cupon = null
+) {
+
+  cuponEditando =
+    cupon?.id || null;
+
+
+  $("couponId").value =
+    cupon?.id || "";
+
+
+  $("couponCode").value =
+    cupon?.codigo ||
+    cupon?.code ||
+    "";
+
+
+  $("couponType").value =
+    cupon?.tipo ||
+    cupon?.type ||
+    "relampago";
+
+
+  $("couponDiscount").value =
+    cupon?.descuento ||
+    cupon?.discount ||
+    "";
+
+
+  $("couponMinimum").value =
+    cupon?.minimo ??
+    cupon?.minimum ??
+    "";
+
+
+  $("couponMaximum").value =
+    cupon?.tope ??
+    cupon?.maximum ??
+    "";
+
+
+  $("couponCopies").value =
+    cupon?.copias ??
+    cupon?.copies ??
+    0;
+
+
+  $("couponStatus").value =
+    cupon?.estado ||
+    cupon?.status ||
+    "activo";
+
+
+  $("couponDescription").value =
+    cupon?.descripcion ||
+    cupon?.description ||
+    "";
+
+
+  const titulo =
+    $("couponModalTitle");
+
+  if (titulo) {
+
+    titulo.textContent =
+      cupon
+        ? "Editar cupón"
+        : "Nuevo cupón";
+
+  }
+
+
+  abrirModal(
+    "couponModal"
+  );
+
+}
+
+
+/* =========================================================
+   GUARDAR CUPÓN
+   ========================================================= */
+
+$("couponForm")
+  ?.addEventListener(
+    "submit",
+    async (event) => {
+
+      event.preventDefault();
+
+
+      if (!usuarioActual) {
+
+        toast(
+          "Debes iniciar sesión.",
+          "error"
+        );
+
+        return;
+      }
+
+
+      const codigo =
+        $("couponCode")
+          ?.value.trim();
+
+      const tipo =
+        $("couponType")
+          ?.value;
+
+      const descuento =
+        $("couponDiscount")
+          ?.value.trim();
+
+      const minimo =
+        numero(
+          $("couponMinimum")
+            ?.value
+        );
+
+      const tope =
+        numero(
+          $("couponMaximum")
+            ?.value
+        );
+
+      const copias =
+        numero(
+          $("couponCopies")
+            ?.value
+        );
+
+      const estado =
+        $("couponStatus")
+          ?.value;
+
+      const descripcion =
+        $("couponDescription")
+          ?.value.trim();
+
+
+      if (!codigo) {
+
+        toast(
+          "Escribe el código.",
+          "error"
+        );
+
+        return;
+      }
+
+
+      const boton =
+        event.target.querySelector(
+          'button[type="submit"]'
+        );
+
+
+      if (boton) {
+
+        boton.disabled = true;
+
+        boton.textContent =
+          "⏳ Guardando...";
+
+      }
+
+
+      try {
+
+        const datos = {
+
+          codigo,
+
+          tipo,
+
+          descuento,
+
+          minimo,
+
+          tope,
+
+          copias,
+
+          estado,
+
+          descripcion,
+
+          actualizadoPor:
+            usuarioActual.email,
+
+          actualizadoEn:
+            serverTimestamp()
+
+        };
+
+
+        if (cuponEditando) {
+
+          await updateDoc(
+            doc(
+              db,
+              "cupones",
+              cuponEditando
+            ),
+            datos
+          );
+
+          toast(
+            "Cupón actualizado."
+          );
+
+        } else {
+
+          await addDoc(
+            collection(
+              db,
+              "cupones"
+            ),
+            {
+
+              ...datos,
+
+              creadoPor:
+                usuarioActual.email,
+
+              creadoEn:
+                serverTimestamp()
+
+            }
+          );
+
+          toast(
+            "Cupón publicado correctamente."
+          );
+
+        }
+
+
+        cerrarModal(
+          "couponModal"
+        );
+
+        limpiarCuponForm();
+
+        await cargarCupones();
+
+        actualizarDashboard();
+
+
+      } catch (error) {
+
+        console.error(
+          "Guardar cupón:",
+          error
+        );
+
+        toast(
+          "Error guardando cupón: " +
+          error.message,
+          "error"
+        );
+
+      } finally {
+
+        if (boton) {
+
+          boton.disabled = false;
+
+          boton.textContent =
+            "💾 Guardar cupón";
+
+        }
+
+      }
+
+    }
+  );
 
 
 /* =========================================================
    EDITAR CUPÓN
    ========================================================= */
 
-async function editarCupon(id) {
+window.editarCupon =
+  function(id) {
 
-  try {
+    const cupon =
+      cupones.find(
+        c =>
+          c.id === id
+      );
 
-    const referencia =
-      doc(db, "cupones", id);
 
-    const snapshot =
-      await getDoc(referencia);
+    if (!cupon) {
 
-    if (!snapshot.exists()) {
-
-      notificacion(
-        "El cupón ya no existe.",
+      toast(
+        "Cupón no encontrado.",
         "error"
       );
 
       return;
     }
 
-    const cupon =
-      snapshot.data();
 
-    cuponEditando = id;
-
-    asignarValor(
-      "cupon-nombre",
-      cupon.nombre
+    abrirModalCupon(
+      cupon
     );
 
-    asignarValor(
-      "cupon-codigo",
-      cupon.codigo
-    );
-
-    asignarValor(
-      "cupon-descuento",
-      cupon.descuento
-    );
-
-    asignarValor(
-      "cupon-minimo",
-      cupon.minimo
-    );
-
-    asignarValor(
-      "cupon-tope",
-      cupon.tope
-    );
-
-    asignarValor(
-      "cupon-link",
-      cupon.link
-    );
-
-    asignarValor(
-      "cupon-tipo",
-      cupon.tipo
-    );
-
-    asignarValor(
-      "cupon-estado",
-      cupon.estado
-    );
-
-    const boton =
-      $("btn-guardar-cupon");
-
-    if (boton) {
-      boton.textContent =
-        "💾 ACTUALIZAR CUPÓN";
-    }
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-    notificacion(
-      "No se pudo editar el cupón.",
-      "error"
-    );
-  }
-}
-
-window.editarCupon = editarCupon;
+  };
 
 
 /* =========================================================
    ELIMINAR CUPÓN
    ========================================================= */
 
-async function eliminarCupon(id) {
+window.eliminarCupon =
+  async function(id) {
 
-  if (!confirm(
-    "¿Seguro que quieres eliminar este cupón?"
-  )) {
-    return;
-  }
+    if (!confirm(
+      "¿Seguro que quieres eliminar este cupón?"
+    )) {
+
+      return;
+    }
+
+
+    try {
+
+      await deleteDoc(
+        doc(
+          db,
+          "cupones",
+          id
+        )
+      );
+
+
+      toast(
+        "Cupón eliminado."
+      );
+
+
+      await cargarCupones();
+
+      actualizarDashboard();
+
+
+    } catch (error) {
+
+      console.error(error);
+
+      toast(
+        "No se pudo eliminar.",
+        "error"
+      );
+
+    }
+
+  };
+
+
+/* =========================================================
+   USUARIOS
+   ========================================================= */
+
+async function cargarUsuarios() {
 
   try {
 
-    await deleteDoc(
-      doc(db, "cupones", id)
+    const snapshot =
+      await getDocs(
+        collection(
+          db,
+          "usuarios"
+        )
+      );
+
+
+    usuarios = [];
+
+
+    snapshot.forEach(
+      (item) => {
+
+        usuarios.push({
+
+          id: item.id,
+
+          ...item.data()
+
+        });
+
+      }
     );
 
-    notificacion(
-      "Cupón eliminado correctamente."
-    );
 
-    await cargarCupones();
-    await cargarDashboard();
+    renderUsuarios();
+
 
   } catch (error) {
 
-    console.error(error);
-
-    notificacion(
-      "No se pudo eliminar el cupón.",
-      "error"
+    console.error(
+      "Usuarios:",
+      error
     );
+
+    renderErrorTabla(
+      "usersTable",
+      7,
+      "No se pudieron cargar los usuarios."
+    );
+
   }
+
 }
 
-window.eliminarCupon = eliminarCupon;
+
+/* =========================================================
+   RENDER USUARIOS
+   ========================================================= */
+
+function renderUsuarios() {
+
+  const tbody =
+    $("usersTable");
+
+  if (!tbody) {
+    return;
+  }
+
+
+  const busqueda =
+    texto(
+      $("userSearch")
+        ?.value
+    )
+      .toLowerCase()
+      .trim();
+
+
+  const filtrados =
+    usuarios.filter(
+      (usuario) => {
+
+        const nombre =
+          texto(
+            usuario.nombre ||
+            usuario.name
+          ).toLowerCase();
+
+        const email =
+          texto(
+            usuario.email ||
+            usuario.correo
+          ).toLowerCase();
+
+
+        return (
+          !busqueda ||
+          nombre.includes(
+            busqueda
+          ) ||
+          email.includes(
+            busqueda
+          )
+        );
+
+      }
+    );
+
+
+  if (!filtrados.length) {
+
+    tbody.innerHTML = `
+      <tr>
+        <td
+          colspan="7"
+          class="table-loading"
+        >
+          No hay usuarios registrados.
+        </td>
+      </tr>
+    `;
+
+    return;
+  }
+
+
+  tbody.innerHTML =
+    filtrados.map(
+      (usuario) => {
+
+        const nombre =
+          usuario.nombre ||
+          usuario.name ||
+          "Usuario";
+
+        const email =
+          usuario.email ||
+          usuario.correo ||
+          "—";
+
+        const visitasUsuario =
+          numero(
+            usuario.visitas
+          );
+
+        const comprasUsuario =
+          numero(
+            usuario.compras
+          );
+
+        const ahorro =
+          numero(
+            usuario.ahorroTotal ||
+            usuario.ahorro
+          );
+
+        const estado =
+          usuario.estado ||
+          "Activo";
+
+
+        return `
+
+          <tr>
+
+            <td>
+              <strong>
+                ${escapar(
+                  nombre
+                )}
+              </strong>
+            </td>
+
+            <td>
+              ${escapar(
+                email
+              )}
+            </td>
+
+            <td>
+              ${escapar(
+                estado
+              )}
+            </td>
+
+            <td>
+              ${visitasUsuario}
+            </td>
+
+            <td>
+              ${comprasUsuario}
+            </td>
+
+            <td>
+              ${dinero(
+                ahorro
+              )}
+            </td>
+
+            <td>
+              ${fecha(
+                usuario.creadoEn ||
+                usuario.registro
+              )}
+            </td>
+
+          </tr>
+
+        `;
+
+      }
+    ).join("");
+
+}
+
+
+/* =========================================================
+   COPIAS
+   ========================================================= */
+
+async function cargarCopias() {
+
+  try {
+
+    const snapshot =
+      await getDocs(
+        collection(
+          db,
+          "copias"
+        )
+      );
+
+
+    copias = [];
+
+
+    snapshot.forEach(
+      (item) => {
+
+        copias.push({
+
+          id: item.id,
+
+          ...item.data()
+
+        });
+
+      }
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Copias:",
+      error
+    );
+
+    copias = [];
+
+  }
+
+}
+
+
+/* =========================================================
+   VISITAS
+   ========================================================= */
+
+async function cargarVisitas() {
+
+  try {
+
+    const snapshot =
+      await getDocs(
+        collection(
+          db,
+          "visitas"
+        )
+      );
+
+
+    visitas = [];
+
+
+    snapshot.forEach(
+      (item) => {
+
+        visitas.push({
+
+          id: item.id,
+
+          ...item.data()
+
+        });
+
+      }
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Visitas:",
+      error
+    );
+
+    visitas = [];
+
+  }
+
+}
+
+
+/* =========================================================
+   COMPRAS
+   ========================================================= */
+
+async function cargarCompras() {
+
+  try {
+
+    const snapshot =
+      await getDocs(
+        collection(
+          db,
+          "compras"
+        )
+      );
+
+
+    compras = [];
+
+
+    snapshot.forEach(
+      (item) => {
+
+        compras.push({
+
+          id: item.id,
+
+          ...item.data()
+
+        });
+
+      }
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Compras:",
+      error
+    );
+
+    compras = [];
+
+  }
+
+}
 
 
 /* =========================================================
    DASHBOARD
    ========================================================= */
 
-async function cargarDashboard() {
+function actualizarDashboard() {
 
-  try {
+  actualizarNumero(
+    "totalOfertas",
+    ofertas.length
+  );
 
-    const [
-      ofertas,
-      cupones,
-      copias,
-      visitas
-    ] = await Promise.all([
 
-      getDocs(
-        collection(db, "ofertas")
-      ),
+  actualizarNumero(
+    "totalCupones",
+    cupones.length
+  );
 
-      getDocs(
-        collection(db, "cupones")
-      ),
 
-      getDocs(
-        collection(db, "copias")
-      ),
+  const totalClics =
+    ofertas.reduce(
+      (
+        total,
+        oferta
+      ) =>
+        total +
+        numero(
+          oferta.clics ??
+          oferta.clicks
+        ),
+      0
+    );
 
-      getDocs(
-        collection(db, "visitas")
+
+  actualizarNumero(
+    "totalClics",
+    totalClics
+  );
+
+
+  actualizarNumero(
+    "totalUsuarios",
+    usuarios.length
+  );
+
+
+  const ahorro =
+    usuarios.reduce(
+      (
+        total,
+        usuario
+      ) =>
+        total +
+        numero(
+          usuario.ahorroTotal ||
+          usuario.ahorro
+        ),
+      0
+    );
+
+
+  const ahorroOfertas =
+    ofertas.reduce(
+      (
+        total,
+        oferta
+      ) =>
+        total +
+        numero(
+          oferta.ahorro
+        ),
+      0
+    );
+
+
+  const ahorroFinal =
+    ahorro ||
+    ahorroOfertas;
+
+
+  const ahorroElemento =
+    $("ahorroTotal");
+
+  if (ahorroElemento) {
+
+    ahorroElemento.textContent =
+      dinero(
+        ahorroFinal
+      );
+
+  }
+
+
+  actualizarNumero(
+    "totalCompras",
+    compras.length
+  );
+
+
+  renderTopOferta();
+
+}
+
+
+/* =========================================================
+   TOP OFERTA
+   ========================================================= */
+
+function renderTopOferta() {
+
+  const contenedor =
+    $("topOffer");
+
+  if (!contenedor) {
+    return;
+  }
+
+
+  const ordenadas =
+    [...ofertas]
+      .sort(
+        (a, b) =>
+          numero(
+            b.clics ??
+            b.clicks
+          ) -
+          numero(
+            a.clics ??
+            a.clicks
+          )
+      );
+
+
+  const top =
+    ordenadas[0];
+
+
+  if (!top) {
+
+    contenedor.innerHTML = `
+      <div class="empty-state">
+        Todavía no hay ofertas.
+      </div>
+    `;
+
+    return;
+  }
+
+
+  const titulo =
+    top.titulo ||
+    top.title ||
+    "Oferta";
+
+
+  const clicks =
+    numero(
+      top.clics ??
+      top.clicks
+    );
+
+
+  contenedor.innerHTML = `
+
+    <div
+      style="
+        display:flex;
+        align-items:center;
+        gap:15px;
+        padding:10px;
+      "
+    >
+
+      <div
+        style="
+          font-size:36px;
+        "
+      >
+        🏆
+      </div>
+
+      <div>
+
+        <strong>
+          ${escapar(
+            titulo
+          )}
+        </strong>
+
+        <div>
+          ${clicks.toLocaleString(
+            "es-MX"
+          )}
+          clics
+        </div>
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+/* =========================================================
+   ESTADÍSTICAS
+   ========================================================= */
+
+function cargarEstadisticas() {
+
+  renderClickStats();
+
+  renderCouponStats();
+
+  renderStateStats();
+
+  renderDailyStats();
+
+}
+
+
+/* =========================================================
+   ESTADÍSTICAS CLICS
+   ========================================================= */
+
+function renderClickStats() {
+
+  const contenedor =
+    $("clickStats");
+
+  if (!contenedor) {
+    return;
+  }
+
+
+  const ordenadas =
+    [...ofertas]
+      .sort(
+        (a, b) =>
+          numero(
+            b.clics ??
+            b.clicks
+          ) -
+          numero(
+            a.clics ??
+            a.clicks
+          )
       )
-
-    ]);
-
-
-    actualizarContador(
-      "total-ofertas",
-      ofertas.size
-    );
-
-    actualizarContador(
-      "total-cupones",
-      cupones.size
-    );
-
-    actualizarContador(
-      "total-copias",
-      copias.size
-    );
-
-    actualizarContador(
-      "total-visitas",
-      visitas.size
-    );
+      .slice(
+        0,
+        10
+      );
 
 
-    /* -----------------------------------------
-       CUPÓN MÁS COPIADO
-       ----------------------------------------- */
+  if (!ordenadas.length) {
 
-    const contadorCupones = {};
+    contenedor.innerHTML =
+      `<div class="empty-state">
+        Sin datos de clics.
+      </div>`;
 
-    copias.forEach((item) => {
+    return;
+  }
 
-      const data = item.data();
 
-      const codigo =
-        data.codigo ||
-        data.cupon ||
-        data.cuponId ||
-        "Desconocido";
+  contenedor.innerHTML =
+    ordenadas.map(
+      (oferta) => {
 
-      contadorCupones[codigo] =
-        (contadorCupones[codigo] || 0) + 1;
-    });
+        const titulo =
+          oferta.titulo ||
+          oferta.title ||
+          "Oferta";
 
-    let topCupon = "—";
-    let maxCopias = 0;
+        const clicks =
+          numero(
+            oferta.clics ??
+            oferta.clicks
+          );
 
-    Object.entries(contadorCupones)
-      .forEach(([codigo, cantidad]) => {
 
-        if (cantidad > maxCopias) {
+        return `
 
-          maxCopias = cantidad;
-          topCupon = codigo;
-        }
+          <div
+            style="
+              display:flex;
+              justify-content:space-between;
+              padding:8px 0;
+            "
+          >
 
-      });
+            <span>
+              ${escapar(
+                titulo
+              )}
+            </span>
 
-    const topCuponElement =
-      $("top-cupon");
+            <strong>
+              ${clicks.toLocaleString(
+                "es-MX"
+              )}
+            </strong>
 
-    if (topCuponElement) {
+          </div>
 
-      topCuponElement.textContent =
-        maxCopias > 0
-          ? `${topCupon} (${maxCopias})`
-          : "—";
+        `;
+
+      }
+    ).join("");
+
+}
+
+
+/* =========================================================
+   ESTADÍSTICAS CUPONES
+   ========================================================= */
+
+function renderCouponStats() {
+
+  const contenedor =
+    $("couponStats");
+
+  if (!contenedor) {
+    return;
+  }
+
+
+  const ordenados =
+    [...cupones]
+      .sort(
+        (a, b) =>
+          numero(
+            b.copias ??
+            b.copies
+          ) -
+          numero(
+            a.copias ??
+            a.copies
+          )
+      )
+      .slice(
+        0,
+        10
+      );
+
+
+  if (!ordenados.length) {
+
+    contenedor.innerHTML =
+      `<div class="empty-state">
+        Sin datos de cupones.
+      </div>`;
+
+    return;
+  }
+
+
+  contenedor.innerHTML =
+    ordenados.map(
+      (cupon) => {
+
+        const codigo =
+          cupon.codigo ||
+          cupon.code ||
+          "Cupón";
+
+        const copias =
+          numero(
+            cupon.copias ??
+            cupon.copies
+          );
+
+
+        return `
+
+          <div
+            style="
+              display:flex;
+              justify-content:space-between;
+              padding:8px 0;
+            "
+          >
+
+            <span>
+              🎟️ ${escapar(
+                codigo
+              )}
+            </span>
+
+            <strong>
+              ${copias.toLocaleString(
+                "es-MX"
+              )}
+            </strong>
+
+          </div>
+
+        `;
+
+      }
+    ).join("");
+
+}
+
+
+/* =========================================================
+   ESTADOS DE MÉXICO
+   ========================================================= */
+
+function renderStateStats() {
+
+  const contenedor =
+    $("stateStats");
+
+  if (!contenedor) {
+    return;
+  }
+
+
+  const estados = {};
+
+
+  usuarios.forEach(
+    (usuario) => {
+
+      const estado =
+        usuario.estadoMexico ||
+        usuario.estado ||
+        usuario.state ||
+        "Sin especificar";
+
+
+      estados[estado] =
+        (
+          estados[estado] ||
+          0
+        ) + 1;
+
     }
+  );
 
 
-    /* -----------------------------------------
-       TOP OFERTA
-       ----------------------------------------- */
+  const lista =
+    Object.entries(
+      estados
+    )
+      .sort(
+        (a, b) =>
+          b[1] - a[1]
+      )
+      .slice(
+        0,
+        10
+      );
 
-    const ofertaClicks = {};
 
-    visitas.forEach((item) => {
+  if (!lista.length) {
 
-      const data = item.data();
+    contenedor.innerHTML =
+      `<div class="empty-state">
+        Sin datos de estados.
+      </div>`;
 
-      const titulo =
-        data.titulo ||
-        data.oferta ||
-        data.ofertaId;
+    return;
+  }
 
-      if (!titulo) {
+
+  contenedor.innerHTML =
+    lista.map(
+      ([estado, cantidad]) =>
+        `
+
+          <div
+            style="
+              display:flex;
+              justify-content:space-between;
+              padding:8px 0;
+            "
+          >
+
+            <span>
+              🇲🇽 ${escapar(
+                estado
+              )}
+            </span>
+
+            <strong>
+              ${cantidad}
+            </strong>
+
+          </div>
+
+        `
+    ).join("");
+
+}
+
+
+/* =========================================================
+   ACTIVIDAD DIARIA
+   ========================================================= */
+
+function renderDailyStats() {
+
+  const contenedor =
+    $("dailyStats");
+
+  if (!contenedor) {
+    return;
+  }
+
+
+  const dias = {};
+
+
+  [...visitas, ...copias].forEach(
+    (item) => {
+
+      const timestamp =
+        item.creadoEn ||
+        item.fecha ||
+        item.timestamp;
+
+
+      const date =
+        obtenerFecha(
+          timestamp
+        );
+
+
+      if (!date) {
         return;
       }
 
-      ofertaClicks[titulo] =
-        (ofertaClicks[titulo] || 0) + 1;
-    });
 
-    let topOferta = "—";
-    let maxClicks = 0;
+      const clave =
+        new Date(
+          date
+        ).toLocaleDateString(
+          "es-MX"
+        );
 
-    Object.entries(ofertaClicks)
-      .forEach(([titulo, cantidad]) => {
 
-        if (cantidad > maxClicks) {
+      dias[clave] =
+        (
+          dias[clave] ||
+          0
+        ) + 1;
 
-          maxClicks = cantidad;
-          topOferta = titulo;
+    }
+  );
+
+
+  const lista =
+    Object.entries(
+      dias
+    )
+      .sort(
+        (a, b) => {
+
+          const da =
+            new Date(
+              a[0]
+            );
+
+          const db =
+            new Date(
+              b[0]
+            );
+
+          return db - da;
+
         }
+      )
+      .slice(
+        0,
+        10
+      );
 
-      });
 
-    const topOfertaElement =
-      $("top-oferta");
+  if (!lista.length) {
 
-    if (topOfertaElement) {
+    contenedor.innerHTML =
+      `<div class="empty-state">
+        Sin actividad registrada.
+      </div>`;
 
-      topOfertaElement.textContent =
-        maxClicks > 0
-          ? topOferta
-          : "—";
-    }
-
-  } catch (error) {
-
-    console.error(
-      "Error cargando dashboard:",
-      error
-    );
+    return;
   }
-}
 
-window.cargarDashboard = cargarDashboard;
+
+  contenedor.innerHTML =
+    lista.map(
+      ([dia, cantidad]) =>
+        `
+
+          <div
+            style="
+              display:flex;
+              justify-content:space-between;
+              padding:8px 0;
+            "
+          >
+
+            <span>
+              📅 ${escapar(
+                dia
+              )}
+            </span>
+
+            <strong>
+              ${cantidad}
+            </strong>
+
+          </div>
+
+        `
+    ).join("");
+
+}
 
 
 /* =========================================================
-   CONTADORES
+   BÚSQUEDAS / FILTROS
    ========================================================= */
 
-function actualizarContador(id, valor) {
+$("offerSearch")
+  ?.addEventListener(
+    "input",
+    renderOfertas
+  );
 
-  const elemento = $(id);
 
-  if (elemento) {
-    elemento.textContent =
-      Number(valor).toLocaleString("es-MX");
-  }
-}
+$("offerCategoryFilter")
+  ?.addEventListener(
+    "change",
+    renderOfertas
+  );
+
+
+$("couponSearch")
+  ?.addEventListener(
+    "input",
+    renderCupones
+  );
+
+
+$("couponTypeFilter")
+  ?.addEventListener(
+    "change",
+    renderCupones
+  );
+
+
+$("userSearch")
+  ?.addEventListener(
+    "input",
+    renderUsuarios
+  );
 
 
 /* =========================================================
-   FORMULARIOS
+   MODALES
    ========================================================= */
 
-function asignarValor(id, valor) {
+function abrirModal(
+  id
+) {
 
-  const elemento = $(id);
+  const modal =
+    $(id);
 
-  if (elemento) {
-    elemento.value =
-      valor === undefined ||
-      valor === null
-        ? ""
-        : valor;
+  if (modal) {
+
+    modal.style.display =
+      "flex";
+
   }
+
 }
 
 
-function limpiarFormularioOferta() {
+function cerrarModal(
+  id
+) {
 
-  ofertaEditando = null;
+  const modal =
+    $(id);
 
-  [
-    "oferta-titulo",
-    "oferta-precio-antes",
-    "oferta-precio-actual",
-    "oferta-imagen",
-    "oferta-link",
-    "oferta-categoria",
-    "oferta-tipo"
-  ].forEach((id) => {
+  if (modal) {
 
-    const elemento = $(id);
+    modal.style.display =
+      "none";
 
-    if (elemento) {
-      elemento.value = "";
+  }
+
+}
+
+
+document
+  .querySelectorAll(
+    "[data-close]"
+  )
+  .forEach(
+    (boton) => {
+
+      boton.addEventListener(
+        "click",
+        () => {
+
+          cerrarModal(
+            boton.dataset.close
+          );
+
+        }
+      );
+
     }
-
-  });
-
-  const boton =
-    $("btn-guardar-oferta");
-
-  if (boton) {
-    boton.textContent =
-      "🚀 PUBLICAR OFERTA";
-  }
-}
-
-window.limpiarFormularioOferta =
-  limpiarFormularioOferta;
+  );
 
 
-function limpiarFormularioCupon() {
+document
+  .querySelectorAll(
+    ".modal-overlay"
+  )
+  .forEach(
+    (modal) => {
 
-  cuponEditando = null;
+      modal.addEventListener(
+        "click",
+        (event) => {
 
-  [
-    "cupon-nombre",
-    "cupon-codigo",
-    "cupon-descuento",
-    "cupon-minimo",
-    "cupon-tope",
-    "cupon-link",
-    "cupon-tipo"
-  ].forEach((id) => {
+          if (
+            event.target ===
+            modal
+          ) {
 
-    const elemento = $(id);
+            modal.style.display =
+              "none";
 
-    if (elemento) {
-      elemento.value = "";
+          }
+
+        }
+      );
+
     }
-
-  });
-
-  const estado =
-    $("cupon-estado");
-
-  if (estado) {
-    estado.value = "activo";
-  }
-
-  const boton =
-    $("btn-guardar-cupon");
-
-  if (boton) {
-    boton.textContent =
-      "🎟️ PUBLICAR CUPÓN";
-  }
-}
-
-window.limpiarFormularioCupon =
-  limpiarFormularioCupon;
+  );
 
 
 /* =========================================================
-   CALCULAR AHORRO
+   LIMPIAR FORMULARIOS
    ========================================================= */
 
-function calcularAhorroOferta() {
+function limpiarOfertaForm() {
 
-  const antes =
-    numero(
-      $("oferta-precio-antes")?.value
-    );
+  ofertaEditando =
+    null;
 
-  const actual =
-    numero(
-      $("oferta-precio-actual")?.value
-    );
+  $("offerId").value =
+    "";
 
-  const ahorro =
-    antes > actual
-      ? antes - actual
-      : 0;
+  $("offerTitle").value =
+    "";
 
-  const porcentaje =
-    antes > 0
-      ? Math.round(
-          (ahorro / antes) * 100
-        )
-      : 0;
+  $("offerOldPrice").value =
+    "";
 
-  const ahorroElement =
-    $("oferta-ahorro");
+  $("offerPrice").value =
+    "";
 
-  if (ahorroElement) {
+  $("offerCategory").value =
+    "";
 
-    ahorroElement.textContent =
-      ahorro > 0
-        ? `${dinero(ahorro)} · ${porcentaje}%`
-        : "—";
-  }
+  $("offerClicks").value =
+    "0";
 
-  return {
-    ahorro,
-    porcentaje
-  };
+  $("offerLink").value =
+    "";
+
+  $("offerImage").value =
+    "";
+
+  $("offerImagePreview").innerHTML =
+    "";
+
+  $("offerModalTitle").textContent =
+    "Nueva oferta";
+
 }
 
-window.calcularAhorroOferta =
-  calcularAhorroOferta;
+
+function limpiarCuponForm() {
+
+  cuponEditando =
+    null;
+
+  $("couponId").value =
+    "";
+
+  $("couponCode").value =
+    "";
+
+  $("couponType").value =
+    "relampago";
+
+  $("couponDiscount").value =
+    "";
+
+  $("couponMinimum").value =
+    "";
+
+  $("couponMaximum").value =
+    "";
+
+  $("couponCopies").value =
+    "0";
+
+  $("couponStatus").value =
+    "activo";
+
+  $("couponDescription").value =
+    "";
+
+  $("couponModalTitle").textContent =
+    "Nuevo cupón";
+
+}
 
 
 /* =========================================================
-   EVENTOS
+   CERRAR MODAL CON ESC
    ========================================================= */
 
 document.addEventListener(
-  "DOMContentLoaded",
-  () => {
+  "keydown",
+  (event) => {
 
-    const precioAntes =
-      $("oferta-precio-antes");
+    if (
+      event.key ===
+      "Escape"
+    ) {
 
-    const precioActual =
-      $("oferta-precio-actual");
-
-    if (precioAntes) {
-      precioAntes.addEventListener(
-        "input",
-        calcularAhorroOferta
+      cerrarModal(
+        "offerModal"
       );
-    }
 
-    if (precioActual) {
-      precioActual.addEventListener(
-        "input",
-        calcularAhorroOferta
+      cerrarModal(
+        "couponModal"
       );
-    }
 
-    const loginForm =
-      $("login-form");
-
-    if (loginForm) {
-
-      loginForm.addEventListener(
-        "submit",
-        (event) => {
-
-          event.preventDefault();
-
-          iniciarSesion();
-        }
-      );
-    }
-
-
-    const logoutButton =
-      $("btn-logout");
-
-    if (logoutButton) {
-
-      logoutButton.addEventListener(
-        "click",
-        cerrarSesion
-      );
-    }
-
-
-    const ofertaForm =
-      $("oferta-form");
-
-    if (ofertaForm) {
-
-      ofertaForm.addEventListener(
-        "submit",
-        (event) => {
-
-          event.preventDefault();
-
-          guardarOferta();
-        }
-      );
-    }
-
-
-    const cuponForm =
-      $("cupon-form");
-
-    if (cuponForm) {
-
-      cuponForm.addEventListener(
-        "submit",
-        (event) => {
-
-          event.preventDefault();
-
-          guardarCupon();
-        }
-      );
     }
 
   }
@@ -1461,15 +4053,153 @@ document.addEventListener(
 
 
 /* =========================================================
-   EXPONER FUNCIONES
+   FUNCIONES AUXILIARES
    ========================================================= */
 
-window.adminFirebase = {
-  app,
+function actualizarNumero(
+  id,
+  valor
+) {
+
+  const elemento =
+    $(id);
+
+  if (elemento) {
+
+    elemento.textContent =
+      numero(
+        valor
+      ).toLocaleString(
+        "es-MX"
+      );
+
+  }
+
+}
+
+
+function obtenerFecha(
+  valor
+) {
+
+  if (!valor) {
+    return 0;
+  }
+
+  try {
+
+    if (
+      typeof valor.toDate ===
+      "function"
+    ) {
+
+      return valor.toDate()
+        .getTime();
+
+    }
+
+
+    const fecha =
+      new Date(
+        valor
+      );
+
+    const tiempo =
+      fecha.getTime();
+
+
+    return Number.isNaN(
+      tiempo
+    )
+      ? 0
+      : tiempo;
+
+  } catch {
+
+    return 0;
+
+  }
+
+}
+
+
+function renderErrorTabla(
+  id,
+  colspan,
+  mensaje
+) {
+
+  const tbody =
+    $(id);
+
+  if (!tbody) {
+    return;
+  }
+
+  tbody.innerHTML = `
+    <tr>
+      <td
+        colspan="${colspan}"
+        class="table-loading"
+      >
+        ${escapar(
+          mensaje
+        )}
+      </td>
+    </tr>
+  `;
+
+}
+
+
+/* =========================================================
+   INICIO
+   ========================================================= */
+
+document.addEventListener(
+  "DOMContentLoaded",
+  () => {
+
+    console.log(
+      "⚡ ADMIN PRO cargado."
+    );
+
+    /*
+     * Si Firebase tarda en responder,
+     * la pantalla de carga permanece.
+     * onAuthStateChanged será quien
+     * finalmente muestre Login o Admin.
+     */
+
+  }
+);
+
+
+/* =========================================================
+   EXPORTACIÓN GLOBAL
+   ========================================================= */
+
+window.adminPRO = {
+
   auth,
-  db
+
+  db,
+
+  cargarTodo,
+
+  cargarOfertas,
+
+  cargarCupones,
+
+  cargarUsuarios,
+
+  cargarEstadisticas,
+
+  cambiarSeccion
+
 };
 
+
 console.log(
-  "⚡ Admin PRO Firebase cargado correctamente."
+  "⚡ El Patrón de las Ofertas — Admin PRO listo."
 );
