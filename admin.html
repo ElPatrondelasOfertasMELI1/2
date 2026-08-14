@@ -2,23 +2,17 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1.0"
   >
 
-  <meta
-    name="theme-color"
-    content="#ffe600"
-  >
+  <title>⚡ Admin | El Patrón de las Ofertas</title>
 
   <meta
     name="description"
     content="Panel administrativo de El Patrón de las Ofertas"
   >
-
-  <title>⚡ Admin | El Patrón de las Ofertas</title>
 
   <link
     rel="stylesheet"
@@ -32,7 +26,7 @@
      LOGIN
 ========================================================= -->
 
-<div
+<section
   class="login-screen"
   id="loginScreen"
 >
@@ -43,29 +37,19 @@
       ⚡
     </div>
 
-    <div class="login-brand">
-      <strong>
-        EL PATRÓN
-      </strong>
-
-      <span>
-        DE LAS OFERTAS
-      </span>
-    </div>
-
     <h1>
-      Panel administrativo
+      EL PATRÓN
     </h1>
 
+    <span>
+      ADMINISTRACIÓN
+    </span>
+
     <p>
-      Inicia sesión para administrar
-      cupones, ofertas y estadísticas.
+      Inicia sesión para acceder al panel administrativo.
     </p>
 
-    <form
-      id="loginForm"
-      autocomplete="on"
-    >
+    <form id="loginForm">
 
       <label>
         Correo electrónico
@@ -74,7 +58,7 @@
           type="email"
           id="loginEmail"
           placeholder="admin@ejemplo.com"
-          autocomplete="username"
+          autocomplete="email"
           required
         >
       </label>
@@ -93,10 +77,9 @@
 
       <button
         type="submit"
-        class="primary-button"
         id="loginButton"
       >
-        🔐 ENTRAR AL ADMIN
+        🔐 INICIAR SESIÓN
       </button>
 
       <div
@@ -108,11 +91,11 @@
 
   </div>
 
-</div>
+</section>
 
 
 <!-- =========================================================
-     ADMIN APP
+     ADMIN
 ========================================================= -->
 
 <div
@@ -126,14 +109,11 @@
        SIDEBAR
   ======================================================== -->
 
-  <aside
-    class="sidebar"
-    id="sidebar"
-  >
+  <aside class="sidebar">
 
-    <div class="sidebar-brand">
+    <div class="sidebar-logo">
 
-      <div class="brand-icon">
+      <div class="sidebar-logo-icon">
         ⚡
       </div>
 
@@ -142,9 +122,9 @@
           EL PATRÓN
         </strong>
 
-        <span>
+        <small>
           DE LAS OFERTAS
-        </span>
+        </small>
       </div>
 
     </div>
@@ -153,48 +133,43 @@
     <nav class="sidebar-nav">
 
       <button
-        type="button"
         class="nav-item active"
         data-section="dashboard"
       >
         <span>📊</span>
-        <strong>Dashboard</strong>
+        Dashboard
       </button>
 
       <button
-        type="button"
         class="nav-item"
         data-section="cupones"
       >
         <span>🎟️</span>
-        <strong>Cupones</strong>
+        Cupones
       </button>
 
       <button
-        type="button"
         class="nav-item"
         data-section="ofertas"
       >
         <span>🔥</span>
-        <strong>Ofertas</strong>
+        Ofertas
       </button>
 
       <button
-        type="button"
         class="nav-item"
         data-section="usuarios"
       >
         <span>👥</span>
-        <strong>Usuarios</strong>
+        Usuarios
       </button>
 
       <button
-        type="button"
         class="nav-item"
         data-section="estadisticas"
       >
         <span>📈</span>
-        <strong>Estadísticas</strong>
+        Estadísticas
       </button>
 
     </nav>
@@ -205,15 +180,14 @@
       <a
         href="index.html"
         target="_blank"
-        class="sidebar-link"
+        class="view-page"
       >
         🌐 Ver página
       </a>
 
       <button
-        type="button"
-        class="sidebar-link logout-button"
         id="logoutButton"
+        class="logout-button"
       >
         🚪 Cerrar sesión
       </button>
@@ -227,64 +201,55 @@
        MAIN
   ======================================================== -->
 
-  <main class="admin-main">
+  <main class="main-content">
 
 
     <!-- =====================================================
          TOPBAR
     ====================================================== -->
 
-    <header class="admin-topbar">
+    <header class="topbar">
 
-      <button
-        type="button"
-        class="mobile-sidebar-button"
-        id="mobileSidebarButton"
-        aria-label="Abrir menú"
-      >
-        ☰
-      </button>
+      <div>
 
-      <div class="topbar-title">
+        <button
+          class="mobile-sidebar-button"
+          id="mobileSidebarButton"
+          type="button"
+        >
+          ☰
+        </button>
 
-        <span>
-          PANEL ADMINISTRATIVO
-        </span>
+        <div class="topbar-title">
 
-        <h1 id="pageTitle">
-          Dashboard
-        </h1>
+          <span>
+            PANEL ADMINISTRATIVO
+          </span>
+
+          <h1 id="pageTitle">
+            Dashboard
+          </h1>
+
+        </div>
 
       </div>
 
-      <div class="topbar-actions">
 
-        <button
-          type="button"
-          class="refresh-button"
-          id="refreshButton"
-          title="Actualizar datos"
-        >
-          🔄
-        </button>
+      <div class="admin-profile">
 
-        <div class="admin-user">
+        <div class="admin-avatar">
+          👤
+        </div>
 
-          <div class="admin-avatar">
-            👤
-          </div>
+        <div>
 
-          <div>
+          <strong id="adminEmail">
+            Administrador
+          </strong>
 
-            <strong id="adminEmail">
-              Administrador
-            </strong>
-
-            <small>
-              Administrador
-            </small>
-
-          </div>
+          <small>
+            Administrador
+          </small>
 
         </div>
 
@@ -306,20 +271,26 @@
 
         <div>
 
-          <span class="section-eyebrow">
+          <span>
             RESUMEN GENERAL
           </span>
 
           <h2>
-            📊 Dashboard
+            📊 Estadísticas
           </h2>
 
           <p>
-            Consulta el rendimiento de tu página
-            y tus cupones.
+            Información general de tu página y comunidad.
           </p>
 
         </div>
+
+        <button
+          class="refresh-button"
+          id="refreshDashboard"
+        >
+          🔄 Actualizar
+        </button>
 
       </div>
 
@@ -328,13 +299,13 @@
 
       <div class="stats-grid">
 
-        <article class="stat-card">
+        <div class="stat-card">
 
           <div class="stat-icon">
             🎟️
           </div>
 
-          <div class="stat-content">
+          <div>
 
             <span>
               Cupones activos
@@ -346,16 +317,16 @@
 
           </div>
 
-        </article>
+        </div>
 
 
-        <article class="stat-card">
+        <div class="stat-card">
 
           <div class="stat-icon">
             🔥
           </div>
 
-          <div class="stat-content">
+          <div>
 
             <span>
               Ofertas
@@ -367,19 +338,19 @@
 
           </div>
 
-        </article>
+        </div>
 
 
-        <article class="stat-card">
+        <div class="stat-card">
 
           <div class="stat-icon">
             👥
           </div>
 
-          <div class="stat-content">
+          <div>
 
             <span>
-              Usuarios registrados
+              Usuarios
             </span>
 
             <strong id="statUsers">
@@ -388,123 +359,130 @@
 
           </div>
 
-        </article>
+        </div>
 
 
-        <article class="stat-card">
+        <div class="stat-card">
+
+          <div class="stat-icon">
+            📋
+          </div>
+
+          <div>
+
+            <span>
+              Copias de cupones
+            </span>
+
+            <strong id="statCopies">
+              0
+            </strong>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- SEGUNDA FILA -->
+
+      <div class="stats-grid secondary">
+
+        <div class="stat-card">
+
+          <div class="stat-icon">
+            💰
+          </div>
+
+          <div>
+
+            <span>
+              Ahorro registrado
+            </span>
+
+            <strong id="statSavings">
+              $0
+            </strong>
+
+          </div>
+
+        </div>
+
+
+        <div class="stat-card">
+
+          <div class="stat-icon">
+            🛒
+          </div>
+
+          <div>
+
+            <span>
+              Compras registradas
+            </span>
+
+            <strong id="statPurchases">
+              0
+            </strong>
+
+          </div>
+
+        </div>
+
+
+        <div class="stat-card">
+
+          <div class="stat-icon">
+            ⚡
+          </div>
+
+          <div>
+
+            <span>
+              Cupones usados
+            </span>
+
+            <strong id="statUsedCoupons">
+              0
+            </strong>
+
+          </div>
+
+        </div>
+
+
+        <div class="stat-card">
 
           <div class="stat-icon">
             👆
           </div>
 
-          <div class="stat-content">
+          <div>
 
             <span>
-              Clics de hoy
+              Clics
             </span>
 
-            <strong id="statTodayClicks">
+            <strong id="statClicks">
               0
             </strong>
 
           </div>
 
-        </article>
-
-
-        <article class="stat-card">
-
-          <div class="stat-icon">
-            📈
-          </div>
-
-          <div class="stat-content">
-
-            <span>
-              Clics totales
-            </span>
-
-            <strong id="statTotalClicks">
-              0
-            </strong>
-
-          </div>
-
-        </article>
-
-
-        <article class="stat-card highlight">
-
-          <div class="stat-icon">
-            🏆
-          </div>
-
-          <div class="stat-content">
-
-            <span>
-              Cupón más copiado
-            </span>
-
-            <strong
-              id="statTopCoupon"
-              class="stat-small"
-            >
-              —
-            </strong>
-
-          </div>
-
-        </article>
+        </div>
 
       </div>
 
 
-      <!-- DASHBOARD GRID -->
+      <!-- GRÁFICAS -->
 
       <div class="dashboard-grid">
 
 
-        <!-- CUPÓN MÁS COPIADO -->
-
-        <article class="panel-card top-coupon-panel">
-
-          <div class="panel-header">
-
-            <div>
-
-              <span>
-                RENDIMIENTO
-              </span>
-
-              <h3>
-                🏆 Cupón más copiado
-              </h3>
-
-            </div>
-
-          </div>
-
-          <div
-            class="top-coupon-content"
-            id="topCouponContent"
-          >
-
-            <div class="empty-state">
-              <span>🎟️</span>
-
-              <p>
-                Todavía no hay datos.
-              </p>
-            </div>
-
-          </div>
-
-        </article>
-
-
         <!-- CLICS POR DÍA -->
 
-        <article class="panel-card">
+        <div class="panel chart-panel">
 
           <div class="panel-header">
 
@@ -520,21 +498,18 @@
 
             </div>
 
-            <select
-              id="clicksPeriod"
-              class="panel-select"
-            >
+            <select id="clickRange">
 
               <option value="7">
-                7 días
+                Últimos 7 días
               </option>
 
               <option value="14">
-                14 días
+                Últimos 14 días
               </option>
 
               <option value="30">
-                30 días
+                Últimos 30 días
               </option>
 
             </select>
@@ -547,63 +522,14 @@
               id="clicksChart"
             ></canvas>
 
-            <div
-              class="chart-empty"
-              id="clicksChartEmpty"
-            >
-              No hay datos suficientes.
-            </div>
-
           </div>
 
-        </article>
+        </div>
 
 
-        <!-- ESTADOS -->
+        <!-- CUPÓN MÁS COPIADO -->
 
-        <article class="panel-card">
-
-          <div class="panel-header">
-
-            <div>
-
-              <span>
-                UBICACIÓN
-              </span>
-
-              <h3>
-                🇲🇽 Usuarios por estado
-              </h3>
-
-            </div>
-
-          </div>
-
-          <div
-            class="states-list"
-            id="statesList"
-          >
-
-            <div class="empty-state">
-
-              <span>
-                🇲🇽
-              </span>
-
-              <p>
-                Todavía no hay usuarios registrados.
-              </p>
-
-            </div>
-
-          </div>
-
-        </article>
-
-
-        <!-- COPIAS POR CUPÓN -->
-
-        <article class="panel-card">
+        <div class="panel">
 
           <div class="panel-header">
 
@@ -614,7 +540,7 @@
               </span>
 
               <h3>
-                🎟️ Copias por cupón
+                🏆 Cupón más copiado
               </h3>
 
             </div>
@@ -622,25 +548,94 @@
           </div>
 
           <div
-            class="coupon-ranking"
-            id="couponRanking"
+            class="top-coupon"
+            id="topCoupon"
           >
 
-            <div class="empty-state">
+            <div class="top-coupon-icon">
+              🎟️
+            </div>
+
+            <strong>
+              Sin datos
+            </strong>
+
+            <span>
+              Aún no hay copias registradas.
+            </span>
+
+          </div>
+
+
+          <div
+            class="coupon-ranking"
+            id="couponRanking"
+          ></div>
+
+        </div>
+
+      </div>
+
+
+      <!-- ESTADOS -->
+
+      <div class="dashboard-grid">
+
+
+        <!-- ESTADOS MÉXICO -->
+
+        <div class="panel">
+
+          <div class="panel-header">
+
+            <div>
 
               <span>
-                📊
+                COMUNIDAD
               </span>
 
-              <p>
-                Todavía no hay copias registradas.
-              </p>
+              <h3>
+                🗺️ Usuarios por estado
+              </h3>
 
             </div>
 
           </div>
 
-        </article>
+          <div
+            class="state-list"
+            id="stateList"
+          ></div>
+
+        </div>
+
+
+        <!-- ACTIVIDAD -->
+
+        <div class="panel">
+
+          <div class="panel-header">
+
+            <div>
+
+              <span>
+                RESUMEN
+              </span>
+
+              <h3>
+                ⚡ Actividad reciente
+              </h3>
+
+            </div>
+
+          </div>
+
+          <div
+            class="activity-list"
+            id="activityList"
+          ></div>
+
+        </div>
 
       </div>
 
@@ -660,7 +655,7 @@
 
         <div>
 
-          <span class="section-eyebrow">
+          <span>
             ADMINISTRACIÓN
           </span>
 
@@ -669,312 +664,67 @@
           </h2>
 
           <p>
-            Agrega, modifica y controla tus cupones.
+            Administra tus cupones y consulta cuántas veces
+            fueron copiados.
           </p>
 
         </div>
 
         <button
-          type="button"
           class="primary-button"
           id="newCouponButton"
         >
-          + NUEVO CUPÓN
+          ➕ Nuevo cupón
         </button>
 
       </div>
 
 
-      <!-- FORMULARIO CUPÓN -->
+      <div class="panel">
 
-      <div
-        class="form-panel"
-        id="couponFormPanel"
-        hidden
-      >
-
-        <div class="panel-header">
-
-          <div>
-
-            <span>
-              EDITOR
-            </span>
-
-            <h3 id="couponFormTitle">
-              Nuevo cupón
-            </h3>
-
-          </div>
-
-          <button
-            type="button"
-            class="close-panel-button"
-            id="closeCouponForm"
-          >
-            ×
-          </button>
-
-        </div>
-
-
-        <form
-          id="couponForm"
-          class="admin-form"
-        >
-
-          <input
-            type="hidden"
-            id="couponId"
-          >
-
-
-          <div class="form-grid">
-
-
-            <label>
-
-              Código del cupón
-
-              <input
-                type="text"
-                id="couponCode"
-                placeholder="EJEMPLO10"
-                maxlength="80"
-                required
-              >
-
-            </label>
-
-
-            <label>
-
-              Título
-
-              <input
-                type="text"
-                id="couponTitle"
-                placeholder="Cupón especial"
-                maxlength="150"
-                required
-              >
-
-            </label>
-
-
-            <label>
-
-              Descuento
-
-              <input
-                type="text"
-                id="couponDiscount"
-                placeholder="10% OFF o $500 OFF"
-                maxlength="80"
-              >
-
-            </label>
-
-
-            <label>
-
-              Compra mínima
-
-              <input
-                type="number"
-                id="couponMinimum"
-                placeholder="400"
-                min="0"
-                step="1"
-              >
-
-            </label>
-
-
-            <label>
-
-              Tope de descuento
-
-              <input
-                type="number"
-                id="couponMaximum"
-                placeholder="150"
-                min="0"
-                step="1"
-              >
-
-            </label>
-
-
-            <label>
-
-              Tipo
-
-              <select
-                id="couponType"
-              >
-
-                <option value="flash">
-                  ⚡ Relámpago
-                </option>
-
-                <option value="exclusive">
-                  🎁 Exclusivo
-                </option>
-
-                <option value="bank">
-                  🏦 Bancario
-                </option>
-
-              </select>
-
-            </label>
-
-
-            <label>
-
-              Categoría
-
-              <input
-                type="text"
-                id="couponCategory"
-                placeholder="Mercado Libre"
-                maxlength="100"
-              >
-
-            </label>
-
-
-            <label>
-
-              Banco
-
-              <input
-                type="text"
-                id="couponBank"
-                placeholder="BBVA"
-                maxlength="100"
-              >
-
-            </label>
-
-
-            <label class="form-span-2">
-
-              Enlace de Mercado Libre
-
-              <input
-                type="url"
-                id="couponLink"
-                placeholder="https://meli.la/..."
-                required
-              >
-
-              <small>
-                Este es el enlace que se abrirá al
-                pulsar COPIAR CUPÓN.
-              </small>
-
-            </label>
-
-
-            <label>
-
-              Estado
-
-              <select
-                id="couponStatus"
-              >
-
-                <option value="activo">
-                  🟢 Activo
-                </option>
-
-                <option value="por agotarse">
-                  🟠 Por agotarse
-                </option>
-
-                <option value="agotado">
-                  🔴 Agotado
-                </option>
-
-              </select>
-
-            </label>
-
-
-            <label>
-
-              Badge
-
-              <input
-                type="text"
-                id="couponBadge"
-                placeholder="⚡ RELÁMPAGO"
-                maxlength="80"
-              >
-
-            </label>
-
-
-          </div>
-
-
-          <div class="form-actions">
-
-            <button
-              type="button"
-              class="secondary-button"
-              id="cancelCouponButton"
-            >
-              CANCELAR
-            </button>
-
-            <button
-              type="submit"
-              class="primary-button"
-              id="saveCouponButton"
-            >
-              💾 GUARDAR CUPÓN
-            </button>
-
-          </div>
-
-
-          <div
-            class="form-message"
-            id="couponMessage"
-          ></div>
-
-        </form>
-
-      </div>
-
-
-      <!-- LISTA CUPONES -->
-
-      <div class="panel-card table-panel">
-
-        <div class="panel-header">
-
-          <div>
-
-            <span>
-              BASE DE DATOS
-            </span>
-
-            <h3>
-              Cupones publicados
-            </h3>
-
-          </div>
+        <div class="table-toolbar">
 
           <input
             type="search"
             id="couponSearch"
-            class="table-search"
             placeholder="🔎 Buscar cupón..."
           >
+
+          <select id="couponTypeFilter">
+
+            <option value="">
+              Todos
+            </option>
+
+            <option value="flash">
+              Relámpago
+            </option>
+
+            <option value="exclusive">
+              Exclusivos
+            </option>
+
+            <option value="bank">
+              Bancarios
+            </option>
+
+          </select>
+
+          <select id="couponStatusFilter">
+
+            <option value="">
+              Todos los estados
+            </option>
+
+            <option value="activo">
+              Activos
+            </option>
+
+            <option value="agotado">
+              Agotados
+            </option>
+
+          </select>
 
         </div>
 
@@ -1016,21 +766,8 @@
             </thead>
 
             <tbody
-              id="couponsTableBody"
-            >
-
-              <tr>
-
-                <td
-                  colspan="6"
-                  class="table-loading"
-                >
-                  Cargando cupones...
-                </td>
-
-              </tr>
-
-            </tbody>
+              id="couponsTable"
+            ></tbody>
 
           </table>
 
@@ -1054,7 +791,7 @@
 
         <div>
 
-          <span class="section-eyebrow">
+          <span>
             ADMINISTRACIÓN
           </span>
 
@@ -1063,240 +800,22 @@
           </h2>
 
           <p>
-            Administra las ofertas que aparecen
-            en la página principal.
+            Administra las ofertas mostradas en la página.
           </p>
 
         </div>
 
         <button
-          type="button"
           class="primary-button"
           id="newOfferButton"
         >
-          + NUEVA OFERTA
+          ➕ Nueva oferta
         </button>
 
       </div>
 
 
-      <!-- FORMULARIO OFERTA -->
-
-      <div
-        class="form-panel"
-        id="offerFormPanel"
-        hidden
-      >
-
-        <div class="panel-header">
-
-          <div>
-
-            <span>
-              EDITOR
-            </span>
-
-            <h3 id="offerFormTitle">
-              Nueva oferta
-            </h3>
-
-          </div>
-
-          <button
-            type="button"
-            class="close-panel-button"
-            id="closeOfferForm"
-          >
-            ×
-          </button>
-
-        </div>
-
-
-        <form
-          id="offerForm"
-          class="admin-form"
-        >
-
-          <input
-            type="hidden"
-            id="offerId"
-          >
-
-
-          <div class="form-grid">
-
-
-            <label class="form-span-2">
-
-              Título
-
-              <input
-                type="text"
-                id="offerTitle"
-                placeholder="Nombre del producto"
-                maxlength="180"
-                required
-              >
-
-            </label>
-
-
-            <label>
-
-              Precio anterior
-
-              <input
-                type="number"
-                id="offerOldPrice"
-                placeholder="1299"
-                min="0"
-                step="0.01"
-              >
-
-            </label>
-
-
-            <label>
-
-              Precio actual
-
-              <input
-                type="number"
-                id="offerPrice"
-                placeholder="899"
-                min="0"
-                step="0.01"
-                required
-              >
-
-            </label>
-
-
-            <label>
-
-              Categoría
-
-              <input
-                type="text"
-                id="offerCategory"
-                placeholder="Electrónica"
-                maxlength="100"
-              >
-
-            </label>
-
-
-            <label>
-
-              Enlace
-
-              <input
-                type="url"
-                id="offerLink"
-                placeholder="https://meli.la/..."
-                required
-              >
-
-            </label>
-
-
-            <label class="form-span-2">
-
-              Imagen
-
-              <input
-                type="file"
-                id="offerImage"
-                accept="image/*"
-              >
-
-              <small>
-                La imagen se guardará como Base64
-                en Firestore. No se utiliza Firebase Storage.
-              </small>
-
-            </label>
-
-
-            <div
-              class="image-preview-wrapper form-span-2"
-              id="offerImagePreviewWrapper"
-              hidden
-            >
-
-              <span>
-                Vista previa
-              </span>
-
-              <img
-                id="offerImagePreview"
-                alt="Vista previa"
-              >
-
-            </div>
-
-          </div>
-
-
-          <div class="form-actions">
-
-            <button
-              type="button"
-              class="secondary-button"
-              id="cancelOfferButton"
-            >
-              CANCELAR
-            </button>
-
-            <button
-              type="submit"
-              class="primary-button"
-              id="saveOfferButton"
-            >
-              💾 GUARDAR OFERTA
-            </button>
-
-          </div>
-
-
-          <div
-            class="form-message"
-            id="offerMessage"
-          ></div>
-
-        </form>
-
-      </div>
-
-
-      <!-- LISTA OFERTAS -->
-
-      <div class="panel-card table-panel">
-
-        <div class="panel-header">
-
-          <div>
-
-            <span>
-              BASE DE DATOS
-            </span>
-
-            <h3>
-              Ofertas publicadas
-            </h3>
-
-          </div>
-
-          <input
-            type="search"
-            id="offerSearch"
-            class="table-search"
-            placeholder="🔎 Buscar oferta..."
-          >
-
-        </div>
-
+      <div class="panel">
 
         <div class="table-wrapper">
 
@@ -1315,11 +834,15 @@
                 </th>
 
                 <th>
-                  Precio
+                  Precio anterior
                 </th>
 
                 <th>
-                  Descuento
+                  Precio actual
+                </th>
+
+                <th>
+                  Clics
                 </th>
 
                 <th>
@@ -1331,21 +854,8 @@
             </thead>
 
             <tbody
-              id="offersTableBody"
-            >
-
-              <tr>
-
-                <td
-                  colspan="5"
-                  class="table-loading"
-                >
-                  Cargando ofertas...
-                </td>
-
-              </tr>
-
-            </tbody>
+              id="offersTable"
+            ></tbody>
 
           </table>
 
@@ -1369,7 +879,7 @@
 
         <div>
 
-          <span class="section-eyebrow">
+          <span>
             COMUNIDAD
           </span>
 
@@ -1378,79 +888,38 @@
           </h2>
 
           <p>
-            Usuarios registrados y ubicación por estado.
+            Usuarios registrados y estadísticas de ahorro.
           </p>
 
         </div>
 
-      </div>
-
-
-      <div class="user-summary-grid">
-
-        <article class="summary-mini-card">
-
-          <span>
-            Usuarios
-          </span>
-
-          <strong id="usersTotal">
-            0
-          </strong>
-
-        </article>
-
-
-        <article class="summary-mini-card">
-
-          <span>
-            Estados registrados
-          </span>
-
-          <strong id="statesTotal">
-            0
-          </strong>
-
-        </article>
-
-
-        <article class="summary-mini-card">
-
-          <span>
-            Ahorro registrado
-          </span>
-
-          <strong id="usersSavings">
-            $0
-          </strong>
-
-        </article>
+        <button
+          class="refresh-button"
+          id="refreshUsers"
+        >
+          🔄 Actualizar
+        </button>
 
       </div>
 
 
-      <div class="panel-card table-panel">
+      <div class="panel">
 
-        <div class="panel-header">
-
-          <div>
-
-            <span>
-              REGISTROS
-            </span>
-
-            <h3>
-              Usuarios registrados
-            </h3>
-
-          </div>
+        <div class="table-toolbar">
 
           <input
             type="search"
             id="userSearch"
-            class="table-search"
             placeholder="🔎 Buscar usuario..."
           >
+
+          <select id="userStateFilter">
+
+            <option value="">
+              Todos los estados
+            </option>
+
+          </select>
 
         </div>
 
@@ -1468,10 +937,6 @@
                 </th>
 
                 <th>
-                  Correo
-                </th>
-
-                <th>
                   Estado
                 </th>
 
@@ -1484,7 +949,11 @@
                 </th>
 
                 <th>
-                  Fecha
+                  Cupones
+                </th>
+
+                <th>
+                  Registro
                 </th>
 
               </tr>
@@ -1492,21 +961,8 @@
             </thead>
 
             <tbody
-              id="usersTableBody"
-            >
-
-              <tr>
-
-                <td
-                  colspan="6"
-                  class="table-loading"
-                >
-                  Cargando usuarios...
-                </td>
-
-              </tr>
-
-            </tbody>
+              id="usersTable"
+            ></tbody>
 
           </table>
 
@@ -1530,17 +986,16 @@
 
         <div>
 
-          <span class="section-eyebrow">
-            ANALÍTICA
+          <span>
+            ANÁLISIS
           </span>
 
           <h2>
-            📈 Estadísticas
+            📈 Estadísticas detalladas
           </h2>
 
           <p>
-            Analiza el comportamiento de los usuarios
-            y el rendimiento de los cupones.
+            Analiza el comportamiento de los usuarios.
           </p>
 
         </div>
@@ -1548,104 +1003,50 @@
       </div>
 
 
-      <!-- FILTRO -->
-
-      <div class="statistics-toolbar">
-
-        <div>
-
-          <span>
-            PERIODO
-          </span>
-
-          <select
-            id="statisticsPeriod"
-          >
-
-            <option value="7">
-              Últimos 7 días
-            </option>
-
-            <option value="14">
-              Últimos 14 días
-            </option>
-
-            <option value="30">
-              Últimos 30 días
-            </option>
-
-          </select>
-
-        </div>
-
-        <button
-          type="button"
-          class="secondary-button"
-          id="reloadStatistics"
-        >
-          🔄 ACTUALIZAR ESTADÍSTICAS
-        </button>
-
-      </div>
+      <div class="dashboard-grid">
 
 
-      <!-- CLICS -->
-
-      <div class="panel-card statistics-chart-panel">
-
-        <div class="panel-header">
-
-          <div>
-
-            <span>
-              ACTIVIDAD DIARIA
-            </span>
-
-            <h3>
-              📈 Clics de cupones por día
-            </h3>
-
-          </div>
-
-        </div>
-
-        <div class="large-chart-container">
-
-          <canvas
-            id="statisticsClicksChart"
-          ></canvas>
-
-          <div
-            class="chart-empty"
-            id="statisticsClicksEmpty"
-          >
-            No hay datos disponibles.
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <!-- DOS COLUMNAS -->
-
-      <div class="statistics-grid">
-
-
-        <!-- CUPONES -->
-
-        <article class="panel-card">
+        <div class="panel chart-panel">
 
           <div class="panel-header">
 
             <div>
 
               <span>
-                RANKING
+                TRÁFICO
               </span>
 
               <h3>
-                🏆 Cupones más copiados
+                👆 Clics por día
+              </h3>
+
+            </div>
+
+          </div>
+
+          <div class="chart-container large">
+
+            <canvas
+              id="clicksChartLarge"
+            ></canvas>
+
+          </div>
+
+        </div>
+
+
+        <div class="panel">
+
+          <div class="panel-header">
+
+            <div>
+
+              <span>
+                CUPONES
+              </span>
+
+              <h3>
+                🎟️ Copias por cupón
               </h3>
 
             </div>
@@ -1653,155 +1054,359 @@
           </div>
 
           <div
-            id="statisticsCouponsRanking"
-            class="statistics-list"
-          >
+            class="coupon-bars"
+            id="couponBars"
+          ></div>
 
-            <div class="empty-state">
-
-              <span>
-                🎟️
-              </span>
-
-              <p>
-                Sin datos todavía.
-              </p>
-
-            </div>
-
-          </div>
-
-        </article>
-
-
-        <!-- ESTADOS -->
-
-        <article class="panel-card">
-
-          <div class="panel-header">
-
-            <div>
-
-              <span>
-                UBICACIÓN
-              </span>
-
-              <h3>
-                🇲🇽 Usuarios por estado
-              </h3>
-
-            </div>
-
-          </div>
-
-          <div
-            id="statisticsStates"
-            class="statistics-list"
-          >
-
-            <div class="empty-state">
-
-              <span>
-                🇲🇽
-              </span>
-
-              <p>
-                Sin datos todavía.
-              </p>
-
-            </div>
-
-          </div>
-
-        </article>
-
+        </div>
 
       </div>
 
 
-      <!-- TABLA DETALLADA -->
-
-      <div class="panel-card table-panel">
+      <div class="panel">
 
         <div class="panel-header">
 
           <div>
 
             <span>
-              DETALLE
+              MÉXICO
             </span>
 
             <h3>
-              📊 Rendimiento de cupones
+              🗺️ Usuarios por estado
             </h3>
 
           </div>
 
         </div>
 
-        <div class="table-wrapper">
-
-          <table>
-
-            <thead>
-
-              <tr>
-
-                <th>
-                  Cupón
-                </th>
-
-                <th>
-                  Tipo
-                </th>
-
-                <th>
-                  Copias
-                </th>
-
-                <th>
-                  Hoy
-                </th>
-
-                <th>
-                  Últimos 7 días
-                </th>
-
-                <th>
-                  Últimos 30 días
-                </th>
-
-              </tr>
-
-            </thead>
-
-            <tbody
-              id="statisticsCouponsTable"
-            >
-
-              <tr>
-
-                <td
-                  colspan="6"
-                  class="table-loading"
-                >
-                  Cargando estadísticas...
-                </td>
-
-              </tr>
-
-            </tbody>
-
-          </table>
-
-        </div>
+        <div
+          class="states-grid"
+          id="statesGrid"
+        ></div>
 
       </div>
 
     </section>
 
-
   </main>
+
+</div>
+
+
+<!-- =========================================================
+     MODAL CUPÓN
+========================================================= -->
+
+<div
+  class="modal"
+  id="couponModal"
+  hidden
+>
+
+  <div class="modal-box">
+
+    <button
+      class="modal-close"
+      data-close-modal="couponModal"
+      type="button"
+    >
+      ×
+    </button>
+
+    <h2 id="couponModalTitle">
+      Nuevo cupón
+    </h2>
+
+    <form id="couponForm">
+
+      <input
+        type="hidden"
+        id="couponId"
+      >
+
+      <label>
+        Código
+
+        <input
+          type="text"
+          id="couponCode"
+          required
+          maxlength="100"
+          placeholder="CUPON123"
+        >
+
+      </label>
+
+      <label>
+        Título
+
+        <input
+          type="text"
+          id="couponTitle"
+          required
+          maxlength="150"
+          placeholder="$500 OFF"
+        >
+
+      </label>
+
+      <label>
+        Descuento
+
+        <input
+          type="text"
+          id="couponDiscount"
+          placeholder="$500 OFF"
+        >
+
+      </label>
+
+      <label>
+        Compra mínima
+
+        <input
+          type="number"
+          id="couponMinimum"
+          min="0"
+          placeholder="4000"
+        >
+
+      </label>
+
+      <label>
+        Tope
+
+        <input
+          type="number"
+          id="couponLimit"
+          min="0"
+          placeholder="500"
+        >
+
+      </label>
+
+      <label>
+        Tipo
+
+        <select id="couponType">
+
+          <option value="flash">
+            ⚡ Relámpago
+          </option>
+
+          <option value="exclusive">
+            🎁 Exclusivo
+          </option>
+
+          <option value="bank">
+            🏦 Bancario
+          </option>
+
+        </select>
+
+      </label>
+
+      <label>
+        Estado
+
+        <select id="couponStatus">
+
+          <option value="activo">
+            🟢 Activo
+          </option>
+
+          <option value="warning">
+            🟠 Por agotarse
+          </option>
+
+          <option value="agotado">
+            🔴 Agotado
+          </option>
+
+        </select>
+
+      </label>
+
+      <label>
+        Enlace de Mercado Libre
+
+        <input
+          type="url"
+          id="couponLink"
+          placeholder="https://meli.la/..."
+        >
+
+      </label>
+
+      <label>
+        Categoría
+
+        <input
+          type="text"
+          id="couponCategory"
+          placeholder="Tecnología"
+        >
+
+      </label>
+
+      <div class="modal-actions">
+
+        <button
+          type="button"
+          class="secondary-button"
+          data-close-modal="couponModal"
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="submit"
+          class="primary-button"
+        >
+          💾 Guardar cupón
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+
+
+<!-- =========================================================
+     MODAL OFERTA
+========================================================= -->
+
+<div
+  class="modal"
+  id="offerModal"
+  hidden
+>
+
+  <div class="modal-box">
+
+    <button
+      class="modal-close"
+      data-close-modal="offerModal"
+      type="button"
+    >
+      ×
+    </button>
+
+    <h2 id="offerModalTitle">
+      Nueva oferta
+    </h2>
+
+    <form id="offerForm">
+
+      <input
+        type="hidden"
+        id="offerId"
+      >
+
+      <label>
+        Título
+
+        <input
+          type="text"
+          id="offerTitle"
+          required
+          maxlength="200"
+          placeholder="Producto en oferta"
+        >
+
+      </label>
+
+      <label>
+        Categoría
+
+        <input
+          type="text"
+          id="offerCategory"
+          placeholder="Electrónica"
+        >
+
+      </label>
+
+      <label>
+        Precio anterior
+
+        <input
+          type="number"
+          id="offerOldPrice"
+          min="0"
+          step="0.01"
+        >
+
+      </label>
+
+      <label>
+        Precio actual
+
+        <input
+          type="number"
+          id="offerPrice"
+          min="0"
+          step="0.01"
+          required
+        >
+
+      </label>
+
+      <label>
+        Enlace
+
+        <input
+          type="url"
+          id="offerLink"
+          placeholder="https://meli.la/..."
+          required
+        >
+
+      </label>
+
+      <label>
+        Imagen
+
+        <input
+          type="file"
+          id="offerImage"
+          accept="image/*"
+        >
+
+      </label>
+
+      <div
+        class="image-preview"
+        id="offerImagePreview"
+      ></div>
+
+      <div class="modal-actions">
+
+        <button
+          type="button"
+          class="secondary-button"
+          data-close-modal="offerModal"
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="submit"
+          class="primary-button"
+        >
+          💾 Guardar oferta
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
 
 </div>
 
@@ -1813,493 +1418,14 @@
 <div
   class="admin-toast"
   id="adminToast"
-  role="status"
-  aria-live="polite"
 ></div>
 
 
 <!-- =========================================================
-     MODAL CONFIRMACIÓN
-========================================================= -->
-
-<div
-  class="confirm-modal"
-  id="confirmModal"
-  hidden
->
-
-  <div class="confirm-box">
-
-    <div class="confirm-icon">
-      ⚠️
-    </div>
-
-    <h2 id="confirmTitle">
-      ¿Confirmar acción?
-    </h2>
-
-    <p id="confirmMessage">
-      Esta acción no se puede deshacer.
-    </p>
-
-    <div class="confirm-actions">
-
-      <button
-        type="button"
-        class="secondary-button"
-        id="confirmCancel"
-      >
-        CANCELAR
-      </button>
-
-      <button
-        type="button"
-        class="danger-button"
-        id="confirmAccept"
-      >
-        CONFIRMAR
-      </button>
-
-    </div>
-
-  </div>
-
-</div>
-
-
-<!-- =========================================================
      FIREBASE
 ========================================================= -->
 
-<script type="module">
-
-  import {
-    initializeApp
-  } from
-  "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-
-
-  import {
-    getAuth,
-    onAuthStateChanged,
-    signInWithEmailAndPassword,
-    signOut
-  } from
-  "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-
-
-  import {
-    getFirestore,
-    collection,
-    addDoc,
-    getDocs,
-    getDoc,
-    doc,
-    setDoc,
-    updateDoc,
-    deleteDoc,
-    query,
-    orderBy,
-    serverTimestamp,
-    Timestamp
-  } from
-  "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-
-
-  /* =======================================================
-     FIREBASE
-  ======================================================== */
-
-  const firebaseConfig = {
-
-    apiKey:
-      "AIzaSyDOoYZZhaTn6hbBQ0ml--mq8ByT0KdF9e0",
-
-    authDomain:
-      "el-patron-de-las-ofertas.firebaseapp.com",
-
-    projectId:
-      "el-patron-de-las-ofertas",
-
-    storageBucket:
-      "el-patron-de-las-ofertas.firebasestorage.app",
-
-    messagingSenderId:
-      "996329026447",
-
-    appId:
-      "1:996329026447:web:dde5b6748aff41e087d1fa",
-
-    measurementId:
-      "G-GTD9375PRW"
-
-  };
-
-
-  /* =======================================================
-     INICIALIZAR
-  ======================================================== */
-
-  const app =
-    initializeApp(
-      firebaseConfig
-    );
-
-
-  const auth =
-    getAuth(
-      app
-    );
-
-
-  const db =
-    getFirestore(
-      app
-    );
-
-
-  /*
-    Exponemos Firebase para admin.js.
-
-    admin.js utilizará exactamente
-    estas mismas referencias.
-  */
-
-  window.AdminFirebase = {
-
-    app,
-
-    auth,
-
-    db,
-
-    firebase: {
-
-      collection,
-
-      addDoc,
-
-      getDocs,
-
-      getDoc,
-
-      doc,
-
-      setDoc,
-
-      updateDoc,
-
-      deleteDoc,
-
-      query,
-
-      orderBy,
-
-      serverTimestamp,
-
-      Timestamp
-
-    }
-
-  };
-
-
-  /* =======================================================
-     ESTADO DE AUTENTICACIÓN
-  ======================================================== */
-
-  onAuthStateChanged(
-    auth,
-    user => {
-
-      const loginScreen =
-        document.getElementById(
-          "loginScreen"
-        );
-
-
-      const adminApp =
-        document.getElementById(
-          "adminApp"
-        );
-
-
-      const adminEmail =
-        document.getElementById(
-          "adminEmail"
-        );
-
-
-      if (user) {
-
-        if (loginScreen) {
-
-          loginScreen.style.display =
-            "none";
-
-        }
-
-
-        if (adminApp) {
-
-          adminApp.hidden =
-            false;
-
-        }
-
-
-        if (adminEmail) {
-
-          adminEmail.textContent =
-            user.email ||
-            "Administrador";
-
-        }
-
-
-        /*
-          Avisamos a admin.js
-          que ya existe sesión.
-        */
-
-        window.dispatchEvent(
-          new CustomEvent(
-            "admin-auth-ready",
-            {
-              detail: {
-                user
-              }
-            }
-          )
-        );
-
-
-      } else {
-
-        if (loginScreen) {
-
-          loginScreen.style.display =
-            "flex";
-
-        }
-
-
-        if (adminApp) {
-
-          adminApp.hidden =
-            true;
-
-        }
-
-      }
-
-    }
-  );
-
-
-  /* =======================================================
-     LOGIN
-  ======================================================== */
-
-  const loginForm =
-    document.getElementById(
-      "loginForm"
-    );
-
-
-  if (loginForm) {
-
-    loginForm.addEventListener(
-      "submit",
-      async event => {
-
-        event.preventDefault();
-
-
-        const email =
-          document.getElementById(
-            "loginEmail"
-          )
-            .value
-            .trim();
-
-
-        const password =
-          document.getElementById(
-            "loginPassword"
-          )
-            .value;
-
-
-        const button =
-          document.getElementById(
-            "loginButton"
-          );
-
-
-        const message =
-          document.getElementById(
-            "loginMessage"
-          );
-
-
-        if (button) {
-
-          button.disabled =
-            true;
-
-          button.textContent =
-            "INICIANDO SESIÓN...";
-
-        }
-
-
-        if (message) {
-
-          message.textContent =
-            "";
-
-        }
-
-
-        try {
-
-          await signInWithEmailAndPassword(
-            auth,
-            email,
-            password
-          );
-
-
-        } catch (error) {
-
-          console.error(
-            "Login:",
-            error
-          );
-
-
-          let text =
-            "❌ No se pudo iniciar sesión.";
-
-
-          if (
-            error.code ===
-            "auth/invalid-credential"
-          ) {
-
-            text =
-              "❌ Correo o contraseña incorrectos.";
-
-          }
-
-
-          if (
-            error.code ===
-            "auth/invalid-email"
-          ) {
-
-            text =
-              "❌ El correo no es válido.";
-
-          }
-
-
-          if (
-            error.code ===
-            "auth/too-many-requests"
-          ) {
-
-            text =
-              "❌ Demasiados intentos. Intenta nuevamente más tarde.";
-
-          }
-
-
-          if (message) {
-
-            message.textContent =
-              text;
-
-          }
-
-        } finally {
-
-          if (button) {
-
-            button.disabled =
-              false;
-
-            button.textContent =
-              "🔐 ENTRAR AL ADMIN";
-
-          }
-
-        }
-
-      }
-    );
-
-  }
-
-
-  /* =======================================================
-     LOGOUT
-  ======================================================== */
-
-  const logoutButton =
-    document.getElementById(
-      "logoutButton"
-    );
-
-
-  if (logoutButton) {
-
-    logoutButton.addEventListener(
-      "click",
-      async () => {
-
-        try {
-
-          await signOut(
-            auth
-          );
-
-        } catch (error) {
-
-          console.error(
-            "Logout:",
-            error
-          );
-
-        }
-
-      }
-    );
-
-  }
-
-</script>
-
-
-<!-- =========================================================
-     CHART.JS
-========================================================= -->
-
-<script
-  src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"
-></script>
-
-
-<!-- =========================================================
-     ADMIN JAVASCRIPT
-========================================================= -->
-
-<script
-  src="admin.js"
-  type="module"
-></script>
-
+<script type="module" src="admin.js"></script>
 
 </body>
 </html>
