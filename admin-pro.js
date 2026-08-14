@@ -1,6 +1,6 @@
 /* =========================================================
    ⚡ EL PATRÓN DE LAS OFERTAS
-   ADMIN PRO v2.1
+   ADMIN PRO v2.2
    =========================================================
 
    Compatible con:
@@ -11,13 +11,18 @@
    FIREBASE:
    Firestore
 
-   IMPORTANTE:
-   - No usa Firebase Storage
-   - Imágenes como Base64
-   - Cada colección carga independientemente
-   - Un error en una colección NO bloquea las demás
-   - No escribe estadísticas automáticamente
+   CARACTERÍSTICAS:
+   - Firestore
+   - Sin Firebase Storage
+   - Imágenes Base64
+   - Galería del teléfono
+   - Código de cupón SIEMPRE EN MAYÚSCULAS
+   - % de descuento automático
+   - Carga independiente de colecciones
+   - Un error de colección NO bloquea las demás
+   - Eventos seguros después de cargar DOM
 ========================================================= */
+
 
 import {
   initializeApp
@@ -27,14 +32,11 @@ import {
   getFirestore,
   collection,
   getDocs,
-  getDoc,
-  doc,
   addDoc,
   updateDoc,
   deleteDoc,
   serverTimestamp,
-  query,
-  orderBy
+  doc
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 
@@ -43,6 +45,7 @@ import {
 ========================================================= */
 
 const firebaseConfig = {
+
   apiKey:
     "AIzaSyDOoYZZhaTn6hbBQ0ml--mq8ByT0KdF9e0",
 
@@ -63,34 +66,58 @@ const firebaseConfig = {
 
   measurementId:
     "G-GTD9375PRW"
+
 };
+
+
+/* =========================================================
+   ESTADO FIREBASE
+========================================================= */
+
+let app = null;
+
+let db = null;
+
+let firebaseReady = false;
 
 
 /* =========================================================
    INICIALIZAR FIREBASE
 ========================================================= */
 
-let app = null;
-let db = null;
+function initializeFirebase() {
 
-let firebaseReady = false;
+  try {
 
-try {
+    app =
+      initializeApp(
+        firebaseConfig
+      );
 
-  app = initializeApp(firebaseConfig);
+    db =
+      getFirestore(app);
 
-  db = getFirestore(app);
+    firebaseReady = true;
 
-  firebaseReady = true;
+    console.log(
+      "✅ Firebase inicializado correctamente"
+    );
 
-} catch (error) {
+  } catch (error) {
 
-  console.error(
-    "Error inicializando Firebase:",
-    error
-  );
+    firebaseReady = false;
+
+    console.error(
+      "❌ Error inicializando Firebase:",
+      error
+    );
+
+  }
 
 }
+
+
+initializeFirebase();
 
 
 /* =========================================================
@@ -98,18 +125,26 @@ try {
 ========================================================= */
 
 let ofertas = [];
+
 let cupones = [];
+
 let usuarios = [];
+
 let copias = [];
 
 let erroresColecciones = {};
 
 let currentOfferId = null;
+
 let currentCouponId = null;
+
 let currentUserId = null;
 
 let clicksChart = null;
+
 let stateChart = null;
+
+let autoRefreshTimer = null;
 
 
 /* =========================================================
@@ -123,27 +158,60 @@ function $(id) {
 }
 
 
-function setText(id, value) {
+function setText(
+  id,
+  value
+) {
 
   const element = $(id);
 
-  if (element) {
+  if (!element) {
 
-    element.textContent = value;
+    return;
 
   }
+
+  element.textContent =
+    value ?? "";
+
+}
+
+
+function setValue(
+  id,
+  value
+) {
+
+  const element = $(id);
+
+  if (!element) {
+
+    return;
+
+  }
+
+  element.value =
+    value ?? "";
 
 }
 
 
 function money(value) {
 
-  let number = Number(
-    String(value ?? 0)
-      .replace(/[$,\s]/g, "")
-  );
+  let number =
+    Number(
+      String(
+        value ?? 0
+      )
+        .replace(
+          /[$,\s]/g,
+          ""
+        )
+    );
 
-  if (Number.isNaN(number)) {
+  if (
+    Number.isNaN(number)
+  ) {
 
     number = 0;
 
@@ -163,22 +231,113 @@ function money(value) {
 
 function escapeHtml(value) {
 
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+  return String(
+    value ?? ""
+  )
+    .replaceAll(
+      "&",
+      "&amp;"
+    )
+    .replaceAll(
+      "<",
+      "&lt;"
+    )
+    .replaceAll(
+      ">",
+      "&gt;"
+    )
+    .replaceAll(
+      '"',
+      "&quot;"
+    )
+    .replaceAll(
+      "'",
+      "&#039;"
+    );
 
 }
 
 
 function normalize(value) {
 
-  return String(value ?? "")
+  return String(
+    value ?? ""
+  )
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+    .replace(
+      /[\u0300-\u036f]/g,
+      ""
+    );
+
+}
+
+
+/* =========================================================
+   NUMEROS
+========================================================= */
+
+function numberValue(value) {
+
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+
+    return 0;
+
+  }
+
+  const cleaned =
+    String(value)
+      .replace(
+        /[$,\s%]/g,
+        ""
+      );
+
+  const number =
+    Number(cleaned);
+
+  return Number.isFinite(number)
+    ? number
+    : 0;
+
+}
+
+
+/* =========================================================
+   CALCULAR DESCUENTO
+========================================================= */
+
+function calculateDiscount(
+  oldPrice,
+  currentPrice
+) {
+
+  const oldValue =
+    numberValue(oldPrice);
+
+  const currentValue =
+    numberValue(currentPrice);
+
+  if (
+    oldValue <= 0 ||
+    currentValue <= 0 ||
+    currentValue >= oldValue
+  ) {
+
+    return 0;
+
+  }
+
+  return Math.round(
+    (
+      1 -
+      currentValue /
+        oldValue
+    ) * 100
+  );
 
 }
 
@@ -192,21 +351,30 @@ function showToast(
   type = "success"
 ) {
 
-  let toast = $("adminToast");
+  let toast =
+    $("adminToast");
 
   if (!toast) {
 
-    toast = document.createElement("div");
+    toast =
+      document.createElement(
+        "div"
+      );
 
-    toast.id = "adminToast";
+    toast.id =
+      "adminToast";
 
-    toast.className = "admin-toast";
+    toast.className =
+      "admin-toast";
 
-    document.body.appendChild(toast);
+    document.body.appendChild(
+      toast
+    );
 
   }
 
-  toast.textContent = message;
+  toast.textContent =
+    message;
 
   toast.className =
     `admin-toast show ${type}`;
@@ -216,11 +384,16 @@ function showToast(
   );
 
   window.adminToastTimer =
-    setTimeout(() => {
+    setTimeout(
+      () => {
 
-      toast.classList.remove("show");
+        toast.classList.remove(
+          "show"
+        );
 
-    }, 3500);
+      },
+      3500
+    );
 
 }
 
@@ -240,7 +413,8 @@ function toDate(value) {
   try {
 
     if (
-      typeof value.toDate === "function"
+      typeof value.toDate ===
+      "function"
     ) {
 
       return value.toDate();
@@ -248,19 +422,24 @@ function toDate(value) {
     }
 
     if (
-      value.seconds !== undefined
+      value.seconds !==
+      undefined
     ) {
 
       return new Date(
-        Number(value.seconds) * 1000
+        Number(value.seconds) *
+        1000
       );
 
     }
 
-    const date = new Date(value);
+    const date =
+      new Date(value);
 
     if (
-      Number.isNaN(date.getTime())
+      Number.isNaN(
+        date.getTime()
+      )
     ) {
 
       return null;
@@ -280,7 +459,8 @@ function toDate(value) {
 
 function formatDate(value) {
 
-  const date = toDate(value);
+  const date =
+    toDate(value);
 
   if (!date) {
 
@@ -302,7 +482,8 @@ function formatDate(value) {
 
 function formatTime(value) {
 
-  const date = toDate(value);
+  const date =
+    toDate(value);
 
   if (!date) {
 
@@ -323,7 +504,8 @@ function formatTime(value) {
 
 function dateKey(value) {
 
-  const date = toDate(value);
+  const date =
+    toDate(value);
 
   if (!date) {
 
@@ -337,12 +519,18 @@ function dateKey(value) {
   const month =
     String(
       date.getMonth() + 1
-    ).padStart(2, "0");
+    ).padStart(
+      2,
+      "0"
+    );
 
   const day =
     String(
       date.getDate()
-    ).padStart(2, "0");
+    ).padStart(
+      2,
+      "0"
+    );
 
   return `${year}-${month}-${day}`;
 
@@ -364,6 +552,7 @@ function setFirebaseStatus(
   const settings =
     $("settingsFirebaseStatus");
 
+
   if (box) {
 
     const dot =
@@ -376,12 +565,14 @@ function setFirebaseStatus(
         "span:last-child"
       );
 
+
     if (dot) {
 
       dot.className =
         `status-dot ${status}`;
 
     }
+
 
     if (text) {
 
@@ -396,6 +587,7 @@ function setFirebaseStatus(
     }
 
   }
+
 
   if (settings) {
 
@@ -415,26 +607,101 @@ function setFirebaseStatus(
 
 
 /* =========================================================
-   CARGAR COLECCIÓN SEGURA
+   ERROR FIREBASE
 ========================================================= */
 
-/*
-   ESTA ES LA CORRECCIÓN MÁS IMPORTANTE.
+function firebaseErrorMessage(
+  error
+) {
 
-   Antes:
+  if (!error) {
 
-   Promise.all([
-     ofertas,
-     cupones,
-     usuarios,
-     copias
-   ])
+    return "Error desconocido";
 
-   Si una fallaba:
-   TODO FALLABA.
+  }
 
-   Ahora cada colección se carga
-   por separado.
+
+  const code =
+    error.code ||
+    "";
+
+
+  if (
+    code.includes(
+      "permission-denied"
+    )
+  ) {
+
+    return (
+      "PERMISOS DE FIRESTORE. " +
+      "Las reglas de Firestore no permiten esta operación."
+    );
+
+  }
+
+
+  if (
+    code.includes(
+      "unauthenticated"
+    )
+  ) {
+
+    return (
+      "Firebase requiere autenticación."
+    );
+
+  }
+
+
+  if (
+    code.includes(
+      "failed-precondition"
+    )
+  ) {
+
+    return (
+      "Configuración de Firestore incorrecta."
+    );
+
+  }
+
+
+  if (
+    code.includes(
+      "unavailable"
+    )
+  ) {
+
+    return (
+      "Firebase no está disponible."
+    );
+
+  }
+
+
+  if (
+    code.includes(
+      "not-found"
+    )
+  ) {
+
+    return (
+      "Documento no encontrado."
+    );
+
+  }
+
+
+  return (
+    error.message ||
+    "Error desconocido."
+  );
+
+}
+
+
+/* =========================================================
+   CARGAR COLECCIÓN SEGURA
 ========================================================= */
 
 async function safeLoadCollection(
@@ -444,13 +711,18 @@ async function safeLoadCollection(
   if (!db) {
 
     return {
+
       data: [],
-      error: new Error(
-        "Firebase no está inicializado."
-      )
+
+      error:
+        new Error(
+          "Firebase no está inicializado."
+        )
+
     };
 
   }
+
 
   try {
 
@@ -462,14 +734,17 @@ async function safeLoadCollection(
         )
       );
 
+
     const data = [];
+
 
     snapshot.forEach(
       item => {
 
         data.push({
 
-          id: item.id,
+          id:
+            item.id,
 
           ...item.data()
 
@@ -478,29 +753,39 @@ async function safeLoadCollection(
       }
     );
 
+
     erroresColecciones[
       collectionName
     ] = null;
 
+
     return {
+
       data,
+
       error: null
+
     };
 
   } catch (error) {
 
     console.error(
-      `Firestore [${collectionName}]:`,
+      `❌ Firestore [${collectionName}]`,
       error
     );
+
 
     erroresColecciones[
       collectionName
     ] = error;
 
+
     return {
+
       data: [],
+
       error
+
     };
 
   }
@@ -516,16 +801,14 @@ async function loadAllData(
   silent = false
 ) {
 
-  if (!firebaseReady || !db) {
+  if (
+    !firebaseReady ||
+    !db
+  ) {
 
     setFirebaseStatus(
       "error",
       "Firebase no disponible"
-    );
-
-    showToast(
-      "❌ No se pudo inicializar Firebase",
-      "error"
     );
 
     renderLoadingErrors();
@@ -550,9 +833,7 @@ async function loadAllData(
   );
 
 
-  /*
-     CARGAMOS INDEPENDIENTEMENTE
-  */
+  /* OFERTAS */
 
   const ofertasResult =
     await safeLoadCollection(
@@ -563,6 +844,8 @@ async function loadAllData(
     ofertasResult.data;
 
 
+  /* CUPONES */
+
   const cuponesResult =
     await safeLoadCollection(
       "cupones"
@@ -571,6 +854,8 @@ async function loadAllData(
   cupones =
     cuponesResult.data;
 
+
+  /* USUARIOS */
 
   const usuariosResult =
     await safeLoadCollection(
@@ -581,11 +866,7 @@ async function loadAllData(
     usuariosResult.data;
 
 
-  /*
-     Aceptamos también
-     copias_diarias si "copias"
-     no existe / no tiene datos.
-  */
+  /* COPIAS */
 
   const copiasResult =
     await safeLoadCollection(
@@ -596,27 +877,25 @@ async function loadAllData(
     copiasResult.data;
 
 
-  /*
-     Si no existe "copias", intentamos
-     copias_diarias.
-  */
+  /* COPIAS DIARIAS */
 
   if (
     copias.length === 0 &&
     copiasResult.error
   ) {
 
-    const copiasDiariasResult =
+    const dailyResult =
       await safeLoadCollection(
         "copias_diarias"
       );
 
+
     if (
-      copiasDiariasResult.data.length
+      dailyResult.data.length
     ) {
 
       copias =
-        copiasDiariasResult.data;
+        dailyResult.data;
 
     }
 
@@ -630,9 +909,9 @@ async function loadAllData(
       .filter(Boolean);
 
 
-  if (errors.length === 0) {
-
-    firebaseReady = true;
+  if (
+    errors.length === 0
+  ) {
 
     setFirebaseStatus(
       "connected",
@@ -657,7 +936,7 @@ async function loadAllData(
     if (errors.length) {
 
       showToast(
-        "⚠️ Datos cargados parcialmente",
+        "⚠️ Información cargada parcialmente",
         "warning"
       );
 
@@ -685,7 +964,8 @@ function renderLoadingErrors() {
       erroresColecciones
     )
       .filter(
-        ([, error]) => error
+        ([, error]) =>
+          error
       );
 
 
@@ -696,9 +976,23 @@ function renderLoadingErrors() {
   }
 
 
-  console.warn(
-    "Colecciones con error:",
-    errors
+  console.table(
+    errors.map(
+      ([collectionName, error]) => ({
+
+        coleccion:
+          collectionName,
+
+        codigo:
+          error?.code ||
+          "",
+
+        mensaje:
+          error?.message ||
+          ""
+
+      })
+    )
   );
 
 }
@@ -711,11 +1005,14 @@ function renderLoadingErrors() {
 function calculateSavings() {
 
   return usuarios.reduce(
-    (total, user) => {
+    (
+      total,
+      user
+    ) => {
 
       return (
         total +
-        Number(
+        numberValue(
           user.ahorroTotal ||
           user.ahorro ||
           0
@@ -732,11 +1029,14 @@ function calculateSavings() {
 function calculatePurchases() {
 
   return usuarios.reduce(
-    (total, user) => {
+    (
+      total,
+      user
+    ) => {
 
       return (
         total +
-        Number(
+        numberValue(
           user.compras ||
           0
         )
@@ -752,11 +1052,14 @@ function calculatePurchases() {
 function calculateUsedCoupons() {
 
   return usuarios.reduce(
-    (total, user) => {
+    (
+      total,
+      user
+    ) => {
 
       return (
         total +
-        Number(
+        numberValue(
           user.cuponesUsados ||
           0
         )
@@ -769,15 +1072,17 @@ function calculateUsedCoupons() {
 }
 
 
-function getCouponCode(coupon) {
+function getCouponCode(
+  coupon
+) {
 
-  return (
-    coupon.codigo ||
-    coupon.code ||
-    coupon.cupon ||
-    coupon.codigoCupon ||
+  return String(
+    coupon?.codigo ||
+    coupon?.code ||
+    coupon?.cupon ||
+    coupon?.codigoCupon ||
     ""
-  );
+  ).toUpperCase();
 
 }
 
@@ -792,8 +1097,12 @@ function getCouponCopies(
 
   }
 
+
   const target =
-    normalize(couponCode);
+    normalize(
+      couponCode
+    );
+
 
   return copias.filter(
     copy => {
@@ -804,6 +1113,7 @@ function getCouponCopies(
         copy.couponCode ||
         copy.code ||
         "";
+
 
       return (
         normalize(code) ===
@@ -821,6 +1131,7 @@ function renderDashboard() {
   const totalOffers =
     ofertas.length;
 
+
   const activeCoupons =
     cupones.filter(
       coupon => {
@@ -832,6 +1143,7 @@ function renderDashboard() {
             "activo"
           );
 
+
         return !status.includes(
           "agot"
         );
@@ -839,14 +1151,18 @@ function renderDashboard() {
       }
     ).length;
 
+
   const totalUsers =
     usuarios.length;
+
 
   const totalClicks =
     copias.length;
 
+
   const savings =
     calculateSavings();
+
 
   const purchases =
     calculatePurchases();
@@ -894,12 +1210,9 @@ function renderDashboard() {
   );
 
 
-  const now =
-    new Date();
-
   setText(
     "lastUpdate",
-    now.toLocaleTimeString(
+    new Date().toLocaleTimeString(
       "es-MX",
       {
         hour: "2-digit",
@@ -924,21 +1237,26 @@ function getCouponStats() {
 
   const map = {};
 
+
   copias.forEach(
     copy => {
 
       const code =
-        copy.codigo ||
-        copy.cupon ||
-        copy.couponCode ||
-        copy.code ||
-        "SIN CÓDIGO";
+        String(
+          copy.codigo ||
+          copy.cupon ||
+          copy.couponCode ||
+          copy.code ||
+          "SIN CÓDIGO"
+        ).toUpperCase();
+
 
       if (!map[code]) {
 
         map[code] = 0;
 
       }
+
 
       map[code]++;
 
@@ -949,13 +1267,17 @@ function getCouponStats() {
   return Object.entries(map)
     .map(
       ([code, count]) => ({
+
         code,
+
         count
+
       })
     )
     .sort(
       (a, b) =>
-        b.count - a.count
+        b.count -
+        a.count
     );
 
 }
@@ -966,10 +1288,14 @@ function getMostCopiedCoupon() {
   const stats =
     getCouponStats();
 
+
   return (
     stats[0] || {
+
       code: "",
+
       count: 0
+
     }
   );
 
@@ -980,6 +1306,7 @@ function renderTopCoupon() {
 
   const container =
     $("topCoupon");
+
 
   if (!container) {
 
@@ -995,10 +1322,17 @@ function renderTopCoupon() {
   if (!top.code) {
 
     container.innerHTML = `
+
       <div class="empty-state-small">
+
         <span>🎟️</span>
-        <p>Aún no hay copias registradas.</p>
+
+        <p>
+          Aún no hay copias registradas.
+        </p>
+
       </div>
+
     `;
 
     return;
@@ -1017,12 +1351,18 @@ function renderTopCoupon() {
       <div>
 
         <strong>
-          ${escapeHtml(top.code)}
+          ${escapeHtml(
+            top.code
+          )}
         </strong>
 
         <span>
           ${top.count}
-          ${top.count === 1 ? "copia" : "copias"}
+          ${
+            top.count === 1
+              ? "copia"
+              : "copias"
+          }
         </span>
 
       </div>
@@ -1042,6 +1382,7 @@ function renderActivity() {
 
   const container =
     $("activityList");
+
 
   if (!container) {
 
@@ -1063,6 +1404,7 @@ function renderActivity() {
               a.fechaHora
             );
 
+
           const dbb =
             toDate(
               b.fecha ||
@@ -1071,23 +1413,40 @@ function renderActivity() {
               b.fechaHora
             );
 
+
           return (
-            (dbb?.getTime() || 0) -
-            (da?.getTime() || 0)
+            (
+              dbb?.getTime() ||
+              0
+            ) -
+            (
+              da?.getTime() ||
+              0
+            )
           );
 
         }
       )
-      .slice(0, 8);
+      .slice(
+        0,
+        8
+      );
 
 
   if (!recent.length) {
 
     container.innerHTML = `
+
       <div class="empty-state-small">
+
         <span>⚡</span>
-        <p>No hay actividad reciente.</p>
+
+        <p>
+          No hay actividad reciente.
+        </p>
+
       </div>
+
     `;
 
     return;
@@ -1096,59 +1455,64 @@ function renderActivity() {
 
 
   container.innerHTML =
-    recent.map(
-      item => {
+    recent
+      .map(
+        item => {
 
-        const code =
-          item.codigo ||
-          item.cupon ||
-          item.couponCode ||
-          item.code ||
-          "Cupón";
-
-        const user =
-          item.usuario ||
-          item.nombre ||
-          item.email ||
-          "Usuario";
+          const code =
+            item.codigo ||
+            item.cupon ||
+            item.couponCode ||
+            item.code ||
+            "Cupón";
 
 
-        return `
+          const user =
+            item.usuario ||
+            item.nombre ||
+            item.email ||
+            "Usuario";
 
-          <div class="activity-item">
 
-            <div class="activity-icon">
-              🎟️
+          return `
+
+            <div class="activity-item">
+
+              <div class="activity-icon">
+                🎟️
+              </div>
+
+              <div class="activity-content">
+
+                <strong>
+                  ${escapeHtml(
+                    String(code)
+                      .toUpperCase()
+                  )}
+                </strong>
+
+                <span>
+                  ${escapeHtml(user)}
+                </span>
+
+              </div>
+
+              <div class="activity-time">
+                ${formatTime(
+                  item.fecha ||
+                  item.createdAt ||
+                  item.timestamp ||
+                  item.fechaHora
+                )}
+              </div>
+
             </div>
 
-            <div class="activity-content">
+          `;
 
-              <strong>
-                ${escapeHtml(code)}
-              </strong>
-
-              <span>
-                ${escapeHtml(user)}
-              </span>
-
-            </div>
-
-            <div class="activity-time">
-              ${formatTime(
-                item.fecha ||
-                item.createdAt ||
-                item.timestamp ||
-                item.fechaHora
-              )}
-            </div>
-
-          </div>
-
-        `;
-
-      }
-    )
-    .join("");
+        }
+      )
+      .join("");
 
 }
 
@@ -1161,6 +1525,7 @@ function renderOffers() {
 
   const body =
     $("offersTableBody");
+
 
   if (!body) {
 
@@ -1175,7 +1540,7 @@ function renderOffers() {
     );
 
 
-  let data =
+  const data =
     ofertas.filter(
       offer => {
 
@@ -1185,11 +1550,16 @@ function renderOffers() {
 
         }
 
+
         return normalize(
-          `${offer.titulo || ""}
-           ${offer.categoria || ""}
-           ${offer.link || ""}`
-        ).includes(search);
+          `
+          ${offer.titulo || ""}
+          ${offer.categoria || ""}
+          ${offer.link || ""}
+          `
+        ).includes(
+          search
+        );
 
       }
     );
@@ -1228,158 +1598,164 @@ function renderOffers() {
 
 
   body.innerHTML =
-    data.map(
-      offer => {
+    data
+      .map(
+        offer => {
 
-        const oldPrice =
-          Number(
-            offer.precioAntes ||
-            offer.precioAnterior ||
-            0
-          );
-
-        const currentPrice =
-          Number(
-            offer.precioActual ||
-            offer.precio ||
-            offer.currentPrice ||
-            0
-          );
-
-
-        let discount = 0;
-
-        if (
-          oldPrice > 0 &&
-          currentPrice > 0 &&
-          currentPrice < oldPrice
-        ) {
-
-          discount =
-            Math.round(
-              (
-                1 -
-                currentPrice /
-                  oldPrice
-              ) * 100
+          const oldPrice =
+            numberValue(
+              offer.precioAntes ||
+              offer.precioAnterior ||
+              0
             );
 
+
+          const currentPrice =
+            numberValue(
+              offer.precioActual ||
+              offer.precio ||
+              offer.currentPrice ||
+              0
+            );
+
+
+          const discount =
+            calculateDiscount(
+              oldPrice,
+              currentPrice
+            );
+
+
+          const clicks =
+            numberValue(
+              offer.clics ||
+              offer.clicks ||
+              0
+            );
+
+
+          const image =
+            offer.imagenBase64 ||
+            offer.imagen ||
+            "";
+
+
+          return `
+
+            <tr>
+
+              <td>
+
+                <div class="table-product">
+
+                  <div class="table-product-image">
+
+                    ${
+                      image
+                        ? `
+                          <img
+                            src="${escapeHtml(
+                              image
+                            )}"
+                            alt=""
+                            loading="lazy"
+                          >
+                        `
+                        : "🔥"
+                    }
+
+                  </div>
+
+                  <div>
+
+                    <strong>
+                      ${escapeHtml(
+                        offer.titulo ||
+                        "Sin título"
+                      )}
+                    </strong>
+
+                    <small>
+                      ${escapeHtml(
+                        offer.categoria ||
+                        "General"
+                      )}
+                    </small>
+
+                  </div>
+
+                </div>
+
+              </td>
+
+              <td>
+                ${
+                  oldPrice
+                    ? money(
+                        oldPrice
+                      )
+                    : "—"
+                }
+              </td>
+
+              <td>
+
+                <strong>
+                  ${money(
+                    currentPrice
+                  )}
+                </strong>
+
+              </td>
+
+              <td>
+
+                ${
+                  discount > 0
+                    ? `
+                      <span class="discount-badge">
+                        -${discount}%
+                      </span>
+                    `
+                    : "—"
+                }
+
+              </td>
+
+              <td>
+                ${clicks}
+              </td>
+
+              <td>
+
+                <div class="table-actions">
+
+                  <button
+                    type="button"
+                    data-edit-offer="${offer.id}"
+                  >
+                    ✏️
+                  </button>
+
+                  <button
+                    type="button"
+                    class="danger"
+                    data-delete-offer="${offer.id}"
+                  >
+                    🗑️
+                  </button>
+
+                </div>
+
+              </td>
+
+            </tr>
+
+          `;
+
         }
-
-
-        const clicks =
-          Number(
-            offer.clics ||
-            offer.clicks ||
-            0
-          );
-
-
-        return `
-
-          <tr>
-
-            <td>
-
-              <div class="table-product">
-
-                <div class="table-product-image">
-
-                  ${
-                    offer.imagenBase64 ||
-                    offer.imagen
-                      ? `
-                        <img
-                          src="${escapeHtml(
-                            offer.imagenBase64 ||
-                            offer.imagen
-                          )}"
-                          alt=""
-                        >
-                      `
-                      : "🔥"
-                  }
-
-                </div>
-
-                <div>
-
-                  <strong>
-                    ${escapeHtml(
-                      offer.titulo ||
-                      "Sin título"
-                    )}
-                  </strong>
-
-                  <small>
-                    ${escapeHtml(
-                      offer.categoria ||
-                      "General"
-                    )}
-                  </small>
-
-                </div>
-
-              </div>
-
-            </td>
-
-            <td>
-              ${
-                oldPrice
-                  ? money(oldPrice)
-                  : "—"
-              }
-            </td>
-
-            <td>
-              <strong>
-                ${money(currentPrice)}
-              </strong>
-            </td>
-
-            <td>
-              ${
-                discount
-                  ? `-${discount}%`
-                  : "—"
-              }
-            </td>
-
-            <td>
-              ${clicks}
-            </td>
-
-            <td>
-
-              <div class="table-actions">
-
-                <button
-                  type="button"
-                  data-edit-offer="${offer.id}"
-                >
-                  ✏️
-                </button>
-
-                <button
-                  type="button"
-                  class="danger"
-                  data-delete-offer="${offer.id}"
-                >
-                  🗑️
-                </button>
-
-              </div>
-
-            </td>
-
-          </tr>
-
-        `;
-
-      }
-    )
-    .join("");
+      )
+      .join("");
 
 }
 
@@ -1409,6 +1785,7 @@ function couponTypeLabel(
 
   }
 
+
   if (
     type.includes("bank") ||
     type.includes("bancar")
@@ -1417,6 +1794,7 @@ function couponTypeLabel(
     return "🏦 Bancario";
 
   }
+
 
   return "🎁 Exclusivo";
 
@@ -1440,8 +1818,13 @@ function couponStatus(
   ) {
 
     return {
-      text: "🔴 Agotado",
-      className: "expired"
+
+      text:
+        "🔴 Agotado",
+
+      className:
+        "expired"
+
     };
 
   }
@@ -1452,16 +1835,26 @@ function couponStatus(
   ) {
 
     return {
-      text: "🟠 Por agotarse",
-      className: "warning"
+
+      text:
+        "🟠 Por agotarse",
+
+      className:
+        "warning"
+
     };
 
   }
 
 
   return {
-    text: "🟢 Activo",
-    className: "active"
+
+    text:
+      "🟢 Activo",
+
+    className:
+      "active"
+
   };
 
 }
@@ -1471,6 +1864,7 @@ function renderCoupons() {
 
   const body =
     $("couponsTableBody");
+
 
   if (!body) {
 
@@ -1484,27 +1878,32 @@ function renderCoupons() {
       $("couponSearch")?.value
     );
 
+
   const filter =
     $("couponTypeFilter")?.value ||
     "all";
 
 
-  let data =
+  const data =
     cupones.filter(
       coupon => {
 
         const text =
           normalize(
-            `${getCouponCode(coupon)}
-             ${coupon.titulo || ""}
-             ${coupon.descuento || ""}
-             ${coupon.banco || ""}`
+            `
+            ${getCouponCode(coupon)}
+            ${coupon.titulo || ""}
+            ${coupon.descuento || ""}
+            ${coupon.banco || ""}
+            `
           );
 
 
         if (
           search &&
-          !text.includes(search)
+          !text.includes(
+            search
+          )
         ) {
 
           return false;
@@ -1607,137 +2006,161 @@ function renderCoupons() {
 
 
   body.innerHTML =
-    data.map(
-      coupon => {
+    data
+      .map(
+        coupon => {
 
-        const code =
-          getCouponCode(coupon);
-
-        const status =
-          couponStatus(coupon);
-
-        const copies =
-          getCouponCopies(code);
+          const code =
+            getCouponCode(
+              coupon
+            );
 
 
-        return `
+          const status =
+            couponStatus(
+              coupon
+            );
 
-          <tr>
 
-            <td>
+          const copies =
+            getCouponCopies(
+              code
+            );
 
-              <strong>
-                ${escapeHtml(
-                  code ||
-                  "SIN CÓDIGO"
+
+          const minimum =
+            coupon.compraMinima ??
+            coupon.minimo ??
+            coupon.minimum ??
+            0;
+
+
+          const maximum =
+            coupon.tope ??
+            coupon.maximo ??
+            coupon.maximum ??
+            0;
+
+
+          return `
+
+            <tr>
+
+              <td>
+
+                <strong>
+                  ${escapeHtml(
+                    code ||
+                    "SIN CÓDIGO"
+                  )}
+                </strong>
+
+                <small>
+                  ${escapeHtml(
+                    coupon.titulo ||
+                    ""
+                  )}
+                </small>
+
+              </td>
+
+              <td>
+                ${couponTypeLabel(
+                  coupon
                 )}
-              </strong>
+              </td>
 
-              <small>
+              <td>
                 ${escapeHtml(
-                  coupon.titulo ||
-                  ""
+                  coupon.descuento ||
+                  "—"
                 )}
-              </small>
+              </td>
 
-            </td>
+              <td>
+                ${
+                  numberValue(
+                    minimum
+                  )
+                    ? money(
+                        minimum
+                      )
+                    : "—"
+                }
+              </td>
 
-            <td>
-              ${couponTypeLabel(coupon)}
-            </td>
+              <td>
+                ${
+                  numberValue(
+                    maximum
+                  )
+                    ? money(
+                        maximum
+                      )
+                    : "—"
+                }
+              </td>
 
-            <td>
-              ${escapeHtml(
-                coupon.descuento ||
-                "—"
-              )}
-            </td>
+              <td>
 
-            <td>
-              ${
-                coupon.compraMinima ??
-                coupon.minimo ??
-                coupon.minimum
-                  ? money(
-                      coupon.compraMinima ??
-                      coupon.minimo ??
-                      coupon.minimum
-                    )
-                  : "—"
-              }
-            </td>
-
-            <td>
-              ${
-                coupon.tope ??
-                coupon.maximo ??
-                coupon.maximum
-                  ? money(
-                      coupon.tope ??
-                      coupon.maximo ??
-                      coupon.maximum
-                    )
-                  : "—"
-              }
-            </td>
-
-            <td>
-
-              <span
-                class="status-badge ${status.className}"
-              >
-                ${status.text}
-              </span>
-
-            </td>
-
-            <td>
-              ${copies}
-            </td>
-
-            <td>
-
-              <div class="table-actions">
-
-                <button
-                  type="button"
-                  data-edit-coupon="${coupon.id}"
+                <span
+                  class="status-badge ${status.className}"
                 >
-                  ✏️
-                </button>
+                  ${status.text}
+                </span>
 
-                <button
-                  type="button"
-                  class="danger"
-                  data-delete-coupon="${coupon.id}"
-                >
-                  🗑️
-                </button>
+              </td>
 
-              </div>
+              <td>
+                ${copies}
+              </td>
 
-            </td>
+              <td>
 
-          </tr>
+                <div class="table-actions">
 
-        `;
+                  <button
+                    type="button"
+                    data-edit-coupon="${coupon.id}"
+                  >
+                    ✏️
+                  </button>
 
-      }
-    )
-    .join("");
+                  <button
+                    type="button"
+                    class="danger"
+                    data-delete-coupon="${coupon.id}"
+                  >
+                    🗑️
+                  </button>
+
+                </div>
+
+              </td>
+
+            </tr>
+
+          `;
+
+        }
+      )
+      .join("");
 
 }
 
 
 /* =========================================================
-   ESTADÍSTICAS DE CUPONES
+   ESTADÍSTICAS CUPONES
 ========================================================= */
 
 function updateCouponMiniStats() {
 
   let active = 0;
+
   let warning = 0;
+
   let expired = 0;
+
   let copies = 0;
 
 
@@ -1745,7 +2168,10 @@ function updateCouponMiniStats() {
     coupon => {
 
       const status =
-        couponStatus(coupon);
+        couponStatus(
+          coupon
+        );
+
 
       if (
         status.className ===
@@ -1770,7 +2196,9 @@ function updateCouponMiniStats() {
 
       copies +=
         getCouponCopies(
-          getCouponCode(coupon)
+          getCouponCode(
+            coupon
+          )
         );
 
     }
@@ -1847,6 +2275,7 @@ function renderUsers() {
   const body =
     $("usersTableBody");
 
+
   if (!body) {
 
     return;
@@ -1859,6 +2288,7 @@ function renderUsers() {
       $("userSearch")?.value
     );
 
+
   const filter =
     $("userStatusFilter")?.value ||
     "all";
@@ -1870,16 +2300,20 @@ function renderUsers() {
 
         const text =
           normalize(
-            `${user.nombre || ""}
-             ${user.email || ""}
-             ${user.estado || ""}
-             ${user.estadoVerificacion || ""}`
+            `
+            ${user.nombre || ""}
+            ${user.email || ""}
+            ${user.estado || ""}
+            ${user.estadoVerificacion || ""}
+            `
           );
 
 
         if (
           search &&
-          !text.includes(search)
+          !text.includes(
+            search
+          )
         ) {
 
           return false;
@@ -1940,162 +2374,174 @@ function renderUsers() {
 
 
   body.innerHTML =
-    data.map(
-      user => {
+    data
+      .map(
+        user => {
 
-        const status =
-          userStatus(user);
+          const status =
+            userStatus(
+              user
+            );
 
 
-        return `
+          return `
 
-          <tr>
+            <tr>
 
-            <td>
+              <td>
 
-              <div class="table-product">
+                <div class="table-product">
 
-                <div class="table-product-image">
+                  <div class="table-product-image">
+
+                    ${
+                      user.fotoBase64
+                        ? `
+                          <img
+                            src="${escapeHtml(
+                              user.fotoBase64
+                            )}"
+                            alt=""
+                            loading="lazy"
+                          >
+                        `
+                        : "👤"
+                    }
+
+                  </div>
+
+                  <div>
+
+                    <strong>
+                      ${escapeHtml(
+                        user.nombre ||
+                        "Sin nombre"
+                      )}
+                    </strong>
+
+                    <small>
+                      ${escapeHtml(
+                        user.email ||
+                        "Sin correo"
+                      )}
+                    </small>
+
+                  </div>
+
+                </div>
+
+              </td>
+
+              <td>
+
+                <span
+                  class="status-badge ${
+                    status ===
+                    "verificado"
+                      ? "active"
+                      : status ===
+                        "rechazado"
+                        ? "expired"
+                        : "warning"
+                  }"
+                >
 
                   ${
-                    user.fotoBase64
-                      ? `
-                        <img
-                          src="${escapeHtml(
-                            user.fotoBase64
-                          )}"
-                          alt=""
-                        >
-                      `
-                      : "👤"
+                    status ===
+                    "verificado"
+                      ? "✅ Verificado"
+                      : status ===
+                        "rechazado"
+                        ? "🔴 Rechazado"
+                        : "⏳ Pendiente"
                   }
 
+                </span>
+
+              </td>
+
+              <td>
+                ${escapeHtml(
+                  user.estado ||
+                  user.estadoMexico ||
+                  "—"
+                )}
+              </td>
+
+              <td>
+                ${numberValue(
+                  user.compras ||
+                  0
+                )}
+              </td>
+
+              <td>
+                ${numberValue(
+                  user.cuponesUsados ||
+                  0
+                )}
+              </td>
+
+              <td>
+                ${money(
+                  user.ahorroTotal ||
+                  user.ahorro ||
+                  0
+                )}
+              </td>
+
+              <td>
+                ${formatDate(
+                  user.createdAt ||
+                  user.fechaRegistro ||
+                  user.registro
+                )}
+              </td>
+
+              <td>
+
+                <div class="table-actions">
+
+                  <button
+                    type="button"
+                    data-edit-user="${user.id}"
+                  >
+                    👁️
+                  </button>
+
+                  <button
+                    type="button"
+                    class="danger"
+                    data-delete-user="${user.id}"
+                  >
+                    🗑️
+                  </button>
+
                 </div>
 
-                <div>
+              </td>
 
-                  <strong>
-                    ${escapeHtml(
-                      user.nombre ||
-                      "Sin nombre"
-                    )}
-                  </strong>
+            </tr>
 
-                  <small>
-                    ${escapeHtml(
-                      user.email ||
-                      "Sin correo"
-                    )}
-                  </small>
+          `;
 
-                </div>
-
-              </div>
-
-            </td>
-
-            <td>
-
-              <span
-                class="status-badge ${
-                  status === "verificado"
-                    ? "active"
-                    : status === "rechazado"
-                      ? "expired"
-                      : "warning"
-                }"
-              >
-                ${
-                  status === "verificado"
-                    ? "✅ Verificado"
-                    : status === "rechazado"
-                      ? "🔴 Rechazado"
-                      : "⏳ Pendiente"
-                }
-              </span>
-
-            </td>
-
-            <td>
-              ${escapeHtml(
-                user.estado ||
-                user.estadoMexico ||
-                "—"
-              )}
-            </td>
-
-            <td>
-              ${Number(
-                user.compras ||
-                0
-              )}
-            </td>
-
-            <td>
-              ${Number(
-                user.cuponesUsados ||
-                0
-              )}
-            </td>
-
-            <td>
-              ${money(
-                user.ahorroTotal ||
-                user.ahorro ||
-                0
-              )}
-            </td>
-
-            <td>
-              ${formatDate(
-                user.createdAt ||
-                user.fechaRegistro ||
-                user.registro
-              )}
-            </td>
-
-            <td>
-
-              <div class="table-actions">
-
-                <button
-                  type="button"
-                  data-edit-user="${user.id}"
-                >
-                  👁️
-                </button>
-
-                <button
-                  type="button"
-                  class="danger"
-                  data-delete-user="${user.id}"
-                >
-                  🗑️
-                </button>
-
-              </div>
-
-            </td>
-
-          </tr>
-
-        `;
-
-      }
-    )
-    .join("");
+        }
+      )
+      .join("");
 
 }
 
 
 /* =========================================================
-   ESTADÍSTICAS DE USUARIOS
+   ESTADÍSTICAS USUARIOS
 ========================================================= */
 
 function updateUserStats() {
 
   let verified = 0;
+
   let pending = 0;
+
   let savings = 0;
 
 
@@ -2103,16 +2549,21 @@ function updateUserStats() {
     user => {
 
       const status =
-        userStatus(user);
+        userStatus(
+          user
+        );
+
 
       if (
-        status === "verificado"
+        status ===
+        "verificado"
       ) {
 
         verified++;
 
       } else if (
-        status === "pendiente"
+        status ===
+        "pendiente"
       ) {
 
         pending++;
@@ -2121,7 +2572,7 @@ function updateUserStats() {
 
 
       savings +=
-        Number(
+        numberValue(
           user.ahorroTotal ||
           user.ahorro ||
           0
@@ -2188,6 +2639,7 @@ function getClicksByDay() {
 
       }
 
+
       map[key]++;
 
     }
@@ -2220,6 +2672,7 @@ function getUsersByState() {
 
       }
 
+
       map[state]++;
 
     }
@@ -2233,45 +2686,31 @@ function getUsersByState() {
 
 function renderStatistics() {
 
-  const totalClicks =
-    copias.length;
-
-  const totalUsers =
-    usuarios.length;
-
-  const totalSavings =
-    calculateSavings();
-
-  const totalPurchases =
-    calculatePurchases();
-
-  const totalCouponUses =
-    calculateUsedCoupons();
-
-
   setText(
     "performanceClicks",
-    totalClicks
+    copias.length
   );
 
   setText(
     "performanceCoupons",
-    totalCouponUses
+    calculateUsedCoupons()
   );
 
   setText(
     "performanceUsers",
-    totalUsers
+    usuarios.length
   );
 
   setText(
     "performanceSavings",
-    money(totalSavings)
+    money(
+      calculateSavings()
+    )
   );
 
   setText(
     "performancePurchases",
-    totalPurchases
+    calculatePurchases()
   );
 
 
@@ -2285,13 +2724,14 @@ function renderStatistics() {
 
 
 /* =========================================================
-   RANKING DE CUPONES
+   RANKING CUPONES
 ========================================================= */
 
 function renderCouponRanking() {
 
   const container =
     $("couponRankingList");
+
 
   if (!container) {
 
@@ -2302,7 +2742,10 @@ function renderCouponRanking() {
 
   const stats =
     getCouponStats()
-      .slice(0, 10);
+      .slice(
+        0,
+        10
+      );
 
 
   if (!stats.length) {
@@ -2327,38 +2770,42 @@ function renderCouponRanking() {
 
 
   container.innerHTML =
-    stats.map(
-      (item, index) => {
+    stats
+      .map(
+        (
+          item,
+          index
+        ) => {
 
-        return `
+          return `
 
-          <div class="coupon-ranking-item">
+            <div class="coupon-ranking-item">
 
-            <div class="ranking-number">
-              ${index + 1}
-            </div>
+              <div class="ranking-number">
+                ${index + 1}
+              </div>
 
-            <div class="ranking-name">
+              <div class="ranking-name">
+
+                <strong>
+                  ${escapeHtml(
+                    item.code
+                  )}
+                </strong>
+
+              </div>
 
               <strong>
-                ${escapeHtml(
-                  item.code
-                )}
+                ${item.count}
               </strong>
 
             </div>
 
-            <strong>
-              ${item.count}
-            </strong>
+          `;
 
-          </div>
-
-        `;
-
-      }
-    )
-    .join("");
+        }
+      )
+      .join("");
 
 }
 
@@ -2371,6 +2818,7 @@ function renderStateList() {
 
   const container =
     $("stateList");
+
 
   if (!container) {
 
@@ -2387,7 +2835,10 @@ function renderStateList() {
         ([, a], [, b]) =>
           b - a
       )
-      .slice(0, 10);
+      .slice(
+        0,
+        10
+      );
 
 
   if (!states.length) {
@@ -2400,28 +2851,31 @@ function renderStateList() {
 
 
   container.innerHTML =
-    states.map(
-      ([state, count]) => {
+    states
+      .map(
+        ([state, count]) => {
 
-        return `
+          return `
 
-          <div class="state-row">
+            <div class="state-row">
 
-            <span>
-              ${escapeHtml(state)}
-            </span>
+              <span>
+                ${escapeHtml(
+                  state
+                )}
+              </span>
 
-            <strong>
-              ${count}
-            </strong>
+              <strong>
+                ${count}
+              </strong>
 
-          </div>
+            </div>
 
-        `;
+          `;
 
-      }
-    )
-    .join("");
+        }
+      )
+      .join("");
 
 }
 
@@ -2436,10 +2890,6 @@ function renderCharts() {
     typeof Chart ===
     "undefined"
   ) {
-
-    console.warn(
-      "Chart.js todavía no está disponible."
-    );
 
     return;
 
@@ -2462,6 +2912,7 @@ function renderClicksChart() {
   const canvas =
     $("clicksByDayChart");
 
+
   if (!canvas) {
 
     return;
@@ -2479,27 +2930,9 @@ function renderClicksChart() {
         ([a], [b]) =>
           a.localeCompare(b)
       )
-      .slice(-30);
-
-
-  const labels =
-    entries.map(
-      ([date]) => {
-
-        const parts =
-          date.split("-");
-
-        return `${parts[2]}/${parts[1]}`;
-
-      }
-    );
-
-
-  const values =
-    entries.map(
-      ([, value]) =>
-        value
-    );
+      .slice(
+        -30
+      );
 
 
   const empty =
@@ -2540,23 +2973,41 @@ function renderClicksChart() {
       canvas,
       {
 
-        type: "line",
+        type:
+          "line",
 
         data: {
 
-          labels,
+          labels:
+            entries.map(
+              ([date]) => {
+
+                const parts =
+                  date.split("-");
+
+                return `${parts[2]}/${parts[1]}`;
+
+              }
+            ),
 
           datasets: [
 
             {
 
-              label: "Clics",
+              label:
+                "Clics",
 
-              data: values,
+              data:
+                entries.map(
+                  ([, value]) =>
+                    value
+                ),
 
-              tension: 0.35,
+              tension:
+                0.35,
 
-              fill: true
+              fill:
+                true
 
             }
 
@@ -2566,15 +3017,18 @@ function renderClicksChart() {
 
         options: {
 
-          responsive: true,
+          responsive:
+            true,
 
-          maintainAspectRatio: false,
+          maintainAspectRatio:
+            false,
 
           plugins: {
 
             legend: {
 
-              display: false
+              display:
+                false
 
             }
 
@@ -2584,11 +3038,13 @@ function renderClicksChart() {
 
             y: {
 
-              beginAtZero: true,
+              beginAtZero:
+                true,
 
               ticks: {
 
-                precision: 0
+                precision:
+                  0
 
               }
 
@@ -2619,6 +3075,7 @@ function renderStateChart() {
   const canvas =
     $("usersByStateChart");
 
+
   if (!canvas) {
 
     return;
@@ -2634,7 +3091,10 @@ function renderStateChart() {
         ([, a], [, b]) =>
           b - a
       )
-      .slice(0, 10);
+      .slice(
+        0,
+        10
+      );
 
 
   const empty =
@@ -2675,7 +3135,8 @@ function renderStateChart() {
       canvas,
       {
 
-        type: "doughnut",
+        type:
+          "doughnut",
 
         data: {
 
@@ -2703,9 +3164,11 @@ function renderStateChart() {
 
         options: {
 
-          responsive: true,
+          responsive:
+            true,
 
-          maintainAspectRatio: false,
+          maintainAspectRatio:
+            false,
 
           plugins: {
 
@@ -2735,6 +3198,7 @@ function renderClicks() {
   const body =
     $("clicksTableBody");
 
+
   if (!body) {
 
     return;
@@ -2759,18 +3223,16 @@ function renderClicks() {
         }
 
 
-        const text =
-          normalize(
-            `${copy.codigo || ""}
-             ${copy.cupon || ""}
-             ${copy.couponCode || ""}
-             ${copy.usuario || ""}
-             ${copy.nombre || ""}
-             ${copy.email || ""}`
-          );
-
-
-        return text.includes(
+        return normalize(
+          `
+          ${copy.codigo || ""}
+          ${copy.cupon || ""}
+          ${copy.couponCode || ""}
+          ${copy.usuario || ""}
+          ${copy.nombre || ""}
+          ${copy.email || ""}
+          `
+        ).includes(
           search
         );
 
@@ -2789,6 +3251,7 @@ function renderClicks() {
             a.timestamp
           );
 
+
         const dbb =
           toDate(
             b.fecha ||
@@ -2796,9 +3259,16 @@ function renderClicks() {
             b.timestamp
           );
 
+
         return (
-          (dbb?.getTime() || 0) -
-          (da?.getTime() || 0)
+          (
+            dbb?.getTime() ||
+            0
+          ) -
+          (
+            da?.getTime() ||
+            0
+          )
         );
 
       }
@@ -2908,74 +3378,84 @@ function renderClicks() {
 
 
   body.innerHTML =
-    data.map(
-      copy => {
+    data
+      .map(
+        copy => {
 
-        const code =
-          copy.codigo ||
-          copy.cupon ||
-          copy.couponCode ||
-          copy.code ||
-          "—";
-
-        const user =
-          copy.usuario ||
-          copy.nombre ||
-          copy.email ||
-          "Usuario";
+          const code =
+            String(
+              copy.codigo ||
+              copy.cupon ||
+              copy.couponCode ||
+              copy.code ||
+              "—"
+            ).toUpperCase();
 
 
-        return `
+          const user =
+            copy.usuario ||
+            copy.nombre ||
+            copy.email ||
+            "Usuario";
 
-          <tr>
 
-            <td>
-              <strong>
-                ${escapeHtml(code)}
-              </strong>
-            </td>
+          return `
 
-            <td>
-              ${escapeHtml(user)}
-            </td>
+            <tr>
 
-            <td>
-              ${formatDate(
-                copy.fecha ||
-                copy.createdAt ||
-                copy.timestamp
-              )}
-            </td>
+              <td>
 
-            <td>
-              ${formatTime(
-                copy.fecha ||
-                copy.createdAt ||
-                copy.timestamp
-              )}
-            </td>
+                <strong>
+                  ${escapeHtml(
+                    code
+                  )}
+                </strong>
 
-            <td>
+              </td>
 
-              <span class="status-badge active">
-                ✅ Registrado
-              </span>
+              <td>
+                ${escapeHtml(
+                  user
+                )}
+              </td>
 
-            </td>
+              <td>
+                ${formatDate(
+                  copy.fecha ||
+                  copy.createdAt ||
+                  copy.timestamp
+                )}
+              </td>
 
-          </tr>
+              <td>
+                ${formatTime(
+                  copy.fecha ||
+                  copy.createdAt ||
+                  copy.timestamp
+                )}
+              </td>
 
-        `;
+              <td>
 
-      }
-    )
-    .join("");
+                <span class="status-badge active">
+                  ✅ Registrado
+                </span>
+
+              </td>
+
+            </tr>
+
+          `;
+
+        }
+      )
+      .join("");
 
 }
 
 
 /* =========================================================
-   RANKING USUARIOS
+   RANKING
 ========================================================= */
 
 function renderRanking() {
@@ -2988,20 +3468,19 @@ function renderRanking() {
 
 
   const ranked =
-    [...usuarios]
-      .sort(
-        (a, b) =>
-          Number(
-            b.ahorroTotal ||
-            b.ahorro ||
-            0
-          ) -
-          Number(
-            a.ahorroTotal ||
-            a.ahorro ||
-            0
-          )
-      );
+    [...usuarios].sort(
+      (a, b) =>
+        numberValue(
+          b.ahorroTotal ||
+          b.ahorro ||
+          0
+        ) -
+        numberValue(
+          a.ahorroTotal ||
+          a.ahorro ||
+          0
+        )
+    );
 
 
   if (grid) {
@@ -3026,15 +3505,22 @@ function renderRanking() {
 
       grid.innerHTML =
         ranked
-          .slice(0, 3)
+          .slice(
+            0,
+            3
+          )
           .map(
-            (user, index) => {
+            (
+              user,
+              index
+            ) => {
 
               return `
 
                 <div class="ranking-card">
 
                   <div class="ranking-position">
+
                     ${
                       index === 0
                         ? "🥇"
@@ -3042,6 +3528,7 @@ function renderRanking() {
                           ? "🥈"
                           : "🥉"
                     }
+
                   </div>
 
                   <strong>
@@ -3102,68 +3589,74 @@ function renderRanking() {
 
 
   body.innerHTML =
-    ranked.map(
-      (user, index) => {
+    ranked
+      .map(
+        (
+          user,
+          index
+        ) => {
 
-        return `
+          return `
 
-          <tr>
+            <tr>
 
-            <td>
-              <strong>
-                #${index + 1}
-              </strong>
-            </td>
+              <td>
+                <strong>
+                  #${index + 1}
+                </strong>
+              </td>
 
-            <td>
-              ${escapeHtml(
-                user.nombre ||
-                "Sin nombre"
-              )}
-            </td>
+              <td>
+                ${escapeHtml(
+                  user.nombre ||
+                  "Sin nombre"
+                )}
+              </td>
 
-            <td>
-              <strong>
-                ${money(
-                  user.ahorroTotal ||
-                  user.ahorro ||
+              <td>
+
+                <strong>
+                  ${money(
+                    user.ahorroTotal ||
+                    user.ahorro ||
+                    0
+                  )}
+                </strong>
+
+              </td>
+
+              <td>
+                ${numberValue(
+                  user.compras ||
                   0
                 )}
-              </strong>
-            </td>
+              </td>
 
-            <td>
-              ${Number(
-                user.compras ||
-                0
-              )}
-            </td>
-
-            <td>
-              ${Number(
-                user.cuponesUsados ||
-                0
-              )}
-            </td>
-
-            <td>
-
-              <span class="status-badge active">
-                ${escapeHtml(
-                  user.estadoVerificacion ||
-                  "Activo"
+              <td>
+                ${numberValue(
+                  user.cuponesUsados ||
+                  0
                 )}
-              </span>
+              </td>
 
-            </td>
+              <td>
 
-          </tr>
+                <span class="status-badge active">
+                  ${escapeHtml(
+                    user.estadoVerificacion ||
+                    "Activo"
+                  )}
+                </span>
 
-        `;
+              </td>
 
-      }
-    )
-    .join("");
+            </tr>
+
+          `;
+
+        }
+      )
+      .join("");
 
 }
 
@@ -3198,43 +3691,83 @@ function renderEverything() {
 const sectionNames = {
 
   dashboard: {
-    breadcrumb: "Dashboard",
-    title: "Panel de control"
+
+    breadcrumb:
+      "Dashboard",
+
+    title:
+      "Panel de control"
+
   },
 
   ofertas: {
-    breadcrumb: "Contenido",
-    title: "🔥 Ofertas"
+
+    breadcrumb:
+      "Contenido",
+
+    title:
+      "🔥 Ofertas"
+
   },
 
   cupones: {
-    breadcrumb: "Cupones",
-    title: "🎟️ Administración de cupones"
+
+    breadcrumb:
+      "Cupones",
+
+    title:
+      "🎟️ Administración de cupones"
+
   },
 
   usuarios: {
-    breadcrumb: "Comunidad",
-    title: "👥 Usuarios"
+
+    breadcrumb:
+      "Comunidad",
+
+    title:
+      "👥 Usuarios"
+
   },
 
   estadisticas: {
-    breadcrumb: "Analítica",
-    title: "📈 Estadísticas"
+
+    breadcrumb:
+      "Analítica",
+
+    title:
+      "📈 Estadísticas"
+
   },
 
   clics: {
-    breadcrumb: "Actividad",
-    title: "👆 Clics y copias"
+
+    breadcrumb:
+      "Actividad",
+
+    title:
+      "👆 Clics y copias"
+
   },
 
   ranking: {
-    breadcrumb: "Comunidad",
-    title: "🏆 Comprador del mes"
+
+    breadcrumb:
+      "Comunidad",
+
+    title:
+      "🏆 Comprador del mes"
+
   },
 
   configuracion: {
-    breadcrumb: "Sistema",
-    title: "⚙️ Configuración"
+
+    breadcrumb:
+      "Sistema",
+
+    title:
+      "⚙️ Configuración"
+
   }
 
 };
@@ -3279,7 +3812,9 @@ function showSection(
 
 
   const info =
-    sectionNames[section] ||
+    sectionNames[
+      section
+    ] ||
     sectionNames.dashboard;
 
 
@@ -3294,21 +3829,30 @@ function showSection(
   );
 
 
-  if (section === "clics") {
+  if (
+    section ===
+    "clics"
+  ) {
 
     renderClicks();
 
   }
 
 
-  if (section === "ranking") {
+  if (
+    section ===
+    "ranking"
+  ) {
 
     renderRanking();
 
   }
 
 
-  if (section === "estadisticas") {
+  if (
+    section ===
+    "estadisticas"
+  ) {
 
     setTimeout(
       renderCharts,
@@ -3318,82 +3862,9 @@ function showSection(
   }
 
 
-  /*
-     Cerrar menú móvil
-  */
-
-  const sidebar =
-    $("sidebar");
-
-  const overlay =
-    $("sidebarOverlay");
-
-  if (sidebar) {
-
-    sidebar.classList.remove(
-      "open"
-    );
-
-  }
-
-  if (overlay) {
-
-    overlay.classList.remove(
-      "show"
-    );
-
-  }
+  closeMobileMenu();
 
 }
-
-
-/* =========================================================
-   EVENTOS NAVEGACIÓN
-========================================================= */
-
-document.addEventListener(
-  "click",
-  event => {
-
-    const nav =
-      event.target.closest(
-        ".nav-item"
-      );
-
-
-    if (nav) {
-
-      event.preventDefault();
-
-      showSection(
-        nav.dataset.section
-      );
-
-      return;
-
-    }
-
-
-    const quick =
-      event.target.closest(
-        ".quick-action"
-      );
-
-
-    if (quick) {
-
-      event.preventDefault();
-
-      showSection(
-        quick.dataset.sectionTarget
-      );
-
-      return;
-
-    }
-
-  }
-);
 
 
 /* =========================================================
@@ -3409,21 +3880,13 @@ function openMobileMenu() {
     $("sidebarOverlay");
 
 
-  if (sidebar) {
+  sidebar?.classList.add(
+    "open"
+  );
 
-    sidebar.classList.add(
-      "open"
-    );
-
-  }
-
-  if (overlay) {
-
-    overlay.classList.add(
-      "show"
-    );
-
-  }
+  overlay?.classList.add(
+    "show"
+  );
 
 }
 
@@ -3437,44 +3900,15 @@ function closeMobileMenu() {
     $("sidebarOverlay");
 
 
-  if (sidebar) {
+  sidebar?.classList.remove(
+    "open"
+  );
 
-    sidebar.classList.remove(
-      "open"
-    );
-
-  }
-
-  if (overlay) {
-
-    overlay.classList.remove(
-      "show"
-    );
-
-  }
+  overlay?.classList.remove(
+    "show"
+  );
 
 }
-
-
-$("mobileMenuButton")
-  ?.addEventListener(
-    "click",
-    openMobileMenu
-  );
-
-
-$("sidebarClose")
-  ?.addEventListener(
-    "click",
-    closeMobileMenu
-  );
-
-
-$("sidebarOverlay")
-  ?.addEventListener(
-    "click",
-    closeMobileMenu
-  );
 
 
 /* =========================================================
@@ -3488,11 +3922,17 @@ function openModal(
   const modal =
     $(id);
 
+
   if (!modal) {
+
+    console.warn(
+      `Modal no encontrado: ${id}`
+    );
 
     return;
 
   }
+
 
   modal.classList.add(
     "show"
@@ -3508,11 +3948,13 @@ function closeModal(
   const modal =
     $(id);
 
+
   if (!modal) {
 
     return;
 
   }
+
 
   modal.classList.remove(
     "show"
@@ -3521,52 +3963,19 @@ function closeModal(
 }
 
 
-document.addEventListener(
-  "click",
-  event => {
-
-    const close =
-      event.target.closest(
-        "[data-close-modal]"
-      );
-
-
-    if (close) {
-
-      closeModal(
-        close.dataset.closeModal
-      );
-
-    }
-
-
-    if (
-      event.target.classList.contains(
-        "admin-modal"
-      )
-    ) {
-
-      event.target.classList.remove(
-        "show"
-      );
-
-    }
-
-  }
-);
-
-
 /* =========================================================
-   LIMPIAR FORMULARIO CUPÓN
+   FORMULARIO CUPÓN
 ========================================================= */
 
 function clearCouponForm() {
 
-  currentCouponId = null;
+  currentCouponId =
+    null;
 
 
   const form =
     $("couponForm");
+
 
   if (form) {
 
@@ -3580,9 +3989,16 @@ function clearCouponForm() {
     "activo"
   );
 
+
   setValue(
     "couponType",
     "flash"
+  );
+
+
+  setValue(
+    "couponCode",
+    ""
   );
 
 
@@ -3600,35 +4016,19 @@ function clearCouponForm() {
 }
 
 
-function setValue(
-  id,
-  value
-) {
-
-  const element =
-    $(id);
-
-  if (element) {
-
-    element.value =
-      value ?? "";
-
-  }
-
-}
-
-
 /* =========================================================
-   LIMPIAR OFERTA
+   FORMULARIO OFERTA
 ========================================================= */
 
 function clearOfferForm() {
 
-  currentOfferId = null;
+  currentOfferId =
+    null;
 
 
   const form =
     $("offerForm");
+
 
   if (form) {
 
@@ -3637,9 +4037,79 @@ function clearOfferForm() {
   }
 
 
+  setValue(
+    "offerImage",
+    ""
+  );
+
+
   setText(
     "offerFormMessage",
     ""
+  );
+
+
+  clearImagePreview();
+
+}
+
+
+/* =========================================================
+   CUPÓN - MAYÚSCULAS EN TIEMPO REAL
+========================================================= */
+
+function setupCouponUppercase() {
+
+  const input =
+    $("couponCode");
+
+
+  if (!input) {
+
+    return;
+
+  }
+
+
+  input.addEventListener(
+    "input",
+    () => {
+
+      const start =
+        input.selectionStart;
+
+      const end =
+        input.selectionEnd;
+
+
+      input.value =
+        input.value
+          .toUpperCase();
+
+
+      try {
+
+        input.setSelectionRange(
+          start,
+          end
+        );
+
+      } catch {}
+
+    }
+  );
+
+
+  input.addEventListener(
+    "blur",
+    () => {
+
+      input.value =
+        input.value
+          .trim()
+          .toUpperCase();
+
+    }
   );
 
 }
@@ -3649,10 +4119,24 @@ function clearOfferForm() {
    NUEVO CUPÓN
 ========================================================= */
 
-$("newCouponButton")
-  ?.addEventListener(
+function setupNewCouponButton() {
+
+  const button =
+    $("newCouponButton");
+
+
+  if (!button) {
+
+    return;
+
+  }
+
+
+  button.addEventListener(
     "click",
-    () => {
+    event => {
+
+      event.preventDefault();
 
       clearCouponForm();
 
@@ -3663,15 +4147,31 @@ $("newCouponButton")
     }
   );
 
+}
+
 
 /* =========================================================
    NUEVA OFERTA
 ========================================================= */
 
-$("newOfferButton")
-  ?.addEventListener(
+function setupNewOfferButton() {
+
+  const button =
+    $("newOfferButton");
+
+
+  if (!button) {
+
+    return;
+
+  }
+
+
+  button.addEventListener(
     "click",
-    () => {
+    event => {
+
+      event.preventDefault();
 
       clearOfferForm();
 
@@ -3682,12 +4182,14 @@ $("newOfferButton")
     }
   );
 
+}
+
 
 /* =========================================================
    EDITAR CUPÓN
 ========================================================= */
 
-async function editCoupon(
+function editCoupon(
   id
 ) {
 
@@ -3719,10 +4221,14 @@ async function editCoupon(
     id
   );
 
+
   setValue(
     "couponCode",
-    getCouponCode(coupon)
+    getCouponCode(
+      coupon
+    )
   );
+
 
   setValue(
     "couponTitle",
@@ -3730,6 +4236,7 @@ async function editCoupon(
     coupon.nombre ||
     ""
   );
+
 
   setValue(
     "couponDiscount",
@@ -3750,17 +4257,20 @@ async function editCoupon(
     type.includes("bancar")
   ) {
 
-    type = "bank";
+    type =
+      "bank";
 
   } else if (
     type.includes("exclus")
   ) {
 
-    type = "exclusive";
+    type =
+      "exclusive";
 
   } else {
 
-    type = "flash";
+    type =
+      "flash";
 
   }
 
@@ -3778,6 +4288,7 @@ async function editCoupon(
     coupon.minimum ??
     ""
   );
+
 
   setValue(
     "couponMaximum",
@@ -3838,14 +4349,7 @@ async function saveCoupon(
   event
 ) {
 
-  if (
-    event &&
-    event.preventDefault
-  ) {
-
-    event.preventDefault();
-
-  }
+  event?.preventDefault();
 
 
   if (!db) {
@@ -3861,17 +4365,35 @@ async function saveCoupon(
 
 
   const code =
-    $("couponCode")?.value
+    String(
+      $("couponCode")?.value ||
+      ""
+    )
       .trim()
       .toUpperCase();
 
 
   const title =
-    $("couponTitle")?.value
+    String(
+      $("couponTitle")?.value ||
+      ""
+    )
       .trim();
 
 
-  if (!code || !title) {
+  /* Siempre dejamos el input
+     visualmente en mayúsculas */
+
+  setValue(
+    "couponCode",
+    code
+  );
+
+
+  if (
+    !code ||
+    !title
+  ) {
 
     showToast(
       "❌ Completa código y título",
@@ -3890,26 +4412,29 @@ async function saveCoupon(
 
   const data = {
 
-    codigo: code,
+    codigo:
+      code,
 
-    titulo: title,
+    titulo:
+      title,
 
     descuento:
-      $("couponDiscount")?.value
-        .trim() || "",
+      String(
+        $("couponDiscount")?.value ||
+        ""
+      ).trim(),
 
-    tipo: type,
+    tipo:
+      type,
 
     compraMinima:
-      Number(
-        $("couponMinimum")?.value ||
-        0
+      numberValue(
+        $("couponMinimum")?.value
       ),
 
     tope:
-      Number(
-        $("couponMaximum")?.value ||
-        0
+      numberValue(
+        $("couponMaximum")?.value
       ),
 
     estado:
@@ -3917,16 +4442,23 @@ async function saveCoupon(
       "activo",
 
     categoria:
-      $("couponCategory")?.value
-        .trim() || "General",
+      String(
+        $("couponCategory")?.value ||
+        ""
+      ).trim() ||
+      "General",
 
     link:
-      $("couponLink")?.value
-        .trim() || "",
+      String(
+        $("couponLink")?.value ||
+        ""
+      ).trim(),
 
     banco:
-      $("couponBank")?.value
-        .trim() || "",
+      String(
+        $("couponBank")?.value ||
+        ""
+      ).trim(),
 
     actualizado:
       serverTimestamp()
@@ -3936,7 +4468,9 @@ async function saveCoupon(
 
   try {
 
-    if (currentCouponId) {
+    if (
+      currentCouponId
+    ) {
 
       await updateDoc(
         doc(
@@ -3968,7 +4502,7 @@ async function saveCoupon(
 
 
       showToast(
-        "✅ Cupón creado"
+        "✅ Cupón guardado"
       );
 
     }
@@ -3978,7 +4512,10 @@ async function saveCoupon(
       "couponModal"
     );
 
-    currentCouponId = null;
+
+    currentCouponId =
+      null;
+
 
     await loadAllData(
       true
@@ -3987,16 +4524,33 @@ async function saveCoupon(
   } catch (error) {
 
     console.error(
-      "Guardar cupón:",
+      "❌ Guardar cupón:",
       error
     );
 
-    showToast(
-      `❌ No se pudo guardar: ${
-        firebaseErrorMessage(error)
-      }`,
-      "error"
-    );
+
+    if (
+      error?.code ===
+      "permission-denied"
+    ) {
+
+      showToast(
+        "❌ Firestore rechazó guardar el cupón por PERMISOS",
+        "error"
+      );
+
+    } else {
+
+      showToast(
+        `❌ No se pudo guardar: ${
+          firebaseErrorMessage(
+            error
+          )
+        }`,
+        "error"
+      );
+
+    }
 
   }
 
@@ -4039,11 +4593,13 @@ function editOffer(
     id
   );
 
+
   setValue(
     "offerTitle",
     offer.titulo ||
     ""
   );
+
 
   setValue(
     "offerOldPrice",
@@ -4052,6 +4608,7 @@ function editOffer(
     ""
   );
 
+
   setValue(
     "offerCurrentPrice",
     offer.precioActual ||
@@ -4059,11 +4616,13 @@ function editOffer(
     ""
   );
 
+
   setValue(
     "offerCategory",
     offer.categoria ||
     ""
   );
+
 
   setValue(
     "offerLink",
@@ -4072,8 +4631,18 @@ function editOffer(
     ""
   );
 
+
   setValue(
     "offerImage",
+    offer.imagenBase64 ||
+    offer.imagen ||
+    ""
+  );
+
+
+  updateOfferDiscountPreview();
+
+  updateImagePreview(
     offer.imagenBase64 ||
     offer.imagen ||
     ""
@@ -4095,14 +4664,7 @@ async function saveOffer(
   event
 ) {
 
-  if (
-    event &&
-    event.preventDefault
-  ) {
-
-    event.preventDefault();
-
-  }
+  event?.preventDefault();
 
 
   if (!db) {
@@ -4118,37 +4680,44 @@ async function saveOffer(
 
 
   const title =
-    $("offerTitle")?.value
-      .trim();
+    String(
+      $("offerTitle")?.value ||
+      ""
+    ).trim();
 
 
   const currentPrice =
-    Number(
-      $("offerCurrentPrice")
-        ?.value || 0
+    numberValue(
+      $("offerCurrentPrice")?.value
     );
 
 
   const oldPrice =
-    Number(
-      $("offerOldPrice")
-        ?.value || 0
+    numberValue(
+      $("offerOldPrice")?.value
     );
 
 
   const category =
-    $("offerCategory")?.value
-      .trim() || "General";
+    String(
+      $("offerCategory")?.value ||
+      ""
+    ).trim() ||
+    "General";
 
 
   const link =
-    $("offerLink")?.value
-      .trim();
+    String(
+      $("offerLink")?.value ||
+      ""
+    ).trim();
 
 
   const image =
-    $("offerImage")?.value
-      .trim();
+    String(
+      $("offerImage")?.value ||
+      ""
+    ).trim();
 
 
   if (!title) {
@@ -4163,7 +4732,9 @@ async function saveOffer(
   }
 
 
-  if (!currentPrice) {
+  if (
+    currentPrice <= 0
+  ) {
 
     showToast(
       "❌ Escribe el precio actual",
@@ -4187,15 +4758,29 @@ async function saveOffer(
   }
 
 
+  const discount =
+    calculateDiscount(
+      oldPrice,
+      currentPrice
+    );
+
+
   const data = {
 
-    titulo: title,
+    titulo:
+      title,
 
     precioAntes:
       oldPrice,
 
     precioActual:
       currentPrice,
+
+    descuento:
+      discount,
+
+    descuentoPorcentaje:
+      discount,
 
     categoria:
       category,
@@ -4217,7 +4802,9 @@ async function saveOffer(
 
   try {
 
-    if (currentOfferId) {
+    if (
+      currentOfferId
+    ) {
 
       await updateDoc(
         doc(
@@ -4238,8 +4825,8 @@ async function saveOffer(
       data.creado =
         serverTimestamp();
 
-
-      data.clics = 0;
+      data.clics =
+        0;
 
 
       await addDoc(
@@ -4262,7 +4849,10 @@ async function saveOffer(
       "offerModal"
     );
 
-    currentOfferId = null;
+
+    currentOfferId =
+      null;
+
 
     await loadAllData(
       true
@@ -4271,18 +4861,665 @@ async function saveOffer(
   } catch (error) {
 
     console.error(
-      "Guardar oferta:",
+      "❌ Guardar oferta:",
       error
     );
 
+
     showToast(
       `❌ No se pudo guardar: ${
-        firebaseErrorMessage(error)
+        firebaseErrorMessage(
+          error
+        )
       }`,
       "error"
     );
 
   }
+
+}
+
+
+/* =========================================================
+   PREVIEW % DESCUENTO
+========================================================= */
+
+function updateOfferDiscountPreview() {
+
+  const oldPrice =
+    numberValue(
+      $("offerOldPrice")?.value
+    );
+
+
+  const currentPrice =
+    numberValue(
+      $("offerCurrentPrice")?.value
+    );
+
+
+  const discount =
+    calculateDiscount(
+      oldPrice,
+      currentPrice
+    );
+
+
+  const elements = [
+
+    "offerDiscount",
+
+    "offerDiscountPreview",
+
+    "discountPreview"
+
+  ];
+
+
+  elements.forEach(
+    id => {
+
+      const element =
+        $(id);
+
+
+      if (!element) {
+
+        return;
+
+      }
+
+
+      element.textContent =
+        discount > 0
+          ? `-${discount}%`
+          : "0%";
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   PREVIEW IMAGEN
+========================================================= */
+
+function updateImagePreview(
+  src
+) {
+
+  if (!src) {
+
+    clearImagePreview();
+
+    return;
+
+  }
+
+
+  const possibleIds = [
+
+    "offerImagePreview",
+
+    "imagePreview",
+
+    "offerPreviewImage",
+
+    "previewOfferImage"
+
+  ];
+
+
+  let found = false;
+
+
+  possibleIds.forEach(
+    id => {
+
+      const element =
+        $(id);
+
+
+      if (!element) {
+
+        return;
+
+      }
+
+
+      found = true;
+
+
+      if (
+        element.tagName ===
+        "IMG"
+      ) {
+
+        element.src =
+          src;
+
+        element.style.display =
+          "block";
+
+      } else {
+
+        element.innerHTML = `
+
+          <img
+            src="${escapeHtml(
+              src
+            )}"
+            alt="Vista previa"
+            style="
+              max-width:100%;
+              max-height:220px;
+              object-fit:contain;
+              border-radius:14px;
+            "
+          >
+
+        `;
+
+      }
+
+    }
+  );
+
+
+  return found;
+
+}
+
+
+function clearImagePreview() {
+
+  const possibleIds = [
+
+    "offerImagePreview",
+
+    "imagePreview",
+
+    "offerPreviewImage",
+
+    "previewOfferImage"
+
+  ];
+
+
+  possibleIds.forEach(
+    id => {
+
+      const element =
+        $(id);
+
+
+      if (!element) {
+
+        return;
+
+      }
+
+
+      if (
+        element.tagName ===
+        "IMG"
+      ) {
+
+        element.removeAttribute(
+          "src"
+        );
+
+        element.style.display =
+          "none";
+
+      } else {
+
+        element.innerHTML =
+          "";
+
+      }
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   IMAGEN DESDE GALERÍA
+========================================================= */
+
+function createGalleryInput() {
+
+  let input =
+    $("offerImageFile");
+
+
+  if (input) {
+
+    return input;
+
+  }
+
+
+  input =
+    document.createElement(
+      "input"
+    );
+
+
+  input.type =
+    "file";
+
+  input.id =
+    "offerImageFile";
+
+  input.accept =
+    "image/*";
+
+  input.style.display =
+    "none";
+
+
+  document.body.appendChild(
+    input
+  );
+
+
+  return input;
+
+}
+
+
+/* =========================================================
+   COMPRIMIR IMAGEN
+========================================================= */
+
+function compressImage(
+  file,
+  maxWidth = 1200,
+  maxHeight = 1200,
+  quality = 0.78
+) {
+
+  return new Promise(
+    (
+      resolve,
+      reject
+    ) => {
+
+      const reader =
+        new FileReader();
+
+
+      reader.onerror =
+        () => {
+
+          reject(
+            new Error(
+              "No se pudo leer la imagen."
+            )
+          );
+
+        };
+
+
+      reader.onload =
+        () => {
+
+          const image =
+            new Image();
+
+
+          image.onerror =
+            () => {
+
+              reject(
+                new Error(
+                  "La imagen no es válida."
+                )
+              );
+
+            };
+
+
+          image.onload =
+            () => {
+
+              let width =
+                image.width;
+
+              let height =
+                image.height;
+
+
+              const ratio =
+                Math.min(
+                  maxWidth /
+                    width,
+                  maxHeight /
+                    height,
+                  1
+                );
+
+
+              width =
+                Math.round(
+                  width * ratio
+                );
+
+
+              height =
+                Math.round(
+                  height * ratio
+                );
+
+
+              const canvas =
+                document.createElement(
+                  "canvas"
+                );
+
+
+              canvas.width =
+                width;
+
+              canvas.height =
+                height;
+
+
+              const context =
+                canvas.getContext(
+                  "2d"
+                );
+
+
+              context.drawImage(
+                image,
+                0,
+                0,
+                width,
+                height
+              );
+
+
+              const result =
+                canvas.toDataURL(
+                  "image/jpeg",
+                  quality
+                );
+
+
+              resolve(
+                result
+              );
+
+            };
+
+
+          image.src =
+            reader.result;
+
+        };
+
+
+      reader.readAsDataURL(
+        file
+      );
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   PROCESAR GALERÍA
+========================================================= */
+
+async function handleGalleryImage(
+  input
+) {
+
+  const file =
+    input?.files?.[0];
+
+
+  if (!file) {
+
+    return;
+
+  }
+
+
+  if (
+    !file.type.startsWith(
+      "image/"
+    )
+  ) {
+
+    showToast(
+      "❌ Selecciona una imagen",
+      "error"
+    );
+
+    input.value =
+      "";
+
+    return;
+
+  }
+
+
+  /*
+     Permitimos imágenes grandes
+     porque las comprimimos antes
+     de guardarlas.
+  */
+
+  if (
+    file.size >
+    15 * 1024 * 1024
+  ) {
+
+    showToast(
+      "❌ La imagen supera 15 MB",
+      "error"
+    );
+
+    input.value =
+      "";
+
+    return;
+
+  }
+
+
+  try {
+
+    showToast(
+      "🖼️ Preparando imagen..."
+    );
+
+
+    const base64 =
+      await compressImage(
+        file
+      );
+
+
+    setValue(
+      "offerImage",
+      base64
+    );
+
+
+    updateImagePreview(
+      base64
+    );
+
+
+    showToast(
+      "✅ Imagen lista"
+    );
+
+  } catch (error) {
+
+    console.error(
+      error
+    );
+
+
+    showToast(
+      "❌ No se pudo procesar la imagen",
+      "error"
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   CONFIGURAR GALERÍA
+========================================================= */
+
+function setupImageInput() {
+
+  let input =
+    $("offerImageFile");
+
+
+  /*
+     Si el HTML ya tiene
+     offerImageFile lo utilizamos.
+
+     Si no existe, creamos uno
+     automáticamente.
+  */
+
+  if (!input) {
+
+    input =
+      createGalleryInput();
+
+  }
+
+
+  if (!input) {
+
+    return;
+
+  }
+
+
+  /*
+     Evitar registrar el evento
+     dos veces.
+  */
+
+  if (
+    input.dataset.adminReady ===
+    "1"
+  ) {
+
+    return;
+
+  }
+
+
+  input.dataset.adminReady =
+    "1";
+
+
+  input.addEventListener(
+    "change",
+    () => {
+
+      handleGalleryImage(
+        input
+      );
+
+    }
+  );
+
+
+  /*
+     También soportamos
+     imagenOfertaFile.
+  */
+
+  const secondInput =
+    $("imagenOfertaFile");
+
+
+  if (
+    secondInput &&
+    secondInput !== input
+  ) {
+
+    secondInput.addEventListener(
+      "change",
+      () => {
+
+        handleGalleryImage(
+          secondInput
+        );
+
+      }
+    );
+
+  }
+
+
+  /*
+     Si existe un botón de
+     seleccionar imagen, lo conectamos.
+  */
+
+  const galleryButtons = [
+
+    "selectOfferImage",
+
+    "selectImageButton",
+
+    "offerGalleryButton",
+
+    "chooseOfferImage",
+
+    "galleryImageButton"
+
+  ];
+
+
+  galleryButtons.forEach(
+    id => {
+
+      const button =
+        $(id);
+
+
+      if (!button) {
+
+        return;
+
+      }
+
+
+      button.addEventListener(
+        "click",
+        event => {
+
+          event.preventDefault();
+
+          input.click();
+
+        }
+      );
+
+    }
+  );
 
 }
 
@@ -4320,6 +5557,7 @@ function editUser(
 
   const container =
     $("userModalContent");
+
 
   if (!container) {
 
@@ -4386,7 +5624,7 @@ function editUser(
       <p>
         🛒 Compras:
         <strong>
-          ${Number(
+          ${numberValue(
             user.compras ||
             0
           )}
@@ -4396,7 +5634,7 @@ function editUser(
       <p>
         🎟️ Cupones usados:
         <strong>
-          ${Number(
+          ${numberValue(
             user.cuponesUsados ||
             0
           )}
@@ -4445,23 +5683,7 @@ async function saveUser(
   event
 ) {
 
-  if (
-    event &&
-    event.preventDefault
-  ) {
-
-    event.preventDefault();
-
-  }
-
-
-  /*
-     El HTML actual no tiene formulario
-     de edición de usuarios.
-
-     Se deja preparado para futuras
-     ampliaciones.
-  */
+  event?.preventDefault();
 
 }
 
@@ -4473,6 +5695,18 @@ async function saveUser(
 async function deleteOffer(
   id
 ) {
+
+  if (!db) {
+
+    showToast(
+      "❌ Firebase no está disponible",
+      "error"
+    );
+
+    return;
+
+  }
+
 
   const offer =
     ofertas.find(
@@ -4527,12 +5761,16 @@ async function deleteOffer(
   } catch (error) {
 
     console.error(
+      "Eliminar oferta:",
       error
     );
 
+
     showToast(
       `❌ No se pudo eliminar: ${
-        firebaseErrorMessage(error)
+        firebaseErrorMessage(
+          error
+        )
       }`,
       "error"
     );
@@ -4550,6 +5788,18 @@ async function deleteCoupon(
   id
 ) {
 
+  if (!db) {
+
+    showToast(
+      "❌ Firebase no está disponible",
+      "error"
+    );
+
+    return;
+
+  }
+
+
   const coupon =
     cupones.find(
       item =>
@@ -4559,13 +5809,20 @@ async function deleteCoupon(
 
   if (!coupon) {
 
+    showToast(
+      "❌ Cupón no encontrado",
+      "error"
+    );
+
     return;
 
   }
 
 
   const code =
-    getCouponCode(coupon);
+    getCouponCode(
+      coupon
+    );
 
 
   const confirmed =
@@ -4604,15 +5861,33 @@ async function deleteCoupon(
   } catch (error) {
 
     console.error(
+      "❌ Eliminar cupón:",
       error
     );
 
-    showToast(
-      `❌ No se pudo eliminar: ${
-        firebaseErrorMessage(error)
-      }`,
-      "error"
-    );
+
+    if (
+      error?.code ===
+      "permission-denied"
+    ) {
+
+      showToast(
+        "❌ Firestore rechazó eliminar el cupón por PERMISOS",
+        "error"
+      );
+
+    } else {
+
+      showToast(
+        `❌ No se pudo eliminar: ${
+          firebaseErrorMessage(
+            error
+          )
+        }`,
+        "error"
+      );
+
+    }
 
   }
 
@@ -4626,6 +5901,18 @@ async function deleteCoupon(
 async function deleteUser(
   id
 ) {
+
+  if (!db) {
+
+    showToast(
+      "❌ Firebase no está disponible",
+      "error"
+    );
+
+    return;
+
+  }
+
 
   const user =
     usuarios.find(
@@ -4681,12 +5968,16 @@ async function deleteUser(
   } catch (error) {
 
     console.error(
+      "Eliminar usuario:",
       error
     );
 
+
     showToast(
       `❌ No se pudo eliminar: ${
-        firebaseErrorMessage(error)
+        firebaseErrorMessage(
+          error
+        )
       }`,
       "error"
     );
@@ -4697,432 +5988,433 @@ async function deleteUser(
 
 
 /* =========================================================
-   MENSAJES FIREBASE
+   EVENTOS DE TABLAS
 ========================================================= */
 
-function firebaseErrorMessage(
-  error
-) {
-
-  if (!error) {
-
-    return "Error desconocido";
-
-  }
-
-
-  const code =
-    error.code || "";
-
-
-  if (
-    code.includes(
-      "permission-denied"
-    )
-  ) {
-
-    return "Permisos de Firestore";
-
-  }
-
-
-  if (
-    code.includes(
-      "failed-precondition"
-    )
-  ) {
-
-    return "Configuración de Firestore";
-
-  }
-
-
-  if (
-    code.includes(
-      "unavailable"
-    )
-  ) {
-
-    return "Firebase no disponible";
-
-  }
-
-
-  if (
-    code.includes(
-      "not-found"
-    )
-  ) {
-
-    return "Documento no encontrado";
-
-  }
-
-
-  return (
-    error.message ||
-    "Error desconocido"
-  );
-
-}
-
-
-/* =========================================================
-   EVENTOS TABLAS
-========================================================= */
-
-document.addEventListener(
-  "click",
-  event => {
-
-    const editOfferButton =
-      event.target.closest(
-        "[data-edit-offer]"
-      );
-
-
-    if (editOfferButton) {
-
-      editOffer(
-        editOfferButton.dataset.editOffer
-      );
-
-      return;
-
-    }
-
-
-    const deleteOfferButton =
-      event.target.closest(
-        "[data-delete-offer]"
-      );
-
-
-    if (deleteOfferButton) {
-
-      deleteOffer(
-        deleteOfferButton.dataset.deleteOffer
-      );
-
-      return;
-
-    }
-
-
-    const editCouponButton =
-      event.target.closest(
-        "[data-edit-coupon]"
-      );
-
-
-    if (editCouponButton) {
-
-      editCoupon(
-        editCouponButton.dataset.editCoupon
-      );
-
-      return;
-
-    }
-
-
-    const deleteCouponButton =
-      event.target.closest(
-        "[data-delete-coupon]"
-      );
-
-
-    if (deleteCouponButton) {
-
-      deleteCoupon(
-        deleteCouponButton.dataset.deleteCoupon
-      );
-
-      return;
-
-    }
-
-
-    const editUserButton =
-      event.target.closest(
-        "[data-edit-user]"
-      );
-
-
-    if (editUserButton) {
-
-      editUser(
-        editUserButton.dataset.editUser
-      );
-
-      return;
-
-    }
-
-
-    const deleteUserButton =
-      event.target.closest(
-        "[data-delete-user]"
-      );
-
-
-    if (deleteUserButton) {
-
-      deleteUser(
-        deleteUserButton.dataset.deleteUser
-      );
-
-      return;
-
-    }
-
-  }
-);
-
-
-/* =========================================================
-   FORMULARIOS
-========================================================= */
-
-$("couponForm")
-  ?.addEventListener(
-    "submit",
-    saveCoupon
-  );
-
-
-$("offerForm")
-  ?.addEventListener(
-    "submit",
-    saveOffer
-  );
-
-
-/* =========================================================
-   REFRESCAR
-========================================================= */
-
-$("refreshButton")
-  ?.addEventListener(
-    "click",
-    () => {
-
-      loadAllData();
-
-    }
-  );
-
-
-$("refreshUsersButton")
-  ?.addEventListener(
-    "click",
-    () => {
-
-      loadAllData();
-
-    }
-  );
-
-
-/* =========================================================
-   BUSCADOR OFERTAS
-========================================================= */
-
-$("offerSearch")
-  ?.addEventListener(
-    "input",
-    renderOffers
-  );
-
-
-/* =========================================================
-   BUSCADOR CUPONES
-========================================================= */
-
-$("couponSearch")
-  ?.addEventListener(
-    "input",
-    renderCoupons
-  );
-
-
-$("couponTypeFilter")
-  ?.addEventListener(
-    "change",
-    renderCoupons
-  );
-
-
-/* =========================================================
-   BUSCADOR USUARIOS
-========================================================= */
-
-$("userSearch")
-  ?.addEventListener(
-    "input",
-    renderUsers
-  );
-
-
-$("userStatusFilter")
-  ?.addEventListener(
-    "change",
-    renderUsers
-  );
-
-
-/* =========================================================
-   BUSCADOR CLICS
-========================================================= */
-
-$("clickSearch")
-  ?.addEventListener(
-    "input",
-    renderClicks
-  );
-
-
-/* =========================================================
-   PERIODOS ESTADÍSTICAS
-========================================================= */
-
-document
-  .querySelectorAll(
-    ".period-button"
-  )
-  .forEach(
-    button => {
-
-      button.addEventListener(
-        "click",
-        () => {
-
-          document
-            .querySelectorAll(
-              ".period-button"
-            )
-            .forEach(
-              item =>
-                item.classList.remove(
-                  "active"
-                )
-            );
-
-
-          button.classList.add(
-            "active"
-          );
-
-
-          renderClicksChart();
-
-        }
-      );
-
-    }
-  );
-
-
-/* =========================================================
-   IMAGEN BASE64
-========================================================= */
-
-function setupImageInput() {
-
-  const input =
-    $("offerImage");
-
+function setupTableEvents() {
 
   /*
-     Tu HTML actual usa un textarea
-     para pegar Base64.
+     Delegación de eventos.
 
-     Si posteriormente agregas
-     un input type=file,
-     también será compatible.
+     Esto es importante porque las filas
+     se generan dinámicamente después
+     de cargar Firestore.
   */
 
-  const fileInputs =
-    [
-      "offerImageFile",
-      "imagenOfertaFile"
-    ];
+  document.addEventListener(
+    "click",
+    event => {
+
+      const editOfferButton =
+        event.target.closest(
+          "[data-edit-offer]"
+        );
 
 
-  fileInputs.forEach(
-    id => {
+      if (editOfferButton) {
 
-      const input =
-        $(id);
-
-      if (!input) {
+        editOffer(
+          editOfferButton.dataset.editOffer
+        );
 
         return;
 
       }
 
 
-      input.addEventListener(
-        "change",
-        () => {
-
-          const file =
-            input.files?.[0];
+      const deleteOfferButton =
+        event.target.closest(
+          "[data-delete-offer]"
+        );
 
 
-          if (!file) {
+      if (deleteOfferButton) {
 
-            return;
+        deleteOffer(
+          deleteOfferButton.dataset.deleteOffer
+        );
 
-          }
+        return;
 
-
-          if (
-            file.size >
-            900 * 1024
-          ) {
-
-            showToast(
-              "❌ Imagen demasiado grande. Máximo 900 KB.",
-              "error"
-            );
-
-            input.value = "";
-
-            return;
-
-          }
+      }
 
 
-          const reader =
-            new FileReader();
+      const editCouponButton =
+        event.target.closest(
+          "[data-edit-coupon]"
+        );
 
 
-          reader.onload =
-            () => {
+      if (editCouponButton) {
 
-              setValue(
-                "offerImage",
-                reader.result
-              );
+        editCoupon(
+          editCouponButton.dataset.editCoupon
+        );
 
+        return;
 
-              showToast(
-                "🖼️ Imagen preparada"
-              );
-
-            };
+      }
 
 
-          reader.readAsDataURL(
-            file
-          );
+      const deleteCouponButton =
+        event.target.closest(
+          "[data-delete-coupon]"
+        );
 
-        }
-      );
+
+      if (deleteCouponButton) {
+
+        deleteCoupon(
+          deleteCouponButton.dataset.deleteCoupon
+        );
+
+        return;
+
+      }
+
+
+      const editUserButton =
+        event.target.closest(
+          "[data-edit-user]"
+        );
+
+
+      if (editUserButton) {
+
+        editUser(
+          editUserButton.dataset.editUser
+        );
+
+        return;
+
+      }
+
+
+      const deleteUserButton =
+        event.target.closest(
+          "[data-delete-user]"
+        );
+
+
+      if (deleteUserButton) {
+
+        deleteUser(
+          deleteUserButton.dataset.deleteUser
+        );
+
+        return;
+
+      }
 
     }
   );
+
+}
+
+
+/* =========================================================
+   NAVEGACIÓN
+========================================================= */
+
+function setupNavigationEvents() {
+
+  document.addEventListener(
+    "click",
+    event => {
+
+      const nav =
+        event.target.closest(
+          ".nav-item"
+        );
+
+
+      if (nav) {
+
+        event.preventDefault();
+
+        showSection(
+          nav.dataset.section
+        );
+
+        return;
+
+      }
+
+
+      const quick =
+        event.target.closest(
+          ".quick-action"
+        );
+
+
+      if (quick) {
+
+        event.preventDefault();
+
+        showSection(
+          quick.dataset.sectionTarget
+        );
+
+        return;
+
+      }
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   MODALES
+========================================================= */
+
+function setupModalEvents() {
+
+  document.addEventListener(
+    "click",
+    event => {
+
+      const close =
+        event.target.closest(
+          "[data-close-modal]"
+        );
+
+
+      if (close) {
+
+        closeModal(
+          close.dataset.closeModal
+        );
+
+      }
+
+
+      if (
+        event.target.classList.contains(
+          "admin-modal"
+        )
+      ) {
+
+        event.target.classList.remove(
+          "show"
+        );
+
+      }
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   MENÚ MÓVIL
+========================================================= */
+
+function setupMobileMenuEvents() {
+
+  $("mobileMenuButton")
+    ?.addEventListener(
+      "click",
+      openMobileMenu
+    );
+
+
+  $("sidebarClose")
+    ?.addEventListener(
+      "click",
+      closeMobileMenu
+    );
+
+
+  $("sidebarOverlay")
+    ?.addEventListener(
+      "click",
+      closeMobileMenu
+    );
+
+}
+
+
+/* =========================================================
+   FORMULARIOS
+========================================================= */
+
+function setupFormEvents() {
+
+  $("couponForm")
+    ?.addEventListener(
+      "submit",
+      saveCoupon
+    );
+
+
+  $("offerForm")
+    ?.addEventListener(
+      "submit",
+      saveOffer
+    );
+
+}
+
+
+/* =========================================================
+   BUSCADORES
+========================================================= */
+
+function setupSearchEvents() {
+
+  $("offerSearch")
+    ?.addEventListener(
+      "input",
+      renderOffers
+    );
+
+
+  $("couponSearch")
+    ?.addEventListener(
+      "input",
+      renderCoupons
+    );
+
+
+  $("couponTypeFilter")
+    ?.addEventListener(
+      "change",
+      renderCoupons
+    );
+
+
+  $("userSearch")
+    ?.addEventListener(
+      "input",
+      renderUsers
+    );
+
+
+  $("userStatusFilter")
+    ?.addEventListener(
+      "change",
+      renderUsers
+    );
+
+
+  $("clickSearch")
+    ?.addEventListener(
+      "input",
+      renderClicks
+    );
+
+}
+
+
+/* =========================================================
+   REFRESCAR
+========================================================= */
+
+function setupRefreshEvents() {
+
+  $("refreshButton")
+    ?.addEventListener(
+      "click",
+      () => {
+
+        loadAllData();
+
+      }
+    );
+
+
+  $("refreshUsersButton")
+    ?.addEventListener(
+      "click",
+      () => {
+
+        loadAllData();
+
+      }
+    );
+
+}
+
+
+/* =========================================================
+   PREVIEW PRECIO OFERTA
+========================================================= */
+
+function setupOfferPriceEvents() {
+
+  $("offerOldPrice")
+    ?.addEventListener(
+      "input",
+      updateOfferDiscountPreview
+    );
+
+
+  $("offerCurrentPrice")
+    ?.addEventListener(
+      "input",
+      updateOfferDiscountPreview
+    );
+
+
+  $("offerImage")
+    ?.addEventListener(
+      "input",
+      () => {
+
+        updateImagePreview(
+          $("offerImage")?.value
+        );
+
+      }
+    );
+
+}
+
+
+/* =========================================================
+   PERIODOS
+========================================================= */
+
+function setupPeriodEvents() {
+
+  document
+    .querySelectorAll(
+      ".period-button"
+    )
+    .forEach(
+      button => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            document
+              .querySelectorAll(
+                ".period-button"
+              )
+              .forEach(
+                item =>
+                  item.classList.remove(
+                    "active"
+                  )
+              );
+
+
+            button.classList.add(
+              "active"
+            );
+
+
+            renderClicksChart();
+
+          }
+        );
+
+      }
+    );
 
 }
 
@@ -5130,10 +6422,6 @@ function setupImageInput() {
 /* =========================================================
    AUTO REFRESH
 ========================================================= */
-
-let autoRefreshTimer =
-  null;
-
 
 function startAutoRefresh() {
 
@@ -5175,17 +6463,61 @@ function startAutoRefresh() {
 
 
 /* =========================================================
+   CONFIGURAR TODOS LOS EVENTOS
+========================================================= */
+
+function setupAllEvents() {
+
+  /*
+     AQUÍ ESTÁ UNA DE LAS CORRECCIONES
+     IMPORTANTES DE ESTA VERSIÓN.
+
+     Todos los eventos se registran
+     DESPUÉS de que el DOM existe.
+  */
+
+
+  setupNavigationEvents();
+
+  setupMobileMenuEvents();
+
+  setupModalEvents();
+
+  setupTableEvents();
+
+  setupFormEvents();
+
+  setupSearchEvents();
+
+  setupRefreshEvents();
+
+  setupPeriodEvents();
+
+  setupNewCouponButton();
+
+  setupNewOfferButton();
+
+  setupCouponUppercase();
+
+  setupImageInput();
+
+  setupOfferPriceEvents();
+
+}
+
+
+/* =========================================================
    INICIALIZACIÓN
 ========================================================= */
 
 async function initAdmin() {
 
   console.log(
-    "⚡ EL PATRÓN ADMIN PRO iniciando..."
+    "⚡ EL PATRÓN ADMIN PRO v2.2 iniciando..."
   );
 
 
-  setupImageInput();
+  setupAllEvents();
 
 
   if (!firebaseReady) {
@@ -5195,10 +6527,12 @@ async function initAdmin() {
       "Error inicializando Firebase"
     );
 
+
     showToast(
       "❌ Error inicializando Firebase",
       "error"
     );
+
 
     return;
 
@@ -5211,20 +6545,8 @@ async function initAdmin() {
   );
 
 
-  /*
-     IMPORTANTE:
-
-     Esperamos a que Firebase cargue
-     pero cada colección tiene su
-     propio manejo de errores.
-  */
-
   await loadAllData();
 
-
-  /*
-     Mostramos dashboard inicialmente.
-  */
 
   showSection(
     "dashboard"
@@ -5242,7 +6564,7 @@ async function initAdmin() {
 
 
 /* =========================================================
-   INICIAR CUANDO DOM ESTÉ LISTO
+   DOM READY
 ========================================================= */
 
 if (
@@ -5252,7 +6574,10 @@ if (
 
   document.addEventListener(
     "DOMContentLoaded",
-    initAdmin
+    initAdmin,
+    {
+      once: true
+    }
   );
 
 } else {
@@ -5304,7 +6629,13 @@ window.AdminPRO = {
 
   clearCouponForm,
 
-  showSection
+  showSection,
+
+  calculateDiscount,
+
+  updateOfferDiscountPreview,
+
+  handleGalleryImage
 
 };
 
