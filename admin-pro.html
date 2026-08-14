@@ -1,5314 +1,2729 @@
-/* =========================================================
-   ⚡ EL PATRÓN DE LAS OFERTAS
-   ADMIN PRO v2.1
-   =========================================================
+<!DOCTYPE html>
 
-   Compatible con:
+<html lang="es">
 
-   admin-pro.html
-   admin-pro.css
+<head>
 
-   FIREBASE:
-   Firestore
+  <meta charset="UTF-8">
 
-   IMPORTANTE:
-   - No usa Firebase Storage
-   - Imágenes como Base64
-   - Cada colección carga independientemente
-   - Un error en una colección NO bloquea las demás
-   - No escribe estadísticas automáticamente
-========================================================= */
+  <meta
 
-import {
-  initializeApp
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+    name="viewport"
 
-import {
-  getFirestore,
-  collection,
-  getDocs,
-  getDoc,
-  doc,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  serverTimestamp,
-  query,
-  orderBy
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+    content="width=device-width, initial-scale=1.0"
 
+  >
 
-/* =========================================================
-   FIREBASE
-========================================================= */
+  <title>⚡ EL PATRÓN ADMIN PRO</title>
 
-const firebaseConfig = {
-  apiKey:
-    "AIzaSyDOoYZZhaTn6hbBQ0ml--mq8ByT0KdF9e0",
+  <link
 
-  authDomain:
-    "el-patron-de-las-ofertas.firebaseapp.com",
+    rel="stylesheet"
 
-  projectId:
-    "el-patron-de-las-ofertas",
+    href="./admin-pro.css"
 
-  storageBucket:
-    "el-patron-de-las-ofertas.firebasestorage.app",
+  >
 
-  messagingSenderId:
-    "996329026447",
+</head>
 
-  appId:
-    "1:996329026447:web:dde5b6748aff41e087d1fa",
+<body>
 
-  measurementId:
-    "G-GTD9375PRW"
-};
+<!-- =========================================================
+     APP
+========================================================= -->
 
+<div class="admin-app">
 
-/* =========================================================
-   INICIALIZAR FIREBASE
-========================================================= */
+  <!-- =======================================================
+       SIDEBAR
+  ======================================================== -->
 
-let app = null;
-let db = null;
+  <aside
+    class="sidebar"
+    id="sidebar"
+  >
 
-let firebaseReady = false;
+    <div class="sidebar-header">
 
-try {
+      <a
+        href="./index.html"
+        class="admin-logo"
+      >
 
-  app = initializeApp(firebaseConfig);
+        <span class="admin-logo-icon">
+          ⚡
+        </span>
 
-  db = getFirestore(app);
+        <div>
 
-  firebaseReady = true;
+          <strong>
+            EL PATRÓN
+          </strong>
 
-} catch (error) {
+          <small>
+            ADMIN PRO
+          </small>
 
-  console.error(
-    "Error inicializando Firebase:",
-    error
-  );
+        </div>
 
-}
+      </a>
 
+      <button
+        type="button"
+        class="sidebar-close"
+        id="sidebarClose"
+        aria-label="Cerrar menú"
+      >
+        ×
+      </button>
 
-/* =========================================================
-   DATOS
-========================================================= */
+    </div>
 
-let ofertas = [];
-let cupones = [];
-let usuarios = [];
-let copias = [];
+    <!-- =====================================================
+         ADMIN USER
+    ====================================================== -->
 
-let erroresColecciones = {};
+    <div class="admin-profile">
 
-let currentOfferId = null;
-let currentCouponId = null;
-let currentUserId = null;
-
-let clicksChart = null;
-let stateChart = null;
-
-
-/* =========================================================
-   HELPERS
-========================================================= */
-
-function $(id) {
-
-  return document.getElementById(id);
-
-}
-
-
-function setText(id, value) {
-
-  const element = $(id);
-
-  if (element) {
-
-    element.textContent = value;
-
-  }
-
-}
-
-
-function money(value) {
-
-  let number = Number(
-    String(value ?? 0)
-      .replace(/[$,\s]/g, "")
-  );
-
-  if (Number.isNaN(number)) {
-
-    number = 0;
-
-  }
-
-  return number.toLocaleString(
-    "es-MX",
-    {
-      style: "currency",
-      currency: "MXN",
-      maximumFractionDigits: 0
-    }
-  );
-
-}
-
-
-function escapeHtml(value) {
-
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-
-}
-
-
-function normalize(value) {
-
-  return String(value ?? "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-
-}
-
-
-/* =========================================================
-   TOAST
-========================================================= */
-
-function showToast(
-  message,
-  type = "success"
-) {
-
-  let toast = $("adminToast");
-
-  if (!toast) {
-
-    toast = document.createElement("div");
-
-    toast.id = "adminToast";
-
-    toast.className = "admin-toast";
-
-    document.body.appendChild(toast);
-
-  }
-
-  toast.textContent = message;
-
-  toast.className =
-    `admin-toast show ${type}`;
-
-  clearTimeout(
-    window.adminToastTimer
-  );
-
-  window.adminToastTimer =
-    setTimeout(() => {
-
-      toast.classList.remove("show");
-
-    }, 3500);
-
-}
-
-
-/* =========================================================
-   FECHAS
-========================================================= */
-
-function toDate(value) {
-
-  if (!value) {
-
-    return null;
-
-  }
-
-  try {
-
-    if (
-      typeof value.toDate === "function"
-    ) {
-
-      return value.toDate();
-
-    }
-
-    if (
-      value.seconds !== undefined
-    ) {
-
-      return new Date(
-        Number(value.seconds) * 1000
-      );
-
-    }
-
-    const date = new Date(value);
-
-    if (
-      Number.isNaN(date.getTime())
-    ) {
-
-      return null;
-
-    }
-
-    return date;
-
-  } catch {
-
-    return null;
-
-  }
-
-}
-
-
-function formatDate(value) {
-
-  const date = toDate(value);
-
-  if (!date) {
-
-    return "Sin fecha";
-
-  }
-
-  return date.toLocaleDateString(
-    "es-MX",
-    {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric"
-    }
-  );
-
-}
-
-
-function formatTime(value) {
-
-  const date = toDate(value);
-
-  if (!date) {
-
-    return "--:--";
-
-  }
-
-  return date.toLocaleTimeString(
-    "es-MX",
-    {
-      hour: "2-digit",
-      minute: "2-digit"
-    }
-  );
-
-}
-
-
-function dateKey(value) {
-
-  const date = toDate(value);
-
-  if (!date) {
-
-    return null;
-
-  }
-
-  const year =
-    date.getFullYear();
-
-  const month =
-    String(
-      date.getMonth() + 1
-    ).padStart(2, "0");
-
-  const day =
-    String(
-      date.getDate()
-    ).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-
-}
-
-
-/* =========================================================
-   ESTADO FIREBASE
-========================================================= */
-
-function setFirebaseStatus(
-  status,
-  message
-) {
-
-  const box =
-    $("firebaseStatus");
-
-  const settings =
-    $("settingsFirebaseStatus");
-
-  if (box) {
-
-    const dot =
-      box.querySelector(
-        ".status-dot"
-      );
-
-    const text =
-      box.querySelector(
-        "span:last-child"
-      );
-
-    if (dot) {
-
-      dot.className =
-        `status-dot ${status}`;
-
-    }
-
-    if (text) {
-
-      text.textContent =
-        message;
-
-    } else {
-
-      box.textContent =
-        message;
-
-    }
-
-  }
-
-  if (settings) {
-
-    settings.textContent =
-      message;
-
-    settings.className =
-      `settings-status ${
-        status === "connected"
-          ? "success"
-          : ""
-      }`;
-
-  }
-
-}
-
-
-/* =========================================================
-   CARGAR COLECCIÓN SEGURA
-========================================================= */
-
-/*
-   ESTA ES LA CORRECCIÓN MÁS IMPORTANTE.
-
-   Antes:
-
-   Promise.all([
-     ofertas,
-     cupones,
-     usuarios,
-     copias
-   ])
-
-   Si una fallaba:
-   TODO FALLABA.
-
-   Ahora cada colección se carga
-   por separado.
-========================================================= */
-
-async function safeLoadCollection(
-  collectionName
-) {
-
-  if (!db) {
-
-    return {
-      data: [],
-      error: new Error(
-        "Firebase no está inicializado."
-      )
-    };
-
-  }
-
-  try {
-
-    const snapshot =
-      await getDocs(
-        collection(
-          db,
-          collectionName
-        )
-      );
-
-    const data = [];
-
-    snapshot.forEach(
-      item => {
-
-        data.push({
-
-          id: item.id,
-
-          ...item.data()
-
-        });
-
-      }
-    );
-
-    erroresColecciones[
-      collectionName
-    ] = null;
-
-    return {
-      data,
-      error: null
-    };
-
-  } catch (error) {
-
-    console.error(
-      `Firestore [${collectionName}]:`,
-      error
-    );
-
-    erroresColecciones[
-      collectionName
-    ] = error;
-
-    return {
-      data: [],
-      error
-    };
-
-  }
-
-}
-
-
-/* =========================================================
-   CARGAR TODO
-========================================================= */
-
-async function loadAllData(
-  silent = false
-) {
-
-  if (!firebaseReady || !db) {
-
-    setFirebaseStatus(
-      "error",
-      "Firebase no disponible"
-    );
-
-    showToast(
-      "❌ No se pudo inicializar Firebase",
-      "error"
-    );
-
-    renderLoadingErrors();
-
-    return;
-
-  }
-
-
-  if (!silent) {
-
-    showToast(
-      "🔄 Actualizando información..."
-    );
-
-  }
-
-
-  setFirebaseStatus(
-    "loading",
-    "Conectando..."
-  );
-
-
-  /*
-     CARGAMOS INDEPENDIENTEMENTE
-  */
-
-  const ofertasResult =
-    await safeLoadCollection(
-      "ofertas"
-    );
-
-  ofertas =
-    ofertasResult.data;
-
-
-  const cuponesResult =
-    await safeLoadCollection(
-      "cupones"
-    );
-
-  cupones =
-    cuponesResult.data;
-
-
-  const usuariosResult =
-    await safeLoadCollection(
-      "usuarios"
-    );
-
-  usuarios =
-    usuariosResult.data;
-
-
-  /*
-     Aceptamos también
-     copias_diarias si "copias"
-     no existe / no tiene datos.
-  */
-
-  const copiasResult =
-    await safeLoadCollection(
-      "copias"
-    );
-
-  copias =
-    copiasResult.data;
-
-
-  /*
-     Si no existe "copias", intentamos
-     copias_diarias.
-  */
-
-  if (
-    copias.length === 0 &&
-    copiasResult.error
-  ) {
-
-    const copiasDiariasResult =
-      await safeLoadCollection(
-        "copias_diarias"
-      );
-
-    if (
-      copiasDiariasResult.data.length
-    ) {
-
-      copias =
-        copiasDiariasResult.data;
-
-    }
-
-  }
-
-
-  const errors =
-    Object.values(
-      erroresColecciones
-    )
-      .filter(Boolean);
-
-
-  if (errors.length === 0) {
-
-    firebaseReady = true;
-
-    setFirebaseStatus(
-      "connected",
-      "Firebase conectado"
-    );
-
-  } else {
-
-    setFirebaseStatus(
-      "warning",
-      "Firebase conectado parcialmente"
-    );
-
-  }
-
-
-  renderEverything();
-
-
-  if (!silent) {
-
-    if (errors.length) {
-
-      showToast(
-        "⚠️ Datos cargados parcialmente",
-        "warning"
-      );
-
-    } else {
-
-      showToast(
-        "✅ Información actualizada"
-      );
-
-    }
-
-  }
-
-}
-
-
-/* =========================================================
-   ERRORES DE CARGA
-========================================================= */
-
-function renderLoadingErrors() {
-
-  const errors =
-    Object.entries(
-      erroresColecciones
-    )
-      .filter(
-        ([, error]) => error
-      );
-
-
-  if (!errors.length) {
-
-    return;
-
-  }
-
-
-  console.warn(
-    "Colecciones con error:",
-    errors
-  );
-
-}
-
-
-/* =========================================================
-   DASHBOARD
-========================================================= */
-
-function calculateSavings() {
-
-  return usuarios.reduce(
-    (total, user) => {
-
-      return (
-        total +
-        Number(
-          user.ahorroTotal ||
-          user.ahorro ||
-          0
-        )
-      );
-
-    },
-    0
-  );
-
-}
-
-
-function calculatePurchases() {
-
-  return usuarios.reduce(
-    (total, user) => {
-
-      return (
-        total +
-        Number(
-          user.compras ||
-          0
-        )
-      );
-
-    },
-    0
-  );
-
-}
-
-
-function calculateUsedCoupons() {
-
-  return usuarios.reduce(
-    (total, user) => {
-
-      return (
-        total +
-        Number(
-          user.cuponesUsados ||
-          0
-        )
-      );
-
-    },
-    0
-  );
-
-}
-
-
-function getCouponCode(coupon) {
-
-  return (
-    coupon.codigo ||
-    coupon.code ||
-    coupon.cupon ||
-    coupon.codigoCupon ||
-    ""
-  );
-
-}
-
-
-function getCouponCopies(
-  couponCode
-) {
-
-  if (!couponCode) {
-
-    return 0;
-
-  }
-
-  const target =
-    normalize(couponCode);
-
-  return copias.filter(
-    copy => {
-
-      const code =
-        copy.codigo ||
-        copy.cupon ||
-        copy.couponCode ||
-        copy.code ||
-        "";
-
-      return (
-        normalize(code) ===
-        target
-      );
-
-    }
-  ).length;
-
-}
-
-
-function renderDashboard() {
-
-  const totalOffers =
-    ofertas.length;
-
-  const activeCoupons =
-    cupones.filter(
-      coupon => {
-
-        const status =
-          normalize(
-            coupon.estado ||
-            coupon.status ||
-            "activo"
-          );
-
-        return !status.includes(
-          "agot"
-        );
-
-      }
-    ).length;
-
-  const totalUsers =
-    usuarios.length;
-
-  const totalClicks =
-    copias.length;
-
-  const savings =
-    calculateSavings();
-
-  const purchases =
-    calculatePurchases();
-
-
-  setText(
-    "statOffers",
-    totalOffers
-  );
-
-  setText(
-    "statCoupons",
-    activeCoupons
-  );
-
-  setText(
-    "statUsers",
-    totalUsers
-  );
-
-  setText(
-    "statClicks",
-    totalClicks
-  );
-
-  setText(
-    "statSavings",
-    money(savings)
-  );
-
-  setText(
-    "statPurchases",
-    purchases
-  );
-
-
-  setText(
-    "navCouponCount",
-    cupones.length
-  );
-
-  setText(
-    "navUserCount",
-    usuarios.length
-  );
-
-
-  const now =
-    new Date();
-
-  setText(
-    "lastUpdate",
-    now.toLocaleTimeString(
-      "es-MX",
-      {
-        hour: "2-digit",
-        minute: "2-digit"
-      }
-    )
-  );
-
-
-  renderTopCoupon();
-
-  renderActivity();
-
-}
-
-
-/* =========================================================
-   CUPÓN MÁS COPIADO
-========================================================= */
-
-function getCouponStats() {
-
-  const map = {};
-
-  copias.forEach(
-    copy => {
-
-      const code =
-        copy.codigo ||
-        copy.cupon ||
-        copy.couponCode ||
-        copy.code ||
-        "SIN CÓDIGO";
-
-      if (!map[code]) {
-
-        map[code] = 0;
-
-      }
-
-      map[code]++;
-
-    }
-  );
-
-
-  return Object.entries(map)
-    .map(
-      ([code, count]) => ({
-        code,
-        count
-      })
-    )
-    .sort(
-      (a, b) =>
-        b.count - a.count
-    );
-
-}
-
-
-function getMostCopiedCoupon() {
-
-  const stats =
-    getCouponStats();
-
-  return (
-    stats[0] || {
-      code: "",
-      count: 0
-    }
-  );
-
-}
-
-
-function renderTopCoupon() {
-
-  const container =
-    $("topCoupon");
-
-  if (!container) {
-
-    return;
-
-  }
-
-
-  const top =
-    getMostCopiedCoupon();
-
-
-  if (!top.code) {
-
-    container.innerHTML = `
-      <div class="empty-state-small">
-        <span>🎟️</span>
-        <p>Aún no hay copias registradas.</p>
-      </div>
-    `;
-
-    return;
-
-  }
-
-
-  container.innerHTML = `
-
-    <div class="top-coupon-content">
-
-      <div class="top-coupon-icon">
-        🏆
+      <div class="admin-avatar">
+        👑
       </div>
 
-      <div>
+      <div class="admin-profile-info">
 
         <strong>
-          ${escapeHtml(top.code)}
+          Administrador
         </strong>
 
         <span>
-          ${top.count}
-          ${top.count === 1 ? "copia" : "copias"}
+          Panel PRO
         </span>
 
       </div>
 
+      <span class="online-dot"></span>
+
     </div>
 
-  `;
+    <!-- =====================================================
+         NAVIGATION
+    ====================================================== -->
 
-}
+    <nav class="admin-navigation">
 
-
-/* =========================================================
-   ACTIVIDAD
-========================================================= */
-
-function renderActivity() {
-
-  const container =
-    $("activityList");
-
-  if (!container) {
-
-    return;
-
-  }
-
-
-  const recent =
-    [...copias]
-      .sort(
-        (a, b) => {
-
-          const da =
-            toDate(
-              a.fecha ||
-              a.createdAt ||
-              a.timestamp ||
-              a.fechaHora
-            );
-
-          const dbb =
-            toDate(
-              b.fecha ||
-              b.createdAt ||
-              b.timestamp ||
-              b.fechaHora
-            );
-
-          return (
-            (dbb?.getTime() || 0) -
-            (da?.getTime() || 0)
-          );
-
-        }
-      )
-      .slice(0, 8);
-
-
-  if (!recent.length) {
-
-    container.innerHTML = `
-      <div class="empty-state-small">
-        <span>⚡</span>
-        <p>No hay actividad reciente.</p>
+      <div class="nav-title">
+        PRINCIPAL
       </div>
-    `;
 
-    return;
+      <button
+        type="button"
+        class="nav-item active"
+        data-section="dashboard"
+      >
 
-  }
+        <span class="nav-icon">
+          📊
+        </span>
 
+        <span>
+          Dashboard
+        </span>
 
-  container.innerHTML =
-    recent.map(
-      item => {
+      </button>
 
-        const code =
-          item.codigo ||
-          item.cupon ||
-          item.couponCode ||
-          item.code ||
-          "Cupón";
+      <button
+        type="button"
+        class="nav-item"
+        data-section="ofertas"
+      >
 
-        const user =
-          item.usuario ||
-          item.nombre ||
-          item.email ||
-          "Usuario";
+        <span class="nav-icon">
+          🔥
+        </span>
 
+        <span>
+          Ofertas
+        </span>
 
-        return `
+      </button>
 
-          <div class="activity-item">
+      <button
+        type="button"
+        class="nav-item"
+        data-section="cupones"
+      >
 
-            <div class="activity-icon">
-              🎟️
-            </div>
+        <span class="nav-icon">
+          🎟️
+        </span>
 
-            <div class="activity-content">
+        <span>
+          Cupones
+        </span>
 
-              <strong>
-                ${escapeHtml(code)}
-              </strong>
-
-              <span>
-                ${escapeHtml(user)}
-              </span>
-
-            </div>
-
-            <div class="activity-time">
-              ${formatTime(
-                item.fecha ||
-                item.createdAt ||
-                item.timestamp ||
-                item.fechaHora
-              )}
-            </div>
-
-          </div>
-
-        `;
-
-      }
-    )
-    .join("");
-
-}
-
-
-/* =========================================================
-   OFERTAS
-========================================================= */
-
-function renderOffers() {
-
-  const body =
-    $("offersTableBody");
-
-  if (!body) {
-
-    return;
-
-  }
-
-
-  const search =
-    normalize(
-      $("offerSearch")?.value
-    );
-
-
-  let data =
-    ofertas.filter(
-      offer => {
-
-        if (!search) {
-
-          return true;
-
-        }
-
-        return normalize(
-          `${offer.titulo || ""}
-           ${offer.categoria || ""}
-           ${offer.link || ""}`
-        ).includes(search);
-
-      }
-    );
-
-
-  setText(
-    "offerTableCount",
-    `${data.length} ${
-      data.length === 1
-        ? "oferta"
-        : "ofertas"
-    }`
-  );
-
-
-  if (!data.length) {
-
-    body.innerHTML = `
-
-      <tr>
-
-        <td
-          colspan="6"
-          class="table-loading"
+        <span
+          class="nav-badge"
+          id="navCouponCount"
         >
-          🔥 No hay ofertas para mostrar.
-        </td>
-
-      </tr>
-
-    `;
-
-    return;
-
-  }
-
-
-  body.innerHTML =
-    data.map(
-      offer => {
-
-        const oldPrice =
-          Number(
-            offer.precioAntes ||
-            offer.precioAnterior ||
-            0
-          );
-
-        const currentPrice =
-          Number(
-            offer.precioActual ||
-            offer.precio ||
-            offer.currentPrice ||
-            0
-          );
-
-
-        let discount = 0;
-
-        if (
-          oldPrice > 0 &&
-          currentPrice > 0 &&
-          currentPrice < oldPrice
-        ) {
-
-          discount =
-            Math.round(
-              (
-                1 -
-                currentPrice /
-                  oldPrice
-              ) * 100
-            );
-
-        }
-
-
-        const clicks =
-          Number(
-            offer.clics ||
-            offer.clicks ||
-            0
-          );
-
-
-        return `
-
-          <tr>
-
-            <td>
-
-              <div class="table-product">
-
-                <div class="table-product-image">
-
-                  ${
-                    offer.imagenBase64 ||
-                    offer.imagen
-                      ? `
-                        <img
-                          src="${escapeHtml(
-                            offer.imagenBase64 ||
-                            offer.imagen
-                          )}"
-                          alt=""
-                        >
-                      `
-                      : "🔥"
-                  }
-
-                </div>
-
-                <div>
-
-                  <strong>
-                    ${escapeHtml(
-                      offer.titulo ||
-                      "Sin título"
-                    )}
-                  </strong>
-
-                  <small>
-                    ${escapeHtml(
-                      offer.categoria ||
-                      "General"
-                    )}
-                  </small>
-
-                </div>
-
-              </div>
-
-            </td>
-
-            <td>
-              ${
-                oldPrice
-                  ? money(oldPrice)
-                  : "—"
-              }
-            </td>
-
-            <td>
-              <strong>
-                ${money(currentPrice)}
-              </strong>
-            </td>
-
-            <td>
-              ${
-                discount
-                  ? `-${discount}%`
-                  : "—"
-              }
-            </td>
-
-            <td>
-              ${clicks}
-            </td>
-
-            <td>
-
-              <div class="table-actions">
-
-                <button
-                  type="button"
-                  data-edit-offer="${offer.id}"
-                >
-                  ✏️
-                </button>
-
-                <button
-                  type="button"
-                  class="danger"
-                  data-delete-offer="${offer.id}"
-                >
-                  🗑️
-                </button>
-
-              </div>
-
-            </td>
-
-          </tr>
-
-        `;
-
-      }
-    )
-    .join("");
-
-}
-
-
-/* =========================================================
-   CUPONES
-========================================================= */
-
-function couponTypeLabel(
-  coupon
-) {
-
-  const type =
-    normalize(
-      coupon.tipo ||
-      coupon.type ||
-      ""
-    );
-
-
-  if (
-    type.includes("flash") ||
-    type.includes("relamp")
-  ) {
-
-    return "⚡ Relámpago";
-
-  }
-
-  if (
-    type.includes("bank") ||
-    type.includes("bancar")
-  ) {
-
-    return "🏦 Bancario";
-
-  }
-
-  return "🎁 Exclusivo";
-
-}
-
-
-function couponStatus(
-  coupon
-) {
-
-  const status =
-    normalize(
-      coupon.estado ||
-      coupon.status ||
-      "activo"
-    );
-
-
-  if (
-    status.includes("agot")
-  ) {
-
-    return {
-      text: "🔴 Agotado",
-      className: "expired"
-    };
-
-  }
-
-
-  if (
-    status.includes("por")
-  ) {
-
-    return {
-      text: "🟠 Por agotarse",
-      className: "warning"
-    };
-
-  }
-
-
-  return {
-    text: "🟢 Activo",
-    className: "active"
-  };
-
-}
-
-
-function renderCoupons() {
-
-  const body =
-    $("couponsTableBody");
-
-  if (!body) {
-
-    return;
-
-  }
-
-
-  const search =
-    normalize(
-      $("couponSearch")?.value
-    );
-
-  const filter =
-    $("couponTypeFilter")?.value ||
-    "all";
-
-
-  let data =
-    cupones.filter(
-      coupon => {
-
-        const text =
-          normalize(
-            `${getCouponCode(coupon)}
-             ${coupon.titulo || ""}
-             ${coupon.descuento || ""}
-             ${coupon.banco || ""}`
-          );
-
-
-        if (
-          search &&
-          !text.includes(search)
-        ) {
-
-          return false;
-
-        }
-
-
-        if (
-          filter === "all"
-        ) {
-
-          return true;
-
-        }
-
-
-        const type =
-          normalize(
-            coupon.tipo ||
-            coupon.type ||
-            ""
-          );
-
-
-        if (
-          filter === "flash"
-        ) {
-
-          return (
-            type.includes("flash") ||
-            type.includes("relamp")
-          );
-
-        }
-
-
-        if (
-          filter === "exclusive"
-        ) {
-
-          return (
-            type.includes("exclusive") ||
-            type.includes("exclus")
-          );
-
-        }
-
-
-        if (
-          filter === "bank"
-        ) {
-
-          return (
-            type.includes("bank") ||
-            type.includes("bancar")
-          );
-
-        }
-
-
-        return true;
-
-      }
-    );
-
-
-  setText(
-    "couponTableCount",
-    `${data.length} ${
-      data.length === 1
-        ? "cupón"
-        : "cupones"
-    }`
-  );
-
-
-  updateCouponMiniStats();
-
-
-  if (!data.length) {
-
-    body.innerHTML = `
-
-      <tr>
-
-        <td
-          colspan="8"
-          class="table-loading"
-        >
-          🎟️ No hay cupones para mostrar.
-        </td>
-
-      </tr>
-
-    `;
-
-    return;
-
-  }
-
-
-  body.innerHTML =
-    data.map(
-      coupon => {
-
-        const code =
-          getCouponCode(coupon);
-
-        const status =
-          couponStatus(coupon);
-
-        const copies =
-          getCouponCopies(code);
-
-
-        return `
-
-          <tr>
-
-            <td>
-
-              <strong>
-                ${escapeHtml(
-                  code ||
-                  "SIN CÓDIGO"
-                )}
-              </strong>
-
-              <small>
-                ${escapeHtml(
-                  coupon.titulo ||
-                  ""
-                )}
-              </small>
-
-            </td>
-
-            <td>
-              ${couponTypeLabel(coupon)}
-            </td>
-
-            <td>
-              ${escapeHtml(
-                coupon.descuento ||
-                "—"
-              )}
-            </td>
-
-            <td>
-              ${
-                coupon.compraMinima ??
-                coupon.minimo ??
-                coupon.minimum
-                  ? money(
-                      coupon.compraMinima ??
-                      coupon.minimo ??
-                      coupon.minimum
-                    )
-                  : "—"
-              }
-            </td>
-
-            <td>
-              ${
-                coupon.tope ??
-                coupon.maximo ??
-                coupon.maximum
-                  ? money(
-                      coupon.tope ??
-                      coupon.maximo ??
-                      coupon.maximum
-                    )
-                  : "—"
-              }
-            </td>
-
-            <td>
-
-              <span
-                class="status-badge ${status.className}"
-              >
-                ${status.text}
-              </span>
-
-            </td>
-
-            <td>
-              ${copies}
-            </td>
-
-            <td>
-
-              <div class="table-actions">
-
-                <button
-                  type="button"
-                  data-edit-coupon="${coupon.id}"
-                >
-                  ✏️
-                </button>
-
-                <button
-                  type="button"
-                  class="danger"
-                  data-delete-coupon="${coupon.id}"
-                >
-                  🗑️
-                </button>
-
-              </div>
-
-            </td>
-
-          </tr>
-
-        `;
-
-      }
-    )
-    .join("");
-
-}
-
-
-/* =========================================================
-   ESTADÍSTICAS DE CUPONES
-========================================================= */
-
-function updateCouponMiniStats() {
-
-  let active = 0;
-  let warning = 0;
-  let expired = 0;
-  let copies = 0;
-
-
-  cupones.forEach(
-    coupon => {
-
-      const status =
-        couponStatus(coupon);
-
-      if (
-        status.className ===
-        "active"
-      ) {
-
-        active++;
-
-      } else if (
-        status.className ===
-        "warning"
-      ) {
-
-        warning++;
-
-      } else {
-
-        expired++;
-
-      }
-
-
-      copies +=
-        getCouponCopies(
-          getCouponCode(coupon)
-        );
-
-    }
-  );
-
-
-  setText(
-    "couponActiveCount",
-    active
-  );
-
-  setText(
-    "couponWarningCount",
-    warning
-  );
-
-  setText(
-    "couponExpiredCount",
-    expired
-  );
-
-  setText(
-    "couponCopiesCount",
-    copies
-  );
-
-}
-
-
-/* =========================================================
-   USUARIOS
-========================================================= */
-
-function userStatus(
-  user
-) {
-
-  const status =
-    normalize(
-      user.estadoVerificacion ||
-      user.estadoUsuario ||
-      user.status ||
-      user.estado ||
-      "pendiente"
-    );
-
-
-  if (
-    status.includes("rechaz")
-  ) {
-
-    return "rechazado";
-
-  }
-
-
-  if (
-    status.includes("verific") ||
-    status.includes("activo")
-  ) {
-
-    return "verificado";
-
-  }
-
-
-  return "pendiente";
-
-}
-
-
-function renderUsers() {
-
-  const body =
-    $("usersTableBody");
-
-  if (!body) {
-
-    return;
-
-  }
-
-
-  const search =
-    normalize(
-      $("userSearch")?.value
-    );
-
-  const filter =
-    $("userStatusFilter")?.value ||
-    "all";
-
-
-  const data =
-    usuarios.filter(
-      user => {
-
-        const text =
-          normalize(
-            `${user.nombre || ""}
-             ${user.email || ""}
-             ${user.estado || ""}
-             ${user.estadoVerificacion || ""}`
-          );
-
-
-        if (
-          search &&
-          !text.includes(search)
-        ) {
-
-          return false;
-
-        }
-
-
-        if (
-          filter !== "all" &&
-          userStatus(user) !==
-            filter
-        ) {
-
-          return false;
-
-        }
-
-
-        return true;
-
-      }
-    );
-
-
-  updateUserStats();
-
-
-  setText(
-    "userTableCount",
-    `${data.length} ${
-      data.length === 1
-        ? "usuario"
-        : "usuarios"
-    }`
-  );
-
-
-  if (!data.length) {
-
-    body.innerHTML = `
-
-      <tr>
-
-        <td
-          colspan="8"
-          class="table-loading"
-        >
-          👥 No hay usuarios para mostrar.
-        </td>
-
-      </tr>
-
-    `;
-
-    return;
-
-  }
-
-
-  body.innerHTML =
-    data.map(
-      user => {
-
-        const status =
-          userStatus(user);
-
-
-        return `
-
-          <tr>
-
-            <td>
-
-              <div class="table-product">
-
-                <div class="table-product-image">
-
-                  ${
-                    user.fotoBase64
-                      ? `
-                        <img
-                          src="${escapeHtml(
-                            user.fotoBase64
-                          )}"
-                          alt=""
-                        >
-                      `
-                      : "👤"
-                  }
-
-                </div>
-
-                <div>
-
-                  <strong>
-                    ${escapeHtml(
-                      user.nombre ||
-                      "Sin nombre"
-                    )}
-                  </strong>
-
-                  <small>
-                    ${escapeHtml(
-                      user.email ||
-                      "Sin correo"
-                    )}
-                  </small>
-
-                </div>
-
-              </div>
-
-            </td>
-
-            <td>
-
-              <span
-                class="status-badge ${
-                  status === "verificado"
-                    ? "active"
-                    : status === "rechazado"
-                      ? "expired"
-                      : "warning"
-                }"
-              >
-                ${
-                  status === "verificado"
-                    ? "✅ Verificado"
-                    : status === "rechazado"
-                      ? "🔴 Rechazado"
-                      : "⏳ Pendiente"
-                }
-              </span>
-
-            </td>
-
-            <td>
-              ${escapeHtml(
-                user.estado ||
-                user.estadoMexico ||
-                "—"
-              )}
-            </td>
-
-            <td>
-              ${Number(
-                user.compras ||
-                0
-              )}
-            </td>
-
-            <td>
-              ${Number(
-                user.cuponesUsados ||
-                0
-              )}
-            </td>
-
-            <td>
-              ${money(
-                user.ahorroTotal ||
-                user.ahorro ||
-                0
-              )}
-            </td>
-
-            <td>
-              ${formatDate(
-                user.createdAt ||
-                user.fechaRegistro ||
-                user.registro
-              )}
-            </td>
-
-            <td>
-
-              <div class="table-actions">
-
-                <button
-                  type="button"
-                  data-edit-user="${user.id}"
-                >
-                  👁️
-                </button>
-
-                <button
-                  type="button"
-                  class="danger"
-                  data-delete-user="${user.id}"
-                >
-                  🗑️
-                </button>
-
-              </div>
-
-            </td>
-
-          </tr>
-
-        `;
-
-      }
-    )
-    .join("");
-
-}
-
-
-/* =========================================================
-   ESTADÍSTICAS DE USUARIOS
-========================================================= */
-
-function updateUserStats() {
-
-  let verified = 0;
-  let pending = 0;
-  let savings = 0;
-
-
-  usuarios.forEach(
-    user => {
-
-      const status =
-        userStatus(user);
-
-      if (
-        status === "verificado"
-      ) {
-
-        verified++;
-
-      } else if (
-        status === "pendiente"
-      ) {
-
-        pending++;
-
-      }
-
-
-      savings +=
-        Number(
-          user.ahorroTotal ||
-          user.ahorro ||
           0
-        );
+        </span>
 
-    }
-  );
+      </button>
 
+      <button
+        type="button"
+        class="nav-item"
+        data-section="usuarios"
+      >
 
-  setText(
-    "usersRegisteredCount",
-    usuarios.length
-  );
+        <span class="nav-icon">
+          👥
+        </span>
+
+        <span>
+          Usuarios
+        </span>
 
-  setText(
-    "usersVerifiedCount",
-    verified
-  );
+        <span
+          class="nav-badge"
+          id="navUserCount"
+        >
+          0
+        </span>
 
-  setText(
-    "usersPendingCount",
-    pending
-  );
+      </button>
 
-  setText(
-    "usersSavingsCount",
-    money(savings)
-  );
+      <div class="nav-title">
+        ESTADÍSTICAS
+      </div>
 
-}
+      <button
+        type="button"
+        class="nav-item"
+        data-section="estadisticas"
+      >
 
+        <span class="nav-icon">
+          📈
+        </span>
 
-/* =========================================================
-   ESTADÍSTICAS
-========================================================= */
+        <span>
+          Estadísticas
+        </span>
 
-function getClicksByDay() {
+      </button>
 
-  const map = {};
+      <button
+        type="button"
+        class="nav-item"
+        data-section="clics"
+      >
 
+        <span class="nav-icon">
+          👆
+        </span>
 
-  copias.forEach(
-    copy => {
+        <span>
+          Clics
+        </span>
 
-      const key =
-        dateKey(
-          copy.fecha ||
-          copy.createdAt ||
-          copy.timestamp ||
-          copy.fechaHora
-        );
+      </button>
 
+      <button
+        type="button"
+        class="nav-item"
+        data-section="ranking"
+      >
 
-      if (!key) {
+        <span class="nav-icon">
+          🏆
+        </span>
 
-        return;
+        <span>
+          Ranking
+        </span>
 
-      }
+      </button>
 
+      <div class="nav-title">
+        SISTEMA
+      </div>
 
-      if (!map[key]) {
+      <button
+        type="button"
+        class="nav-item"
+        data-section="configuracion"
+      >
 
-        map[key] = 0;
+        <span class="nav-icon">
+          ⚙️
+        </span>
 
-      }
+        <span>
+          Configuración
+        </span>
 
-      map[key]++;
+      </button>
 
-    }
-  );
+    </nav>
 
+    <!-- =====================================================
+         SIDEBAR FOOTER
+    ====================================================== -->
 
-  return map;
+    <div class="sidebar-footer">
 
-}
+      <a
+        href="./index.html"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="view-site-button"
+      >
 
+        🌐
 
-function getUsersByState() {
+        <span>
+          Ver página
+        </span>
 
-  const map = {};
+      </a>
 
+      <div class="admin-version">
 
-  usuarios.forEach(
-    user => {
+        <span>
+          Admin PRO
+        </span>
 
-      const state =
-        user.estado ||
-        user.estadoMexico ||
-        user.estadoRepublica ||
-        "Sin especificar";
-
-
-      if (!map[state]) {
-
-        map[state] = 0;
-
-      }
-
-      map[state]++;
-
-    }
-  );
-
-
-  return map;
-
-}
-
-
-function renderStatistics() {
-
-  const totalClicks =
-    copias.length;
-
-  const totalUsers =
-    usuarios.length;
-
-  const totalSavings =
-    calculateSavings();
-
-  const totalPurchases =
-    calculatePurchases();
-
-  const totalCouponUses =
-    calculateUsedCoupons();
-
-
-  setText(
-    "performanceClicks",
-    totalClicks
-  );
-
-  setText(
-    "performanceCoupons",
-    totalCouponUses
-  );
-
-  setText(
-    "performanceUsers",
-    totalUsers
-  );
-
-  setText(
-    "performanceSavings",
-    money(totalSavings)
-  );
-
-  setText(
-    "performancePurchases",
-    totalPurchases
-  );
-
-
-  renderCouponRanking();
-
-  renderStateList();
-
-  renderCharts();
-
-}
-
-
-/* =========================================================
-   RANKING DE CUPONES
-========================================================= */
-
-function renderCouponRanking() {
-
-  const container =
-    $("couponRankingList");
-
-  if (!container) {
-
-    return;
-
-  }
-
-
-  const stats =
-    getCouponStats()
-      .slice(0, 10);
-
-
-  if (!stats.length) {
-
-    container.innerHTML = `
-
-      <div class="empty-state-small">
-
-        <span>🎟️</span>
-
-        <p>
-          No hay copias registradas.
-        </p>
+        <strong>
+          v2.0
+        </strong>
 
       </div>
 
-    `;
+    </div>
 
-    return;
+  </aside>
 
-  }
+  <!-- =======================================================
+       OVERLAY MOBILE
+  ======================================================== -->
 
+  <div
+    class="sidebar-overlay"
+    id="sidebarOverlay"
+  ></div>
 
-  container.innerHTML =
-    stats.map(
-      (item, index) => {
+  <!-- =======================================================
+       MAIN
+  ======================================================== -->
 
-        return `
+  <main class="main-content">
 
-          <div class="coupon-ranking-item">
+    <!-- =====================================================
+         TOPBAR
+    ====================================================== -->
 
-            <div class="ranking-number">
-              ${index + 1}
-            </div>
+    <header class="topbar">
 
-            <div class="ranking-name">
+      <div class="topbar-left">
 
-              <strong>
-                ${escapeHtml(
-                  item.code
-                )}
-              </strong>
-
-            </div>
-
-            <strong>
-              ${item.count}
-            </strong>
-
-          </div>
-
-        `;
-
-      }
-    )
-    .join("");
-
-}
-
-
-/* =========================================================
-   ESTADOS
-========================================================= */
-
-function renderStateList() {
-
-  const container =
-    $("stateList");
-
-  if (!container) {
-
-    return;
-
-  }
-
-
-  const states =
-    Object.entries(
-      getUsersByState()
-    )
-      .sort(
-        ([, a], [, b]) =>
-          b - a
-      )
-      .slice(0, 10);
-
-
-  if (!states.length) {
-
-    container.innerHTML = "";
-
-    return;
-
-  }
-
-
-  container.innerHTML =
-    states.map(
-      ([state, count]) => {
-
-        return `
-
-          <div class="state-row">
-
-            <span>
-              ${escapeHtml(state)}
-            </span>
-
-            <strong>
-              ${count}
-            </strong>
-
-          </div>
-
-        `;
-
-      }
-    )
-    .join("");
-
-}
-
-
-/* =========================================================
-   CHARTS
-========================================================= */
-
-function renderCharts() {
-
-  if (
-    typeof Chart ===
-    "undefined"
-  ) {
-
-    console.warn(
-      "Chart.js todavía no está disponible."
-    );
-
-    return;
-
-  }
-
-
-  renderClicksChart();
-
-  renderStateChart();
-
-}
-
-
-/* =========================================================
-   GRÁFICA CLICS
-========================================================= */
-
-function renderClicksChart() {
-
-  const canvas =
-    $("clicksByDayChart");
-
-  if (!canvas) {
-
-    return;
-
-  }
-
-
-  const map =
-    getClicksByDay();
-
-
-  const entries =
-    Object.entries(map)
-      .sort(
-        ([a], [b]) =>
-          a.localeCompare(b)
-      )
-      .slice(-30);
-
-
-  const labels =
-    entries.map(
-      ([date]) => {
-
-        const parts =
-          date.split("-");
-
-        return `${parts[2]}/${parts[1]}`;
-
-      }
-    );
-
-
-  const values =
-    entries.map(
-      ([, value]) =>
-        value
-    );
-
-
-  const empty =
-    $("clicksChartEmpty");
-
-
-  if (!entries.length) {
-
-    if (empty) {
-
-      empty.style.display =
-        "flex";
-
-    }
-
-    return;
-
-  }
-
-
-  if (empty) {
-
-    empty.style.display =
-      "none";
-
-  }
-
-
-  if (clicksChart) {
-
-    clicksChart.destroy();
-
-  }
-
-
-  clicksChart =
-    new Chart(
-      canvas,
-      {
-
-        type: "line",
-
-        data: {
-
-          labels,
-
-          datasets: [
-
-            {
-
-              label: "Clics",
-
-              data: values,
-
-              tension: 0.35,
-
-              fill: true
-
-            }
-
-          ]
-
-        },
-
-        options: {
-
-          responsive: true,
-
-          maintainAspectRatio: false,
-
-          plugins: {
-
-            legend: {
-
-              display: false
-
-            }
-
-          },
-
-          scales: {
-
-            y: {
-
-              beginAtZero: true,
-
-              ticks: {
-
-                precision: 0
-
-              }
-
-            }
-
-          }
-
-        }
-
-      }
-    );
-
-
-  setText(
-    "chartClicksTotal",
-    `${copias.length} clics`
-  );
-
-}
-
-
-/* =========================================================
-   GRÁFICA ESTADOS
-========================================================= */
-
-function renderStateChart() {
-
-  const canvas =
-    $("usersByStateChart");
-
-  if (!canvas) {
-
-    return;
-
-  }
-
-
-  const states =
-    Object.entries(
-      getUsersByState()
-    )
-      .sort(
-        ([, a], [, b]) =>
-          b - a
-      )
-      .slice(0, 10);
-
-
-  const empty =
-    $("stateChartEmpty");
-
-
-  if (!states.length) {
-
-    if (empty) {
-
-      empty.style.display =
-        "flex";
-
-    }
-
-    return;
-
-  }
-
-
-  if (empty) {
-
-    empty.style.display =
-      "none";
-
-  }
-
-
-  if (stateChart) {
-
-    stateChart.destroy();
-
-  }
-
-
-  stateChart =
-    new Chart(
-      canvas,
-      {
-
-        type: "doughnut",
-
-        data: {
-
-          labels:
-            states.map(
-              ([state]) =>
-                state
-            ),
-
-          datasets: [
-
-            {
-
-              data:
-                states.map(
-                  ([, count]) =>
-                    count
-                )
-
-            }
-
-          ]
-
-        },
-
-        options: {
-
-          responsive: true,
-
-          maintainAspectRatio: false,
-
-          plugins: {
-
-            legend: {
-
-              position:
-                "bottom"
-
-            }
-
-          }
-
-        }
-
-      }
-    );
-
-}
-
-
-/* =========================================================
-   CLICS
-========================================================= */
-
-function renderClicks() {
-
-  const body =
-    $("clicksTableBody");
-
-  if (!body) {
-
-    return;
-
-  }
-
-
-  const search =
-    normalize(
-      $("clickSearch")?.value
-    );
-
-
-  let data =
-    copias.filter(
-      copy => {
-
-        if (!search) {
-
-          return true;
-
-        }
-
-
-        const text =
-          normalize(
-            `${copy.codigo || ""}
-             ${copy.cupon || ""}
-             ${copy.couponCode || ""}
-             ${copy.usuario || ""}
-             ${copy.nombre || ""}
-             ${copy.email || ""}`
-          );
-
-
-        return text.includes(
-          search
-        );
-
-      }
-    );
-
-
-  data =
-    [...data].sort(
-      (a, b) => {
-
-        const da =
-          toDate(
-            a.fecha ||
-            a.createdAt ||
-            a.timestamp
-          );
-
-        const dbb =
-          toDate(
-            b.fecha ||
-            b.createdAt ||
-            b.timestamp
-          );
-
-        return (
-          (dbb?.getTime() || 0) -
-          (da?.getTime() || 0)
-        );
-
-      }
-    );
-
-
-  setText(
-    "clickTableCount",
-    `${data.length} ${
-      data.length === 1
-        ? "registro"
-        : "registros"
-    }`
-  );
-
-
-  setText(
-    "clicksTotal",
-    copias.length
-  );
-
-
-  const today =
-    dateKey(
-      new Date()
-    );
-
-
-  const todayClicks =
-    copias.filter(
-      copy =>
-        dateKey(
-          copy.fecha ||
-          copy.createdAt ||
-          copy.timestamp
-        ) === today
-    ).length;
-
-
-  setText(
-    "clicksToday",
-    todayClicks
-  );
-
-
-  const days =
-    new Set(
-      copias
-        .map(
-          copy =>
-            dateKey(
-              copy.fecha ||
-              copy.createdAt ||
-              copy.timestamp
-            )
-        )
-        .filter(Boolean)
-    );
-
-
-  const average =
-    days.size
-      ? (
-          copias.length /
-          days.size
-        ).toFixed(1)
-      : "0";
-
-
-  setText(
-    "clicksAverage",
-    average
-  );
-
-
-  const mostCopied =
-    getMostCopiedCoupon();
-
-
-  setText(
-    "mostCopiedShort",
-    mostCopied.code ||
-      "—"
-  );
-
-
-  if (!data.length) {
-
-    body.innerHTML = `
-
-      <tr>
-
-        <td
-          colspan="5"
-          class="table-loading"
+        <button
+          type="button"
+          class="mobile-menu-button"
+          id="mobileMenuButton"
+          aria-label="Abrir menú"
         >
-          👆 No hay actividad registrada.
-        </td>
+          ☰
+        </button>
 
-      </tr>
+        <div>
 
-    `;
+          <span
+            class="breadcrumb"
+            id="breadcrumb"
+          >
+            Dashboard
+          </span>
 
-    return;
-
-  }
-
-
-  body.innerHTML =
-    data.map(
-      copy => {
-
-        const code =
-          copy.codigo ||
-          copy.cupon ||
-          copy.couponCode ||
-          copy.code ||
-          "—";
-
-        const user =
-          copy.usuario ||
-          copy.nombre ||
-          copy.email ||
-          "Usuario";
-
-
-        return `
-
-          <tr>
-
-            <td>
-              <strong>
-                ${escapeHtml(code)}
-              </strong>
-            </td>
-
-            <td>
-              ${escapeHtml(user)}
-            </td>
-
-            <td>
-              ${formatDate(
-                copy.fecha ||
-                copy.createdAt ||
-                copy.timestamp
-              )}
-            </td>
-
-            <td>
-              ${formatTime(
-                copy.fecha ||
-                copy.createdAt ||
-                copy.timestamp
-              )}
-            </td>
-
-            <td>
-
-              <span class="status-badge active">
-                ✅ Registrado
-              </span>
-
-            </td>
-
-          </tr>
-
-        `;
-
-      }
-    )
-    .join("");
-
-}
-
-
-/* =========================================================
-   RANKING USUARIOS
-========================================================= */
-
-function renderRanking() {
-
-  const body =
-    $("rankingTableBody");
-
-  const grid =
-    $("rankingGrid");
-
-
-  const ranked =
-    [...usuarios]
-      .sort(
-        (a, b) =>
-          Number(
-            b.ahorroTotal ||
-            b.ahorro ||
-            0
-          ) -
-          Number(
-            a.ahorroTotal ||
-            a.ahorro ||
-            0
-          )
-      );
-
-
-  if (grid) {
-
-    if (!ranked.length) {
-
-      grid.innerHTML = `
-
-        <div class="ranking-loading">
-
-          🏆
-
-          <p>
-            No hay usuarios todavía.
-          </p>
+          <h1 id="pageTitle">
+            Panel de control
+          </h1>
 
         </div>
 
-      `;
+      </div>
 
-    } else {
+      <div class="topbar-right">
 
-      grid.innerHTML =
-        ranked
-          .slice(0, 3)
-          .map(
-            (user, index) => {
-
-              return `
-
-                <div class="ranking-card">
-
-                  <div class="ranking-position">
-                    ${
-                      index === 0
-                        ? "🥇"
-                        : index === 1
-                          ? "🥈"
-                          : "🥉"
-                    }
-                  </div>
-
-                  <strong>
-                    ${escapeHtml(
-                      user.nombre ||
-                      "Usuario"
-                    )}
-                  </strong>
-
-                  <span>
-                    ${money(
-                      user.ahorroTotal ||
-                      user.ahorro ||
-                      0
-                    )}
-                  </span>
-
-                </div>
-
-              `;
-
-            }
-          )
-          .join("");
-
-    }
-
-  }
-
-
-  if (!body) {
-
-    return;
-
-  }
-
-
-  if (!ranked.length) {
-
-    body.innerHTML = `
-
-      <tr>
-
-        <td
-          colspan="6"
-          class="table-loading"
+        <div
+          class="firebase-status"
+          id="firebaseStatus"
         >
-          🏆 No hay usuarios registrados.
-        </td>
 
-      </tr>
-
-    `;
-
-    return;
-
-  }
-
-
-  body.innerHTML =
-    ranked.map(
-      (user, index) => {
-
-        return `
-
-          <tr>
-
-            <td>
-              <strong>
-                #${index + 1}
-              </strong>
-            </td>
-
-            <td>
-              ${escapeHtml(
-                user.nombre ||
-                "Sin nombre"
-              )}
-            </td>
-
-            <td>
-              <strong>
-                ${money(
-                  user.ahorroTotal ||
-                  user.ahorro ||
-                  0
-                )}
-              </strong>
-            </td>
-
-            <td>
-              ${Number(
-                user.compras ||
-                0
-              )}
-            </td>
-
-            <td>
-              ${Number(
-                user.cuponesUsados ||
-                0
-              )}
-            </td>
-
-            <td>
-
-              <span class="status-badge active">
-                ${escapeHtml(
-                  user.estadoVerificacion ||
-                  "Activo"
-                )}
-              </span>
-
-            </td>
-
-          </tr>
-
-        `;
-
-      }
-    )
-    .join("");
-
-}
-
-
-/* =========================================================
-   RENDER TODO
-========================================================= */
-
-function renderEverything() {
-
-  renderDashboard();
-
-  renderOffers();
-
-  renderCoupons();
-
-  renderUsers();
-
-  renderStatistics();
-
-  renderClicks();
-
-  renderRanking();
-
-}
-
-
-/* =========================================================
-   NAVEGACIÓN
-========================================================= */
-
-const sectionNames = {
-
-  dashboard: {
-    breadcrumb: "Dashboard",
-    title: "Panel de control"
-  },
-
-  ofertas: {
-    breadcrumb: "Contenido",
-    title: "🔥 Ofertas"
-  },
-
-  cupones: {
-    breadcrumb: "Cupones",
-    title: "🎟️ Administración de cupones"
-  },
-
-  usuarios: {
-    breadcrumb: "Comunidad",
-    title: "👥 Usuarios"
-  },
-
-  estadisticas: {
-    breadcrumb: "Analítica",
-    title: "📈 Estadísticas"
-  },
-
-  clics: {
-    breadcrumb: "Actividad",
-    title: "👆 Clics y copias"
-  },
-
-  ranking: {
-    breadcrumb: "Comunidad",
-    title: "🏆 Comprador del mes"
-  },
-
-  configuracion: {
-    breadcrumb: "Sistema",
-    title: "⚙️ Configuración"
-  }
-
-};
-
-
-function showSection(
-  section
-) {
-
-  document
-    .querySelectorAll(
-      ".admin-section"
-    )
-    .forEach(
-      item => {
-
-        item.classList.toggle(
-          "active",
-          item.id ===
-            `section-${section}`
-        );
-
-      }
-    );
-
-
-  document
-    .querySelectorAll(
-      ".nav-item"
-    )
-    .forEach(
-      button => {
-
-        button.classList.toggle(
-          "active",
-          button.dataset.section ===
-            section
-        );
-
-      }
-    );
-
-
-  const info =
-    sectionNames[section] ||
-    sectionNames.dashboard;
-
-
-  setText(
-    "breadcrumb",
-    info.breadcrumb
-  );
-
-  setText(
-    "pageTitle",
-    info.title
-  );
-
-
-  if (section === "clics") {
-
-    renderClicks();
-
-  }
-
-
-  if (section === "ranking") {
-
-    renderRanking();
-
-  }
-
-
-  if (section === "estadisticas") {
-
-    setTimeout(
-      renderCharts,
-      50
-    );
-
-  }
-
-
-  /*
-     Cerrar menú móvil
-  */
-
-  const sidebar =
-    $("sidebar");
-
-  const overlay =
-    $("sidebarOverlay");
-
-  if (sidebar) {
-
-    sidebar.classList.remove(
-      "open"
-    );
-
-  }
-
-  if (overlay) {
-
-    overlay.classList.remove(
-      "show"
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   EVENTOS NAVEGACIÓN
-========================================================= */
-
-document.addEventListener(
-  "click",
-  event => {
-
-    const nav =
-      event.target.closest(
-        ".nav-item"
-      );
-
-
-    if (nav) {
-
-      event.preventDefault();
-
-      showSection(
-        nav.dataset.section
-      );
-
-      return;
-
-    }
-
-
-    const quick =
-      event.target.closest(
-        ".quick-action"
-      );
-
-
-    if (quick) {
-
-      event.preventDefault();
-
-      showSection(
-        quick.dataset.sectionTarget
-      );
-
-      return;
-
-    }
-
-  }
-);
-
-
-/* =========================================================
-   MENÚ MÓVIL
-========================================================= */
-
-function openMobileMenu() {
-
-  const sidebar =
-    $("sidebar");
-
-  const overlay =
-    $("sidebarOverlay");
-
-
-  if (sidebar) {
-
-    sidebar.classList.add(
-      "open"
-    );
-
-  }
-
-  if (overlay) {
-
-    overlay.classList.add(
-      "show"
-    );
-
-  }
-
-}
-
-
-function closeMobileMenu() {
-
-  const sidebar =
-    $("sidebar");
-
-  const overlay =
-    $("sidebarOverlay");
-
-
-  if (sidebar) {
-
-    sidebar.classList.remove(
-      "open"
-    );
-
-  }
-
-  if (overlay) {
-
-    overlay.classList.remove(
-      "show"
-    );
-
-  }
-
-}
-
-
-$("mobileMenuButton")
-  ?.addEventListener(
-    "click",
-    openMobileMenu
-  );
-
-
-$("sidebarClose")
-  ?.addEventListener(
-    "click",
-    closeMobileMenu
-  );
-
-
-$("sidebarOverlay")
-  ?.addEventListener(
-    "click",
-    closeMobileMenu
-  );
-
-
-/* =========================================================
-   MODALES
-========================================================= */
-
-function openModal(
-  id
-) {
-
-  const modal =
-    $(id);
-
-  if (!modal) {
-
-    return;
-
-  }
-
-  modal.classList.add(
-    "show"
-  );
-
-}
-
-
-function closeModal(
-  id
-) {
-
-  const modal =
-    $(id);
-
-  if (!modal) {
-
-    return;
-
-  }
-
-  modal.classList.remove(
-    "show"
-  );
-
-}
-
-
-document.addEventListener(
-  "click",
-  event => {
-
-    const close =
-      event.target.closest(
-        "[data-close-modal]"
-      );
-
-
-    if (close) {
-
-      closeModal(
-        close.dataset.closeModal
-      );
-
-    }
-
-
-    if (
-      event.target.classList.contains(
-        "admin-modal"
-      )
-    ) {
-
-      event.target.classList.remove(
-        "show"
-      );
-
-    }
-
-  }
-);
-
-
-/* =========================================================
-   LIMPIAR FORMULARIO CUPÓN
-========================================================= */
-
-function clearCouponForm() {
-
-  currentCouponId = null;
-
-
-  const form =
-    $("couponForm");
-
-  if (form) {
-
-    form.reset();
-
-  }
-
-
-  setValue(
-    "couponStatus",
-    "activo"
-  );
-
-  setValue(
-    "couponType",
-    "flash"
-  );
-
-
-  setText(
-    "couponModalTitle",
-    "🎟️ Nuevo cupón"
-  );
-
-
-  setText(
-    "couponFormMessage",
-    ""
-  );
-
-}
-
-
-function setValue(
-  id,
-  value
-) {
-
-  const element =
-    $(id);
-
-  if (element) {
-
-    element.value =
-      value ?? "";
-
-  }
-
-}
-
-
-/* =========================================================
-   LIMPIAR OFERTA
-========================================================= */
-
-function clearOfferForm() {
-
-  currentOfferId = null;
-
-
-  const form =
-    $("offerForm");
-
-  if (form) {
-
-    form.reset();
-
-  }
-
-
-  setText(
-    "offerFormMessage",
-    ""
-  );
-
-}
-
-
-/* =========================================================
-   NUEVO CUPÓN
-========================================================= */
-
-$("newCouponButton")
-  ?.addEventListener(
-    "click",
-    () => {
-
-      clearCouponForm();
-
-      openModal(
-        "couponModal"
-      );
-
-    }
-  );
-
-
-/* =========================================================
-   NUEVA OFERTA
-========================================================= */
-
-$("newOfferButton")
-  ?.addEventListener(
-    "click",
-    () => {
-
-      clearOfferForm();
-
-      openModal(
-        "offerModal"
-      );
-
-    }
-  );
-
-
-/* =========================================================
-   EDITAR CUPÓN
-========================================================= */
-
-async function editCoupon(
-  id
-) {
-
-  const coupon =
-    cupones.find(
-      item =>
-        item.id === id
-    );
-
-
-  if (!coupon) {
-
-    showToast(
-      "❌ Cupón no encontrado",
-      "error"
-    );
-
-    return;
-
-  }
-
-
-  currentCouponId =
-    id;
-
-
-  setValue(
-    "couponId",
-    id
-  );
-
-  setValue(
-    "couponCode",
-    getCouponCode(coupon)
-  );
-
-  setValue(
-    "couponTitle",
-    coupon.titulo ||
-    coupon.nombre ||
-    ""
-  );
-
-  setValue(
-    "couponDiscount",
-    coupon.descuento ||
-    ""
-  );
-
-
-  let type =
-    normalize(
-      coupon.tipo ||
-      coupon.type ||
-      "flash"
-    );
-
-
-  if (
-    type.includes("bancar")
-  ) {
-
-    type = "bank";
-
-  } else if (
-    type.includes("exclus")
-  ) {
-
-    type = "exclusive";
-
-  } else {
-
-    type = "flash";
-
-  }
-
-
-  setValue(
-    "couponType",
-    type
-  );
-
-
-  setValue(
-    "couponMinimum",
-    coupon.compraMinima ??
-    coupon.minimo ??
-    coupon.minimum ??
-    ""
-  );
-
-  setValue(
-    "couponMaximum",
-    coupon.tope ??
-    coupon.maximo ??
-    coupon.maximum ??
-    ""
-  );
-
-
-  setValue(
-    "couponStatus",
-    coupon.estado ||
-    "activo"
-  );
-
-
-  setValue(
-    "couponCategory",
-    coupon.categoria ||
-    ""
-  );
-
-
-  setValue(
-    "couponLink",
-    coupon.link ||
-    coupon.enlace ||
-    ""
-  );
-
-
-  setValue(
-    "couponBank",
-    coupon.banco ||
-    ""
-  );
-
-
-  setText(
-    "couponModalTitle",
-    "🎟️ Editar cupón"
-  );
-
-
-  openModal(
-    "couponModal"
-  );
-
-}
-
-
-/* =========================================================
-   GUARDAR CUPÓN
-========================================================= */
-
-async function saveCoupon(
-  event
-) {
-
-  if (
-    event &&
-    event.preventDefault
-  ) {
-
-    event.preventDefault();
-
-  }
-
-
-  if (!db) {
-
-    showToast(
-      "❌ Firebase no está disponible",
-      "error"
-    );
-
-    return;
-
-  }
-
-
-  const code =
-    $("couponCode")?.value
-      .trim()
-      .toUpperCase();
-
-
-  const title =
-    $("couponTitle")?.value
-      .trim();
-
-
-  if (!code || !title) {
-
-    showToast(
-      "❌ Completa código y título",
-      "error"
-    );
-
-    return;
-
-  }
-
-
-  const type =
-    $("couponType")?.value ||
-    "flash";
-
-
-  const data = {
-
-    codigo: code,
-
-    titulo: title,
-
-    descuento:
-      $("couponDiscount")?.value
-        .trim() || "",
-
-    tipo: type,
-
-    compraMinima:
-      Number(
-        $("couponMinimum")?.value ||
-        0
-      ),
-
-    tope:
-      Number(
-        $("couponMaximum")?.value ||
-        0
-      ),
-
-    estado:
-      $("couponStatus")?.value ||
-      "activo",
-
-    categoria:
-      $("couponCategory")?.value
-        .trim() || "General",
-
-    link:
-      $("couponLink")?.value
-        .trim() || "",
-
-    banco:
-      $("couponBank")?.value
-        .trim() || "",
-
-    actualizado:
-      serverTimestamp()
-
-  };
-
-
-  try {
-
-    if (currentCouponId) {
-
-      await updateDoc(
-        doc(
-          db,
-          "cupones",
-          currentCouponId
-        ),
-        data
-      );
-
-
-      showToast(
-        "✅ Cupón actualizado"
-      );
-
-    } else {
-
-      data.creado =
-        serverTimestamp();
-
-
-      await addDoc(
-        collection(
-          db,
-          "cupones"
-        ),
-        data
-      );
-
-
-      showToast(
-        "✅ Cupón creado"
-      );
-
-    }
-
-
-    closeModal(
-      "couponModal"
-    );
-
-    currentCouponId = null;
-
-    await loadAllData(
-      true
-    );
-
-  } catch (error) {
-
-    console.error(
-      "Guardar cupón:",
-      error
-    );
-
-    showToast(
-      `❌ No se pudo guardar: ${
-        firebaseErrorMessage(error)
-      }`,
-      "error"
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   EDITAR OFERTA
-========================================================= */
-
-function editOffer(
-  id
-) {
-
-  const offer =
-    ofertas.find(
-      item =>
-        item.id === id
-    );
-
-
-  if (!offer) {
-
-    showToast(
-      "❌ Oferta no encontrada",
-      "error"
-    );
-
-    return;
-
-  }
-
-
-  currentOfferId =
-    id;
-
-
-  setValue(
-    "offerId",
-    id
-  );
-
-  setValue(
-    "offerTitle",
-    offer.titulo ||
-    ""
-  );
-
-  setValue(
-    "offerOldPrice",
-    offer.precioAntes ||
-    offer.precioAnterior ||
-    ""
-  );
-
-  setValue(
-    "offerCurrentPrice",
-    offer.precioActual ||
-    offer.precio ||
-    ""
-  );
-
-  setValue(
-    "offerCategory",
-    offer.categoria ||
-    ""
-  );
-
-  setValue(
-    "offerLink",
-    offer.link ||
-    offer.enlace ||
-    ""
-  );
-
-  setValue(
-    "offerImage",
-    offer.imagenBase64 ||
-    offer.imagen ||
-    ""
-  );
-
-
-  openModal(
-    "offerModal"
-  );
-
-}
-
-
-/* =========================================================
-   GUARDAR OFERTA
-========================================================= */
-
-async function saveOffer(
-  event
-) {
-
-  if (
-    event &&
-    event.preventDefault
-  ) {
-
-    event.preventDefault();
-
-  }
-
-
-  if (!db) {
-
-    showToast(
-      "❌ Firebase no está disponible",
-      "error"
-    );
-
-    return;
-
-  }
-
-
-  const title =
-    $("offerTitle")?.value
-      .trim();
-
-
-  const currentPrice =
-    Number(
-      $("offerCurrentPrice")
-        ?.value || 0
-    );
-
-
-  const oldPrice =
-    Number(
-      $("offerOldPrice")
-        ?.value || 0
-    );
-
-
-  const category =
-    $("offerCategory")?.value
-      .trim() || "General";
-
-
-  const link =
-    $("offerLink")?.value
-      .trim();
-
-
-  const image =
-    $("offerImage")?.value
-      .trim();
-
-
-  if (!title) {
-
-    showToast(
-      "❌ Escribe el título",
-      "error"
-    );
-
-    return;
-
-  }
-
-
-  if (!currentPrice) {
-
-    showToast(
-      "❌ Escribe el precio actual",
-      "error"
-    );
-
-    return;
-
-  }
-
-
-  if (!link) {
-
-    showToast(
-      "❌ Escribe el enlace",
-      "error"
-    );
-
-    return;
-
-  }
-
-
-  const data = {
-
-    titulo: title,
-
-    precioAntes:
-      oldPrice,
-
-    precioActual:
-      currentPrice,
-
-    categoria:
-      category,
-
-    link:
-      link,
-
-    imagen:
-      image,
-
-    imagenBase64:
-      image,
-
-    actualizado:
-      serverTimestamp()
-
-  };
-
-
-  try {
-
-    if (currentOfferId) {
-
-      await updateDoc(
-        doc(
-          db,
-          "ofertas",
-          currentOfferId
-        ),
-        data
-      );
-
-
-      showToast(
-        "✅ Oferta actualizada"
-      );
-
-    } else {
-
-      data.creado =
-        serverTimestamp();
-
-
-      data.clics = 0;
-
-
-      await addDoc(
-        collection(
-          db,
-          "ofertas"
-        ),
-        data
-      );
-
-
-      showToast(
-        "✅ Oferta publicada"
-      );
-
-    }
-
-
-    closeModal(
-      "offerModal"
-    );
-
-    currentOfferId = null;
-
-    await loadAllData(
-      true
-    );
-
-  } catch (error) {
-
-    console.error(
-      "Guardar oferta:",
-      error
-    );
-
-    showToast(
-      `❌ No se pudo guardar: ${
-        firebaseErrorMessage(error)
-      }`,
-      "error"
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   EDITAR USUARIO
-========================================================= */
-
-function editUser(
-  id
-) {
-
-  const user =
-    usuarios.find(
-      item =>
-        item.id === id
-    );
-
-
-  if (!user) {
-
-    showToast(
-      "❌ Usuario no encontrado",
-      "error"
-    );
-
-    return;
-
-  }
-
-
-  currentUserId =
-    id;
-
-
-  const container =
-    $("userModalContent");
-
-  if (!container) {
-
-    return;
-
-  }
-
-
-  container.innerHTML = `
-
-    <div class="user-modal-info">
-
-      <div class="user-modal-avatar">
-
-        ${
-          user.fotoBase64
-            ? `
-              <img
-                src="${escapeHtml(
-                  user.fotoBase64
-                )}"
-                alt=""
-              >
-            `
-            : "👤"
-        }
+          <span class="status-dot"></span>
+
+          <span>
+            Conectando...
+          </span>
+
+        </div>
+
+        <button
+          type="button"
+          class="refresh-button"
+          id="refreshButton"
+          title="Actualizar estadísticas"
+        >
+          🔄
+        </button>
+
+        <a
+          href="./index.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="topbar-site-button"
+        >
+          Ver página →
+        </a>
 
       </div>
 
-      <h3>
-        ${escapeHtml(
-          user.nombre ||
-          "Sin nombre"
-        )}
-      </h3>
+    </header>
 
-      <p>
-        ${escapeHtml(
-          user.email ||
-          "Sin correo"
-        )}
-      </p>
+    <!-- =====================================================
+         CONTENT
+    ====================================================== -->
 
-      <p>
-        📍 ${escapeHtml(
-          user.estado ||
-          "Sin estado"
-        )}
-      </p>
+    <div class="content-container">
 
-      <hr>
+      <!-- ===================================================
+           DASHBOARD
+      ==================================================== -->
 
-      <p>
-        💰 Ahorro:
-        <strong>
-          ${money(
-            user.ahorroTotal ||
-            user.ahorro ||
-            0
-          )}
-        </strong>
-      </p>
+      <section
+        class="admin-section active"
+        id="section-dashboard"
+      >
 
-      <p>
-        🛒 Compras:
-        <strong>
-          ${Number(
-            user.compras ||
-            0
-          )}
-        </strong>
-      </p>
+        <div class="page-intro">
 
-      <p>
-        🎟️ Cupones usados:
-        <strong>
-          ${Number(
-            user.cuponesUsados ||
-            0
-          )}
-        </strong>
-      </p>
+          <div>
 
-      <p>
-        📅 Registro:
-        <strong>
-          ${formatDate(
-            user.createdAt ||
-            user.fechaRegistro ||
-            user.registro
-          )}
-        </strong>
-      </p>
+            <span class="page-label">
+              RESUMEN GENERAL
+            </span>
 
-      <p>
-        🔐 Estado:
-        <strong>
-          ${escapeHtml(
-            user.estadoVerificacion ||
-            user.estado ||
-            "Pendiente"
-          )}
-        </strong>
-      </p>
+            <h2>
+              👋 Bienvenido al Admin PRO
+            </h2>
+
+            <p>
+              Aquí puedes controlar ofertas, cupones,
+              usuarios y estadísticas de tu página.
+            </p>
+
+          </div>
+
+          <div class="last-update">
+
+            <span>
+              Última actualización
+            </span>
+
+            <strong id="lastUpdate">
+              --:--
+            </strong>
+
+          </div>
+
+        </div>
+
+        <!-- =================================================
+             STAT CARDS
+        ================================================== -->
+
+        <div class="stats-grid">
+
+          <div class="stat-card">
+
+            <div class="stat-icon blue">
+              🔥
+            </div>
+
+            <div class="stat-info">
+
+              <span>
+                Ofertas
+              </span>
+
+              <strong id="statOffers">
+                0
+              </strong>
+
+              <small>
+                Publicadas
+              </small>
+
+            </div>
+
+          </div>
+
+          <div class="stat-card">
+
+            <div class="stat-icon yellow">
+              🎟️
+            </div>
+
+            <div class="stat-info">
+
+              <span>
+                Cupones activos
+              </span>
+
+              <strong id="statCoupons">
+                0
+              </strong>
+
+              <small>
+                Disponibles
+              </small>
+
+            </div>
+
+          </div>
+
+          <div class="stat-card">
+
+            <div class="stat-icon green">
+              👥
+            </div>
+
+            <div class="stat-info">
+
+              <span>
+                Usuarios
+              </span>
+
+              <strong id="statUsers">
+                0
+              </strong>
+
+              <small>
+                Registrados
+              </small>
+
+            </div>
+
+          </div>
+
+          <div class="stat-card">
+
+            <div class="stat-icon purple">
+              👆
+            </div>
+
+            <div class="stat-info">
+
+              <span>
+                Clics totales
+              </span>
+
+              <strong id="statClicks">
+                0
+              </strong>
+
+              <small>
+                Cupones copiados
+              </small>
+
+            </div>
+
+          </div>
+
+          <div class="stat-card">
+
+            <div class="stat-icon orange">
+              💰
+            </div>
+
+            <div class="stat-info">
+
+              <span>
+                Ahorro total
+              </span>
+
+              <strong id="statSavings">
+                $0
+              </strong>
+
+              <small>
+                Usuarios
+              </small>
+
+            </div>
+
+          </div>
+
+          <div class="stat-card">
+
+            <div class="stat-icon pink">
+              🛒
+            </div>
+
+            <div class="stat-info">
+
+              <span>
+                Compras
+              </span>
+
+              <strong id="statPurchases">
+                0
+              </strong>
+
+              <small>
+                Registradas
+              </small>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- =================================================
+             MAIN DASHBOARD GRID
+        ================================================== -->
+
+        <div class="dashboard-grid">
+
+          <!-- ===============================================
+               MOST COPIED COUPON
+          ================================================ -->
+
+          <div class="panel-card">
+
+            <div class="panel-header">
+
+              <div>
+
+                <span class="panel-label">
+                  RENDIMIENTO
+                </span>
+
+                <h3>
+                  🎟️ Cupón más copiado
+                </h3>
+
+              </div>
+
+              <span class="panel-icon">
+                🏆
+              </span>
+
+            </div>
+
+            <div
+              class="top-coupon"
+              id="topCoupon"
+            >
+
+              <div class="empty-state-small">
+
+                <span>
+                  🎟️
+                </span>
+
+                <p>
+                  Cargando estadísticas...
+                </p>
+
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- ===============================================
+               RECENT ACTIVITY
+          ================================================ -->
+
+          <div class="panel-card">
+
+            <div class="panel-header">
+
+              <div>
+
+                <span class="panel-label">
+                  ACTIVIDAD
+                </span>
+
+                <h3>
+                  ⚡ Actividad reciente
+                </h3>
+
+              </div>
+
+            </div>
+
+            <div
+              class="activity-list"
+              id="activityList"
+            >
+
+              <div class="empty-state-small">
+
+                <span>
+                  ⏳
+                </span>
+
+                <p>
+                  Cargando actividad...
+                </p>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- =================================================
+             QUICK ACTIONS
+        ================================================== -->
+
+        <div class="quick-actions-panel">
+
+          <div class="panel-header">
+
+            <div>
+
+              <span class="panel-label">
+                ACCIONES RÁPIDAS
+              </span>
+
+              <h3>
+                ⚡ Administrar página
+              </h3>
+
+            </div>
+
+          </div>
+
+          <div class="quick-actions">
+
+            <button
+              type="button"
+              class="quick-action"
+              data-section-target="cupones"
+            >
+
+              <span>
+                🎟️
+              </span>
+
+              <strong>
+                Cupones
+              </strong>
+
+              <small>
+                Administrar cupones
+              </small>
+
+            </button>
+
+            <button
+              type="button"
+              class="quick-action"
+              data-section-target="ofertas"
+            >
+
+              <span>
+                🔥
+              </span>
+
+              <strong>
+                Ofertas
+              </strong>
+
+              <small>
+                Administrar ofertas
+              </small>
+
+            </button>
+
+            <button
+              type="button"
+              class="quick-action"
+              data-section-target="usuarios"
+            >
+
+              <span>
+                👥
+              </span>
+
+              <strong>
+                Usuarios
+              </strong>
+
+              <small>
+                Ver usuarios
+              </small>
+
+            </button>
+
+            <button
+              type="button"
+              class="quick-action"
+              data-section-target="estadisticas"
+            >
+
+              <span>
+                📊
+              </span>
+
+              <strong>
+                Estadísticas
+              </strong>
+
+              <small>
+                Ver rendimiento
+              </small>
+
+            </button>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ===================================================
+           OFERTAS
+      ==================================================== -->
+
+      <section
+        class="admin-section"
+        id="section-ofertas"
+      >
+
+        <div class="section-page-header">
+
+          <div>
+
+            <span class="page-label">
+              CONTENIDO
+            </span>
+
+            <h2>
+              🔥 Ofertas
+            </h2>
+
+            <p>
+              Administra las ofertas que aparecen
+              en la página principal.
+            </p>
+
+          </div>
+
+          <button
+            type="button"
+            class="primary-button"
+            id="newOfferButton"
+          >
+            ＋ Nueva oferta
+          </button>
+
+        </div>
+
+        <div class="table-panel">
+
+          <div class="table-toolbar">
+
+            <div class="table-search">
+
+              🔎
+
+              <input
+                type="search"
+                id="offerSearch"
+                placeholder="Buscar oferta..."
+              >
+
+            </div>
+
+            <span
+              id="offerTableCount"
+              class="table-count"
+            >
+              0 ofertas
+            </span>
+
+          </div>
+
+          <div class="table-responsive">
+
+            <table class="admin-table">
+
+              <thead>
+
+                <tr>
+
+                  <th>
+                    Oferta
+                  </th>
+
+                  <th>
+                    Precio anterior
+                  </th>
+
+                  <th>
+                    Precio actual
+                  </th>
+
+                  <th>
+                    Descuento
+                  </th>
+
+                  <th>
+                    Clics
+                  </th>
+
+                  <th>
+                    Acciones
+                  </th>
+
+                </tr>
+
+              </thead>
+
+              <tbody
+                id="offersTableBody"
+              >
+
+                <tr>
+
+                  <td
+                    colspan="6"
+                    class="table-loading"
+                  >
+                    Cargando ofertas...
+                  </td>
+
+                </tr>
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ===================================================
+           CUPONES
+      ==================================================== -->
+
+      <section
+        class="admin-section"
+        id="section-cupones"
+      >
+
+        <div class="section-page-header">
+
+          <div>
+
+            <span class="page-label">
+              CUPONES
+            </span>
+
+            <h2>
+              🎟️ Administración de cupones
+            </h2>
+
+            <p>
+              Crea, edita y controla todos los cupones
+              publicados en la página.
+            </p>
+
+          </div>
+
+          <button
+            type="button"
+            class="primary-button"
+            id="newCouponButton"
+          >
+            ＋ Nuevo cupón
+          </button>
+
+        </div>
+
+        <!-- ===============================================
+             COUPON SUMMARY
+        ================================================ -->
+
+        <div class="mini-stats-grid">
+
+          <div class="mini-stat">
+
+            <span class="mini-stat-icon">
+              🟢
+            </span>
+
+            <div>
+
+              <small>
+                Activos
+              </small>
+
+              <strong id="couponActiveCount">
+                0
+              </strong>
+
+            </div>
+
+          </div>
+
+          <div class="mini-stat">
+
+            <span class="mini-stat-icon">
+              🟠
+            </span>
+
+            <div>
+
+              <small>
+                Por agotarse
+              </small>
+
+              <strong id="couponWarningCount">
+                0
+              </strong>
+
+            </div>
+
+          </div>
+
+          <div class="mini-stat">
+
+            <span class="mini-stat-icon">
+              🔴
+            </span>
+
+            <div>
+
+              <small>
+                Agotados
+              </small>
+
+              <strong id="couponExpiredCount">
+                0
+              </strong>
+
+            </div>
+
+          </div>
+
+          <div class="mini-stat">
+
+            <span class="mini-stat-icon">
+              👆
+            </span>
+
+            <div>
+
+              <small>
+                Copias
+              </small>
+
+              <strong id="couponCopiesCount">
+                0
+              </strong>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="table-panel">
+
+          <div class="table-toolbar">
+
+            <div class="table-search">
+
+              🔎
+
+              <input
+                type="search"
+                id="couponSearch"
+                placeholder="Buscar cupón..."
+              >
+
+            </div>
+
+            <select
+              id="couponTypeFilter"
+              class="table-select"
+            >
+
+              <option value="all">
+                Todos
+              </option>
+
+              <option value="flash">
+                ⚡ Relámpago
+              </option>
+
+              <option value="exclusive">
+                🎁 Exclusivos
+              </option>
+
+              <option value="bank">
+                🏦 Bancarios
+              </option>
+
+            </select>
+
+            <span
+              id="couponTableCount"
+              class="table-count"
+            >
+              0 cupones
+            </span>
+
+          </div>
+
+          <div class="table-responsive">
+
+            <table class="admin-table coupon-table">
+
+              <thead>
+
+                <tr>
+
+                  <th>
+                    Cupón
+                  </th>
+
+                  <th>
+                    Tipo
+                  </th>
+
+                  <th>
+                    Descuento
+                  </th>
+
+                  <th>
+                    Mínimo
+                  </th>
+
+                  <th>
+                    Tope
+                  </th>
+
+                  <th>
+                    Estado
+                  </th>
+
+                  <th>
+                    Copias
+                  </th>
+
+                  <th>
+                    Acciones
+                  </th>
+
+                </tr>
+
+              </thead>
+
+              <tbody
+                id="couponsTableBody"
+              >
+
+                <tr>
+
+                  <td
+                    colspan="8"
+                    class="table-loading"
+                  >
+                    Cargando cupones...
+                  </td>
+
+                </tr>
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ===================================================
+           USUARIOS
+      ==================================================== -->
+
+      <section
+        class="admin-section"
+        id="section-usuarios"
+      >
+
+        <div class="section-page-header">
+
+          <div>
+
+            <span class="page-label">
+              COMUNIDAD
+            </span>
+
+            <h2>
+              👥 Usuarios
+            </h2>
+
+            <p>
+              Consulta usuarios registrados, ahorro,
+              compras y estado de verificación.
+            </p>
+
+          </div>
+
+          <button
+            type="button"
+            class="secondary-button"
+            id="refreshUsersButton"
+          >
+            🔄 Actualizar
+          </button>
+
+        </div>
+
+        <div class="mini-stats-grid">
+
+          <div class="mini-stat">
+
+            <span class="mini-stat-icon">
+              👥
+            </span>
+
+            <div>
+
+              <small>
+                Registrados
+              </small>
+
+              <strong id="usersRegisteredCount">
+                0
+              </strong>
+
+            </div>
+
+          </div>
+
+          <div class="mini-stat">
+
+            <span class="mini-stat-icon">
+              ✅
+            </span>
+
+            <div>
+
+              <small>
+                Verificados
+              </small>
+
+              <strong id="usersVerifiedCount">
+                0
+              </strong>
+
+            </div>
+
+          </div>
+
+          <div class="mini-stat">
+
+            <span class="mini-stat-icon">
+              ⏳
+            </span>
+
+            <div>
+
+              <small>
+                Pendientes
+              </small>
+
+              <strong id="usersPendingCount">
+                0
+              </strong>
+
+            </div>
+
+          </div>
+
+          <div class="mini-stat">
+
+            <span class="mini-stat-icon">
+              💰
+            </span>
+
+            <div>
+
+              <small>
+                Ahorro total
+              </small>
+
+              <strong id="usersSavingsCount">
+                $0
+              </strong>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="table-panel">
+
+          <div class="table-toolbar">
+
+            <div class="table-search">
+
+              🔎
+
+              <input
+                type="search"
+                id="userSearch"
+                placeholder="Buscar nombre, correo o estado..."
+              >
+
+            </div>
+
+            <select
+              id="userStatusFilter"
+              class="table-select"
+            >
+
+              <option value="all">
+                Todos los estados
+              </option>
+
+              <option value="pendiente">
+                Pendientes
+              </option>
+
+              <option value="verificado">
+                Verificados
+              </option>
+
+              <option value="rechazado">
+                Rechazados
+              </option>
+
+            </select>
+
+            <span
+              id="userTableCount"
+              class="table-count"
+            >
+              0 usuarios
+            </span>
+
+          </div>
+
+          <div class="table-responsive">
+
+            <table class="admin-table">
+
+              <thead>
+
+                <tr>
+
+                  <th>
+                    Usuario
+                  </th>
+
+                  <th>
+                    Estado
+                  </th>
+
+                  <th>
+                    Estado de México
+                  </th>
+
+                  <th>
+                    Compras
+                  </th>
+
+                  <th>
+                    Cupones
+                  </th>
+
+                  <th>
+                    Ahorro
+                  </th>
+
+                  <th>
+                    Registro
+                  </th>
+
+                  <th>
+                    Acciones
+                  </th>
+
+                </tr>
+
+              </thead>
+
+              <tbody
+                id="usersTableBody"
+              >
+
+                <tr>
+
+                  <td
+                    colspan="8"
+                    class="table-loading"
+                  >
+                    Cargando usuarios...
+                  </td>
+
+                </tr>
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ===================================================
+           ESTADÍSTICAS
+      ==================================================== -->
+
+      <section
+        class="admin-section"
+        id="section-estadisticas"
+      >
+
+        <div class="section-page-header">
+
+          <div>
+
+            <span class="page-label">
+              ANALÍTICA
+            </span>
+
+            <h2>
+              📈 Estadísticas
+            </h2>
+
+            <p>
+              Analiza el rendimiento de tus cupones
+              y la actividad de los usuarios.
+            </p>
+
+          </div>
+
+          <div class="period-selector">
+
+            <button
+              type="button"
+              class="period-button active"
+              data-period="7"
+            >
+              7 días
+            </button>
+
+            <button
+              type="button"
+              class="period-button"
+              data-period="30"
+            >
+              30 días
+            </button>
+
+            <button
+              type="button"
+              class="period-button"
+              data-period="all"
+            >
+              Todo
+            </button>
+
+          </div>
+
+        </div>
+
+        <!-- ===============================================
+             CHARTS
+        ================================================ -->
+
+        <div class="charts-grid">
+
+          <!-- =============================================
+               CLICKS BY DAY
+          ============================================== -->
+
+          <div class="chart-panel chart-large">
+
+            <div class="panel-header">
+
+              <div>
+
+                <span class="panel-label">
+                  ACTIVIDAD DIARIA
+                </span>
+
+                <h3>
+                  👆 Días con más clics
+                </h3>
+
+              </div>
+
+              <div
+                class="chart-total"
+                id="chartClicksTotal"
+              >
+                0 clics
+              </div>
+
+            </div>
+
+            <div class="chart-wrapper">
+
+              <canvas
+                id="clicksByDayChart"
+              ></canvas>
+
+              <div
+                class="chart-empty"
+                id="clicksChartEmpty"
+              >
+
+                <span>
+                  📊
+                </span>
+
+                <p>
+                  Cargando datos...
+                </p>
+
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- =============================================
+               COUPON RANKING
+          ============================================== -->
+
+          <div class="chart-panel">
+
+            <div class="panel-header">
+
+              <div>
+
+                <span class="panel-label">
+                  CUPONES
+                </span>
+
+                <h3>
+                  🏆 Copias por cupón
+                </h3>
+
+              </div>
+
+            </div>
+
+            <div
+              class="coupon-ranking-list"
+              id="couponRankingList"
+            >
+
+              <div class="empty-state-small">
+
+                <span>
+                  🎟️
+                </span>
+
+                <p>
+                  Cargando...
+                </p>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- ===============================================
+             SECOND CHART ROW
+        ================================================ -->
+
+        <div class="charts-grid">
+
+          <!-- =============================================
+               USERS BY STATE
+          ============================================== -->
+
+          <div class="chart-panel">
+
+            <div class="panel-header">
+
+              <div>
+
+                <span class="panel-label">
+                  UBICACIÓN
+                </span>
+
+                <h3>
+                  🇲🇽 Usuarios por estado
+                </h3>
+
+              </div>
+
+            </div>
+
+            <div class="state-chart-wrapper">
+
+              <canvas
+                id="usersByStateChart"
+              ></canvas>
+
+              <div
+                class="chart-empty"
+                id="stateChartEmpty"
+              >
+
+                <span>
+                  🇲🇽
+                </span>
+
+                <p>
+                  Cargando datos...
+                </p>
+
+              </div>
+
+            </div>
+
+            <div
+              class="state-list"
+              id="stateList"
+            ></div>
+
+          </div>
+
+          <!-- =============================================
+               GENERAL PERFORMANCE
+          ============================================== -->
+
+          <div class="chart-panel">
+
+            <div class="panel-header">
+
+              <div>
+
+                <span class="panel-label">
+                  RENDIMIENTO
+                </span>
+
+                <h3>
+                  📊 Resumen
+                </h3>
+
+              </div>
+
+            </div>
+
+            <div class="performance-list">
+
+              <div class="performance-row">
+
+                <div class="performance-icon">
+                  👆
+                </div>
+
+                <div class="performance-content">
+
+                  <span>
+                    Clics totales
+                  </span>
+
+                  <strong id="performanceClicks">
+                    0
+                  </strong>
+
+                </div>
+
+              </div>
+
+              <div class="performance-row">
+
+                <div class="performance-icon">
+                  🎟️
+                </div>
+
+                <div class="performance-content">
+
+                  <span>
+                    Cupones copiados
+                  </span>
+
+                  <strong id="performanceCoupons">
+                    0
+                  </strong>
+
+                </div>
+
+              </div>
+
+              <div class="performance-row">
+
+                <div class="performance-icon">
+                  👥
+                </div>
+
+                <div class="performance-content">
+
+                  <span>
+                    Usuarios
+                  </span>
+
+                  <strong id="performanceUsers">
+                    0
+                  </strong>
+
+                </div>
+
+              </div>
+
+              <div class="performance-row">
+
+                <div class="performance-icon">
+                  💰
+                </div>
+
+                <div class="performance-content">
+
+                  <span>
+                    Ahorro generado
+                  </span>
+
+                  <strong id="performanceSavings">
+                    $0
+                  </strong>
+
+                </div>
+
+              </div>
+
+              <div class="performance-row">
+
+                <div class="performance-icon">
+                  🛒
+                </div>
+
+                <div class="performance-content">
+
+                  <span>
+                    Compras registradas
+                  </span>
+
+                  <strong id="performancePurchases">
+                    0
+                  </strong>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ===================================================
+           CLICS
+      ==================================================== -->
+
+      <section
+        class="admin-section"
+        id="section-clics"
+      >
+
+        <div class="section-page-header">
+
+          <div>
+
+            <span class="page-label">
+              ACTIVIDAD
+            </span>
+
+            <h2>
+              👆 Clics y copias
+            </h2>
+
+            <p>
+              Revisa cuándo, qué cupón y cuántas veces
+              fue utilizado.
+            </p>
+
+          </div>
+
+        </div>
+
+        <div class="mini-stats-grid">
+
+          <div class="mini-stat">
+
+            <span class="mini-stat-icon">
+              👆
+            </span>
+
+            <div>
+
+              <small>
+                Clics totales
+              </small>
+
+              <strong id="clicksTotal">
+                0
+              </strong>
+
+            </div>
+
+          </div>
+
+          <div class="mini-stat">
+
+            <span class="mini-stat-icon">
+              📅
+            </span>
+
+            <div>
+
+              <small>
+                Hoy
+              </small>
+
+              <strong id="clicksToday">
+                0
+              </strong>
+
+            </div>
+
+          </div>
+
+          <div class="mini-stat">
+
+            <span class="mini-stat-icon">
+              📈
+            </span>
+
+            <div>
+
+              <small>
+                Promedio diario
+              </small>
+
+              <strong id="clicksAverage">
+                0
+              </strong>
+
+            </div>
+
+          </div>
+
+          <div class="mini-stat">
+
+            <span class="mini-stat-icon">
+              🏆
+            </span>
+
+            <div>
+
+              <small>
+                Más popular
+              </small>
+
+              <strong
+                id="mostCopiedShort"
+              >
+                —
+              </strong>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="table-panel">
+
+          <div class="table-toolbar">
+
+            <div class="table-search">
+
+              🔎
+
+              <input
+                type="search"
+                id="clickSearch"
+                placeholder="Buscar código..."
+              >
+
+            </div>
+
+            <span
+              id="clickTableCount"
+              class="table-count"
+            >
+              0 registros
+            </span>
+
+          </div>
+
+          <div class="table-responsive">
+
+            <table class="admin-table">
+
+              <thead>
+
+                <tr>
+
+                  <th>
+                    Cupón
+                  </th>
+
+                  <th>
+                    Usuario
+                  </th>
+
+                  <th>
+                    Fecha
+                  </th>
+
+                  <th>
+                    Hora
+                  </th>
+
+                  <th>
+                    Estado
+                  </th>
+
+                </tr>
+
+              </thead>
+
+              <tbody
+                id="clicksTableBody"
+              >
+
+                <tr>
+
+                  <td
+                    colspan="5"
+                    class="table-loading"
+                  >
+                    Cargando actividad...
+                  </td>
+
+                </tr>
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ===================================================
+           RANKING
+      ==================================================== -->
+
+      <section
+        class="admin-section"
+        id="section-ranking"
+      >
+
+        <div class="section-page-header">
+
+          <div>
+
+            <span class="page-label">
+              COMUNIDAD
+            </span>
+
+            <h2>
+              🏆 Comprador del mes
+            </h2>
+
+            <p>
+              Ranking automático basado en el ahorro
+              registrado por cada usuario.
+            </p>
+
+          </div>
+
+        </div>
+
+        <div
+          class="ranking-grid"
+          id="rankingGrid"
+        >
+
+          <div class="ranking-loading">
+
+            🏆
+
+            <p>
+              Cargando ranking...
+            </p>
+
+          </div>
+
+        </div>
+
+        <div class="table-panel">
+
+          <div class="panel-header">
+
+            <div>
+
+              <span class="panel-label">
+                CLASIFICACIÓN
+              </span>
+
+              <h3>
+                Usuarios con mayor ahorro
+              </h3>
+
+            </div>
+
+          </div>
+
+          <div class="table-responsive">
+
+            <table class="admin-table">
+
+              <thead>
+
+                <tr>
+
+                  <th>
+                    Posición
+                  </th>
+
+                  <th>
+                    Usuario
+                  </th>
+
+                  <th>
+                    Ahorro
+                  </th>
+
+                  <th>
+                    Compras
+                  </th>
+
+                  <th>
+                    Cupones
+                  </th>
+
+                  <th>
+                    Estado
+                  </th>
+
+                </tr>
+
+              </thead>
+
+              <tbody
+                id="rankingTableBody"
+              >
+
+                <tr>
+
+                  <td
+                    colspan="6"
+                    class="table-loading"
+                  >
+                    Cargando ranking...
+                  </td>
+
+                </tr>
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ===================================================
+           CONFIGURACIÓN
+      ==================================================== -->
+
+      <section
+        class="admin-section"
+        id="section-configuracion"
+      >
+
+        <div class="section-page-header">
+
+          <div>
+
+            <span class="page-label">
+              SISTEMA
+            </span>
+
+            <h2>
+              ⚙️ Configuración
+            </h2>
+
+            <p>
+              Configuración general del panel administrativo.
+            </p>
+
+          </div>
+
+        </div>
+
+        <div class="settings-grid">
+
+          <div class="settings-card">
+
+            <div class="settings-icon">
+              🔥
+            </div>
+
+            <div>
+
+              <h3>
+                Firebase
+              </h3>
+
+              <p>
+                Estado de conexión con Firestore.
+              </p>
+
+              <div
+                class="settings-status"
+                id="settingsFirebaseStatus"
+              >
+                Conectando...
+              </div>
+
+            </div>
+
+          </div>
+
+          <div class="settings-card">
+
+            <div class="settings-icon">
+              🎟️
+            </div>
+
+            <div>
+
+              <h3>
+                Registro de copias
+              </h3>
+
+              <p>
+                Cada cupón debe registrarse como máximo
+                una vez por usuario por día.
+              </p>
+
+              <div class="settings-status success">
+                Sistema preparado
+              </div>
+
+            </div>
+
+          </div>
+
+          <div class="settings-card">
+
+            <div class="settings-icon">
+                📊
+            </div>
+
+            <div>
+
+              <h3>
+                Estadísticas
+              </h3>
+
+              <p>
+                Las estadísticas se calculan directamente
+                desde Firestore.
+              </p>
+
+              <div class="settings-status success">
+                Activas
+              </div>
+
+            </div>
+
+          </div>
+
+          <div class="settings-card">
+
+            <div class="settings-icon">
+              🖼️
+            </div>
+
+            <div>
+
+              <h3>
+                Imágenes
+              </h3>
+
+              <p>
+                Las imágenes pueden guardarse directamente
+                como Base64 en Firestore.
+              </p>
+
+              <div class="settings-status success">
+                Sin Firebase Storage
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="info-panel">
+
+          <div class="info-icon">
+            ℹ️
+          </div>
+
+          <div>
+
+            <h3>
+              Estructura utilizada
+            </h3>
+
+            <p>
+              Este panel utiliza las colecciones
+              <strong>cupones</strong>,
+              <strong>ofertas</strong>,
+              <strong>usuarios</strong> y
+              <strong>copias</strong> de Firestore.
+              Las estadísticas se generan a partir
+              de esos datos.
+            </p>
+
+          </div>
+
+        </div>
+
+      </section>
 
     </div>
 
-  `;
+  </main>
 
+</div>
 
-  openModal(
-    "userModal"
-  );
+<!-- =========================================================
+     MODAL CUPÓN
+========================================================= -->
 
-}
+<div
+  class="admin-modal"
+  id="couponModal"
+>
 
+  <div class="admin-modal-box">
 
-/* =========================================================
-   SAVE USER
-========================================================= */
+    <div class="modal-header">
 
-async function saveUser(
-  event
-) {
+      <div>
 
-  if (
-    event &&
-    event.preventDefault
-  ) {
+        <span class="page-label">
+          ADMINISTRACIÓN
+        </span>
 
-    event.preventDefault();
+        <h2 id="couponModalTitle">
+          🎟️ Nuevo cupón
+        </h2>
 
-  }
+      </div>
 
+      <button
+        type="button"
+        class="modal-close"
+        data-close-modal="couponModal"
+      >
+        ×
+      </button>
 
-  /*
-     El HTML actual no tiene formulario
-     de edición de usuarios.
+    </div>
 
-     Se deja preparado para futuras
-     ampliaciones.
-  */
+    <form
+      id="couponForm"
+      class="admin-form"
+    >
 
-}
+      <input
+        type="hidden"
+        id="couponId"
+      >
 
+      <div class="form-grid">
 
-/* =========================================================
-   ELIMINAR OFERTA
-========================================================= */
+        <label>
 
-async function deleteOffer(
-  id
-) {
+          Código
 
-  const offer =
-    ofertas.find(
-      item =>
-        item.id === id
-    );
+          <input
+            type="text"
+            id="couponCode"
+            placeholder="EJEMPLO2026"
+            maxlength="50"
+            required
+          >
 
+        </label>
 
-  if (!offer) {
+        <label>
 
-    return;
+          Título
 
-  }
+          <input
+            type="text"
+            id="couponTitle"
+            placeholder="$500 OFF"
+            maxlength="150"
+            required
+          >
 
+        </label>
 
-  const confirmed =
-    confirm(
-      `¿Eliminar la oferta "${
-        offer.titulo ||
-        "Sin título"
-      }"?`
-    );
+        <label>
 
+          Descuento
 
-  if (!confirmed) {
+          <input
+            type="text"
+            id="couponDiscount"
+            placeholder="$500 OFF / 20%"
+          >
 
-    return;
+        </label>
 
-  }
+        <label>
 
+          Tipo
 
-  try {
+          <select
+            id="couponType"
+          >
 
-    await deleteDoc(
-      doc(
-        db,
-        "ofertas",
-        id
-      )
-    );
+            <option value="flash">
+              ⚡ Relámpago
+            </option>
 
+            <option value="exclusive">
+              🎁 Exclusivo
+            </option>
 
-    showToast(
-      "🗑️ Oferta eliminada"
-    );
+            <option value="bank">
+              🏦 Bancario
+            </option>
 
+          </select>
 
-    await loadAllData(
-      true
-    );
+        </label>
 
-  } catch (error) {
+        <label>
 
-    console.error(
-      error
-    );
+          Compra mínima
 
-    showToast(
-      `❌ No se pudo eliminar: ${
-        firebaseErrorMessage(error)
-      }`,
-      "error"
-    );
+          <input
+            type="number"
+            id="couponMinimum"
+            placeholder="1000"
+            min="0"
+          >
 
-  }
+        </label>
 
-}
+        <label>
 
+          Tope
 
-/* =========================================================
-   ELIMINAR CUPÓN
-========================================================= */
+          <input
+            type="number"
+            id="couponMaximum"
+            placeholder="150"
+            min="0"
+          >
 
-async function deleteCoupon(
-  id
-) {
+        </label>
 
-  const coupon =
-    cupones.find(
-      item =>
-        item.id === id
-    );
+        <label>
 
+          Estado
 
-  if (!coupon) {
+          <select
+            id="couponStatus"
+          >
 
-    return;
+            <option value="activo">
+              🟢 Activo
+            </option>
 
-  }
+            <option value="por agotarse">
+              🟠 Por agotarse
+            </option>
 
+            <option value="agotado">
+              🔴 Agotado
+            </option>
 
-  const code =
-    getCouponCode(coupon);
+          </select>
 
+        </label>
 
-  const confirmed =
-    confirm(
-      `¿Eliminar el cupón "${code}"?`
-    );
+        <label>
 
+          Categoría
 
-  if (!confirmed) {
+          <input
+            type="text"
+            id="couponCategory"
+            placeholder="General"
+          >
 
-    return;
+        </label>
 
-  }
+        <label class="form-full">
 
+          Enlace de Mercado Libre
 
-  try {
+          <input
+            type="url"
+            id="couponLink"
+            placeholder="https://meli.la/..."
+          >
 
-    await deleteDoc(
-      doc(
-        db,
-        "cupones",
-        id
-      )
-    );
+        </label>
 
+        <label class="form-full">
 
-    showToast(
-      "🗑️ Cupón eliminado"
-    );
+          Banco / tienda
 
+          <input
+            type="text"
+            id="couponBank"
+            placeholder="Opcional"
+          >
 
-    await loadAllData(
-      true
-    );
+        </label>
 
-  } catch (error) {
+      </div>
 
-    console.error(
-      error
-    );
+      <div
+        class="form-message"
+        id="couponFormMessage"
+      ></div>
 
-    showToast(
-      `❌ No se pudo eliminar: ${
-        firebaseErrorMessage(error)
-      }`,
-      "error"
-    );
+      <div class="modal-actions">
 
-  }
+        <button
+          type="button"
+          class="secondary-button"
+          data-close-modal="couponModal"
+        >
+          Cancelar
+        </button>
 
-}
+        <button
+          type="submit"
+          class="primary-button"
+          id="saveCouponButton"
+        >
+          GUARDAR CUPÓN
+        </button>
 
+      </div>
 
-/* =========================================================
-   ELIMINAR USUARIO
-========================================================= */
+    </form>
 
-async function deleteUser(
-  id
-) {
+  </div>
 
-  const user =
-    usuarios.find(
-      item =>
-        item.id === id
-    );
+</div>
 
+<!-- =========================================================
+     MODAL OFERTA
+========================================================= -->
 
-  if (!user) {
+<div
+  class="admin-modal"
+  id="offerModal"
+>
 
-    return;
+  <div class="admin-modal-box">
 
-  }
+    <div class="modal-header">
 
+      <div>
 
-  const confirmed =
-    confirm(
-      `¿Eliminar al usuario "${
-        user.nombre ||
-        user.email ||
-        "Usuario"
-      }"?`
-    );
+        <span class="page-label">
+          ADMINISTRACIÓN
+        </span>
 
+        <h2>
+          🔥 Nueva oferta
+        </h2>
 
-  if (!confirmed) {
+      </div>
 
-    return;
+      <button
+        type="button"
+        class="modal-close"
+        data-close-modal="offerModal"
+      >
+        ×
+      </button>
 
-  }
+    </div>
 
+    <form
+      id="offerForm"
+      class="admin-form"
+    >
 
-  try {
+      <input
+        type="hidden"
+        id="offerId"
+      >
 
-    await deleteDoc(
-      doc(
-        db,
-        "usuarios",
-        id
-      )
-    );
+      <div class="form-grid">
 
+        <label class="form-full">
 
-    showToast(
-      "🗑️ Usuario eliminado"
-    );
+          Título
 
+          <input
+            type="text"
+            id="offerTitle"
+            placeholder="Nombre del producto"
+            required
+          >
 
-    await loadAllData(
-      true
-    );
+        </label>
 
-  } catch (error) {
+        <label>
 
-    console.error(
-      error
-    );
+          Precio anterior
 
-    showToast(
-      `❌ No se pudo eliminar: ${
-        firebaseErrorMessage(error)
-      }`,
-      "error"
-    );
+          <input
+            type="number"
+            id="offerOldPrice"
+            min="0"
+            step="0.01"
+          >
 
-  }
+        </label>
 
-}
+        <label>
 
+          Precio actual
 
-/* =========================================================
-   MENSAJES FIREBASE
-========================================================= */
+          <input
+            type="number"
+            id="offerCurrentPrice"
+            min="0"
+            step="0.01"
+            required
+          >
 
-function firebaseErrorMessage(
-  error
-) {
+        </label>
 
-  if (!error) {
+        <label>
 
-    return "Error desconocido";
+          Categoría
 
-  }
+          <input
+            type="text"
+            id="offerCategory"
+            placeholder="Electrónica"
+          >
 
+        </label>
 
-  const code =
-    error.code || "";
+        <label>
 
+          Enlace
 
-  if (
-    code.includes(
-      "permission-denied"
-    )
-  ) {
+          <input
+            type="url"
+            id="offerLink"
+            placeholder="https://meli.la/..."
+            required
+          >
 
-    return "Permisos de Firestore";
+        </label>
 
-  }
+        <label class="form-full">
 
+          Imagen Base64
 
-  if (
-    code.includes(
-      "failed-precondition"
-    )
-  ) {
+          <textarea
+            id="offerImage"
+            rows="4"
+            placeholder="Pega aquí la imagen Base64..."
+          ></textarea>
 
-    return "Configuración de Firestore";
+        </label>
 
-  }
+      </div>
 
+      <div
+        class="form-message"
+        id="offerFormMessage"
+      ></div>
 
-  if (
-    code.includes(
-      "unavailable"
-    )
-  ) {
+      <div class="modal-actions">
 
-    return "Firebase no disponible";
+        <button
+          type="button"
+          class="secondary-button"
+          data-close-modal="offerModal"
+        >
+          Cancelar
+        </button>
 
-  }
+        <button
+          type="submit"
+          class="primary-button"
+          id="saveOfferButton"
+        >
+          GUARDAR OFERTA
+        </button>
 
+      </div>
 
-  if (
-    code.includes(
-      "not-found"
-    )
-  ) {
+    </form>
 
-    return "Documento no encontrado";
+  </div>
 
-  }
+</div>
 
+<!-- =========================================================
+     MODAL USUARIO
+========================================================= -->
 
-  return (
-    error.message ||
-    "Error desconocido"
-  );
+<div
+  class="admin-modal"
+  id="userModal"
+>
 
-}
+  <div class="admin-modal-box">
 
+    <div class="modal-header">
 
-/* =========================================================
-   EVENTOS TABLAS
-========================================================= */
+      <div>
 
-document.addEventListener(
-  "click",
-  event => {
+        <span class="page-label">
+          USUARIO
+        </span>
 
-    const editOfferButton =
-      event.target.closest(
-        "[data-edit-offer]"
-      );
+        <h2>
+          👤 Información
+        </h2>
 
+      </div>
 
-    if (editOfferButton) {
+      <button
+        type="button"
+        class="modal-close"
+        data-close-modal="userModal"
+      >
+        ×
+      </button>
 
-      editOffer(
-        editOfferButton.dataset.editOffer
-      );
+    </div>
 
-      return;
+    <div
+      id="userModalContent"
+      class="user-modal-content"
+    >
 
-    }
+      Cargando...
 
+    </div>
 
-    const deleteOfferButton =
-      event.target.closest(
-        "[data-delete-offer]"
-      );
+    <div class="modal-actions">
 
+      <button
+        type="button"
+        class="secondary-button"
+        data-close-modal="userModal"
+      >
+        Cerrar
+      </button>
 
-    if (deleteOfferButton) {
+    </div>
 
-      deleteOffer(
-        deleteOfferButton.dataset.deleteOffer
-      );
+  </div>
 
-      return;
+</div>
 
-    }
+<!-- =========================================================
+     TOAST
+========================================================= -->
 
+<div
+  class="admin-toast"
+  id="adminToast"
+  role="status"
+  aria-live="polite"
+></div>
 
-    const editCouponButton =
-      event.target.closest(
-        "[data-edit-coupon]"
-      );
+<!-- =========================================================
+     CHART.JS
+========================================================= -->
 
+<script
+  src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"
+></script>
 
-    if (editCouponButton) {
+<!-- =========================================================
+     ADMIN JAVASCRIPT
+========================================================= -->
 
-      editCoupon(
-        editCouponButton.dataset.editCoupon
-      );
+<script
+  type="module"
+  src="./admin-pro.js?v=20260813"
+></script>
 
-      return;
-
-    }
-
-
-    const deleteCouponButton =
-      event.target.closest(
-        "[data-delete-coupon]"
-      );
-
-
-    if (deleteCouponButton) {
-
-      deleteCoupon(
-        deleteCouponButton.dataset.deleteCoupon
-      );
-
-      return;
-
-    }
-
-
-    const editUserButton =
-      event.target.closest(
-        "[data-edit-user]"
-      );
-
-
-    if (editUserButton) {
-
-      editUser(
-        editUserButton.dataset.editUser
-      );
-
-      return;
-
-    }
-
-
-    const deleteUserButton =
-      event.target.closest(
-        "[data-delete-user]"
-      );
-
-
-    if (deleteUserButton) {
-
-      deleteUser(
-        deleteUserButton.dataset.deleteUser
-      );
-
-      return;
-
-    }
-
-  }
-);
-
-
-/* =========================================================
-   FORMULARIOS
-========================================================= */
-
-$("couponForm")
-  ?.addEventListener(
-    "submit",
-    saveCoupon
-  );
-
-
-$("offerForm")
-  ?.addEventListener(
-    "submit",
-    saveOffer
-  );
-
-
-/* =========================================================
-   REFRESCAR
-========================================================= */
-
-$("refreshButton")
-  ?.addEventListener(
-    "click",
-    () => {
-
-      loadAllData();
-
-    }
-  );
-
-
-$("refreshUsersButton")
-  ?.addEventListener(
-    "click",
-    () => {
-
-      loadAllData();
-
-    }
-  );
-
-
-/* =========================================================
-   BUSCADOR OFERTAS
-========================================================= */
-
-$("offerSearch")
-  ?.addEventListener(
-    "input",
-    renderOffers
-  );
-
-
-/* =========================================================
-   BUSCADOR CUPONES
-========================================================= */
-
-$("couponSearch")
-  ?.addEventListener(
-    "input",
-    renderCoupons
-  );
-
-
-$("couponTypeFilter")
-  ?.addEventListener(
-    "change",
-    renderCoupons
-  );
-
-
-/* =========================================================
-   BUSCADOR USUARIOS
-========================================================= */
-
-$("userSearch")
-  ?.addEventListener(
-    "input",
-    renderUsers
-  );
-
-
-$("userStatusFilter")
-  ?.addEventListener(
-    "change",
-    renderUsers
-  );
-
-
-/* =========================================================
-   BUSCADOR CLICS
-========================================================= */
-
-$("clickSearch")
-  ?.addEventListener(
-    "input",
-    renderClicks
-  );
-
-
-/* =========================================================
-   PERIODOS ESTADÍSTICAS
-========================================================= */
-
-document
-  .querySelectorAll(
-    ".period-button"
-  )
-  .forEach(
-    button => {
-
-      button.addEventListener(
-        "click",
-        () => {
-
-          document
-            .querySelectorAll(
-              ".period-button"
-            )
-            .forEach(
-              item =>
-                item.classList.remove(
-                  "active"
-                )
-            );
-
-
-          button.classList.add(
-            "active"
-          );
-
-
-          renderClicksChart();
-
-        }
-      );
-
-    }
-  );
-
-
-/* =========================================================
-   IMAGEN BASE64
-========================================================= */
-
-function setupImageInput() {
-
-  const input =
-    $("offerImage");
-
-
-  /*
-     Tu HTML actual usa un textarea
-     para pegar Base64.
-
-     Si posteriormente agregas
-     un input type=file,
-     también será compatible.
-  */
-
-  const fileInputs =
-    [
-      "offerImageFile",
-      "imagenOfertaFile"
-    ];
-
-
-  fileInputs.forEach(
-    id => {
-
-      const input =
-        $(id);
-
-      if (!input) {
-
-        return;
-
-      }
-
-
-      input.addEventListener(
-        "change",
-        () => {
-
-          const file =
-            input.files?.[0];
-
-
-          if (!file) {
-
-            return;
-
-          }
-
-
-          if (
-            file.size >
-            900 * 1024
-          ) {
-
-            showToast(
-              "❌ Imagen demasiado grande. Máximo 900 KB.",
-              "error"
-            );
-
-            input.value = "";
-
-            return;
-
-          }
-
-
-          const reader =
-            new FileReader();
-
-
-          reader.onload =
-            () => {
-
-              setValue(
-                "offerImage",
-                reader.result
-              );
-
-
-              showToast(
-                "🖼️ Imagen preparada"
-              );
-
-            };
-
-
-          reader.readAsDataURL(
-            file
-          );
-
-        }
-      );
-
-    }
-  );
-
-}
-
-
-/* =========================================================
-   AUTO REFRESH
-========================================================= */
-
-let autoRefreshTimer =
-  null;
-
-
-function startAutoRefresh() {
-
-  if (
-    autoRefreshTimer
-  ) {
-
-    clearInterval(
-      autoRefreshTimer
-    );
-
-  }
-
-
-  autoRefreshTimer =
-    setInterval(
-      async () => {
-
-        try {
-
-          await loadAllData(
-            true
-          );
-
-        } catch (error) {
-
-          console.warn(
-            "Auto refresh:",
-            error
-          );
-
-        }
-
-      },
-      60000
-    );
-
-}
-
-
-/* =========================================================
-   INICIALIZACIÓN
-========================================================= */
-
-async function initAdmin() {
-
-  console.log(
-    "⚡ EL PATRÓN ADMIN PRO iniciando..."
-  );
-
-
-  setupImageInput();
-
-
-  if (!firebaseReady) {
-
-    setFirebaseStatus(
-      "error",
-      "Error inicializando Firebase"
-    );
-
-    showToast(
-      "❌ Error inicializando Firebase",
-      "error"
-    );
-
-    return;
-
-  }
-
-
-  setFirebaseStatus(
-    "loading",
-    "Conectando..."
-  );
-
-
-  /*
-     IMPORTANTE:
-
-     Esperamos a que Firebase cargue
-     pero cada colección tiene su
-     propio manejo de errores.
-  */
-
-  await loadAllData();
-
-
-  /*
-     Mostramos dashboard inicialmente.
-  */
-
-  showSection(
-    "dashboard"
-  );
-
-
-  startAutoRefresh();
-
-
-  console.log(
-    "✅ ADMIN PRO listo"
-  );
-
-}
-
-
-/* =========================================================
-   INICIAR CUANDO DOM ESTÉ LISTO
-========================================================= */
-
-if (
-  document.readyState ===
-  "loading"
-) {
-
-  document.addEventListener(
-    "DOMContentLoaded",
-    initAdmin
-  );
-
-} else {
-
-  initAdmin();
-
-}
-
-
-/* =========================================================
-   EXPONER FUNCIONES
-========================================================= */
-
-window.AdminPRO = {
-
-  loadAllData,
-
-  saveOffer,
-
-  saveCoupon,
-
-  saveUser,
-
-  editOffer,
-
-  editCoupon,
-
-  editUser,
-
-  deleteOffer,
-
-  deleteCoupon,
-
-  deleteUser,
-
-  getMostCopiedCoupon,
-
-  getCouponStats,
-
-  getClicksByDay,
-
-  getUsersByState,
-
-  renderCharts,
-
-  renderEverything,
-
-  clearOfferForm,
-
-  clearCouponForm,
-
-  showSection
-
-};
-
-
-/* =========================================================
-   FIN
-========================================================= */
+</body>
+</html>
