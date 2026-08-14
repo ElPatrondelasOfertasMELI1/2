@@ -10,12 +10,14 @@
 
   <title>Admin PRO | El Patrón de las Ofertas</title>
 
-  <link rel="stylesheet" href="admin-pro.css">
+  <!-- ICONOS -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+  >
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <!-- TU CSS DEL ADMIN -->
+  <link rel="stylesheet" href="admin-pro.css">
 </head>
 
 <body>
@@ -26,8 +28,8 @@
   <div id="loadingScreen" class="loading-screen">
     <div class="loading-box">
       <div class="loading-logo">⚡</div>
-      <h2>El Patrón de las Ofertas</h2>
-      <p>Conectando con Firebase...</p>
+      <h2>EL PATRÓN DE LAS OFERTAS</h2>
+      <p>Cargando Admin PRO...</p>
       <div class="loading-spinner"></div>
     </div>
   </div>
@@ -44,7 +46,7 @@
         ⚡
       </div>
 
-      <h1>Admin PRO</h1>
+      <h1>ADMIN PRO</h1>
 
       <p class="login-subtitle">
         El Patrón de las Ofertas
@@ -52,23 +54,28 @@
 
       <form id="loginForm">
 
-        <div class="form-group">
+        <div class="input-group">
+
           <label for="loginEmail">
+            <i class="fa-solid fa-envelope"></i>
             Correo electrónico
           </label>
 
           <input
             type="email"
             id="loginEmail"
-            placeholder="correo@ejemplo.com"
+            placeholder="Correo de administrador"
             autocomplete="email"
             required
           >
+
         </div>
 
 
-        <div class="form-group">
+        <div class="input-group">
+
           <label for="loginPassword">
+            <i class="fa-solid fa-lock"></i>
             Contraseña
           </label>
 
@@ -77,7 +84,7 @@
             <input
               type="password"
               id="loginPassword"
-              placeholder="Tu contraseña"
+              placeholder="Contraseña"
               autocomplete="current-password"
               required
             >
@@ -87,10 +94,11 @@
               id="togglePassword"
               class="password-toggle"
             >
-              👁️
+              <i class="fa-solid fa-eye"></i>
             </button>
 
           </div>
+
         </div>
 
 
@@ -99,8 +107,10 @@
           id="loginButton"
           class="btn-login"
         >
-          🔐 Entrar al Admin PRO
+          <i class="fa-solid fa-right-to-bracket"></i>
+          ENTRAR AL ADMIN
         </button>
+
 
         <div
           id="loginError"
@@ -115,7 +125,7 @@
 
 
   <!-- =====================================================
-       ADMIN PRO
+       ADMIN PRINCIPAL
   ====================================================== -->
   <div id="adminApp" class="admin-app hidden">
 
@@ -146,7 +156,7 @@
           class="menu-item active"
           data-section="dashboard"
         >
-          <span>📊</span>
+          <i class="fa-solid fa-chart-line"></i>
           <span>Dashboard</span>
         </button>
 
@@ -155,7 +165,7 @@
           class="menu-item"
           data-section="ofertas"
         >
-          <span>🛍️</span>
+          <i class="fa-solid fa-fire"></i>
           <span>Ofertas</span>
         </button>
 
@@ -164,26 +174,8 @@
           class="menu-item"
           data-section="cupones"
         >
-          <span>🎟️</span>
+          <i class="fa-solid fa-ticket"></i>
           <span>Cupones</span>
-        </button>
-
-
-        <button
-          class="menu-item"
-          data-section="copias"
-        >
-          <span>📋</span>
-          <span>Copias</span>
-        </button>
-
-
-        <button
-          class="menu-item"
-          data-section="usuarios"
-        >
-          <span>👥</span>
-          <span>Usuarios</span>
         </button>
 
 
@@ -191,8 +183,26 @@
           class="menu-item"
           data-section="estadisticas"
         >
-          <span>📈</span>
+          <i class="fa-solid fa-chart-pie"></i>
           <span>Estadísticas</span>
+        </button>
+
+
+        <button
+          class="menu-item"
+          data-section="usuarios"
+        >
+          <i class="fa-solid fa-users"></i>
+          <span>Usuarios</span>
+        </button>
+
+
+        <button
+          class="menu-item"
+          data-section="visitas"
+        >
+          <i class="fa-solid fa-eye"></i>
+          <span>Visitas</span>
         </button>
 
 
@@ -200,7 +210,7 @@
           class="menu-item"
           data-section="configuracion"
         >
-          <span>⚙️</span>
+          <i class="fa-solid fa-gear"></i>
           <span>Configuración</span>
         </button>
 
@@ -209,32 +219,22 @@
 
       <div class="sidebar-bottom">
 
-        <div class="admin-user">
-
-          <div class="admin-avatar">
-            👤
-          </div>
-
-          <div class="admin-user-info">
-
-            <strong id="adminName">
-              Administrador
-            </strong>
-
-            <span id="adminEmail">
-              —
-            </span>
-
-          </div>
-
-        </div>
+        <a
+          href="index.html"
+          target="_blank"
+          class="menu-item"
+        >
+          <i class="fa-solid fa-globe"></i>
+          <span>Ver página</span>
+        </a>
 
 
         <button
           id="logoutButton"
-          class="logout-button"
+          class="menu-item logout"
         >
-          🚪 Cerrar sesión
+          <i class="fa-solid fa-right-from-bracket"></i>
+          <span>Cerrar sesión</span>
         </button>
 
       </div>
@@ -243,7 +243,7 @@
 
 
     <!-- ===================================================
-         CONTENIDO PRINCIPAL
+         CONTENIDO
     ==================================================== -->
 
     <main class="main-content">
@@ -255,9 +255,10 @@
 
         <button
           id="menuToggle"
-          class="mobile-menu-button"
+          class="menu-toggle"
+          type="button"
         >
-          ☰
+          <i class="fa-solid fa-bars"></i>
         </button>
 
 
@@ -267,31 +268,30 @@
             Dashboard
           </h1>
 
-          <p id="pageSubtitle">
-            Resumen general de tu página
+          <p>
+            Panel de administración
           </p>
 
         </div>
 
 
-        <div class="topbar-actions">
+        <div class="admin-user">
 
-          <button
-            id="refreshButton"
-            class="topbar-button"
-            title="Actualizar"
-          >
-            🔄
-          </button>
+          <div class="admin-avatar">
+            <i class="fa-solid fa-user"></i>
+          </div>
 
-          <a
-            href="index.html"
-            target="_blank"
-            class="topbar-button"
-            title="Abrir página principal"
-          >
-            🌐
-          </a>
+          <div class="admin-user-info">
+
+            <strong id="adminEmail">
+              Administrador
+            </strong>
+
+            <span>
+              Administrador PRO
+            </span>
+
+          </div>
 
         </div>
 
@@ -307,20 +307,33 @@
         class="admin-section active"
       >
 
-        <div class="section-heading">
+        <div class="welcome-box">
 
           <div>
-            <h2>Panel general</h2>
+
+            <span class="welcome-small">
+              BIENVENIDO AL
+            </span>
+
+            <h2>
+              ⚡ ADMIN PRO
+            </h2>
 
             <p>
-              Controla tu página de ofertas desde aquí.
+              Controla tus ofertas, cupones, visitas y
+              estadísticas desde un solo lugar.
             </p>
+
+          </div>
+
+          <div class="welcome-icon">
+            ⚡
           </div>
 
         </div>
 
 
-        <!-- TARJETAS -->
+        <!-- ESTADÍSTICAS -->
 
         <div class="stats-grid">
 
@@ -328,14 +341,16 @@
           <div class="stat-card">
 
             <div class="stat-icon offers">
-              🛍️
+              <i class="fa-solid fa-fire"></i>
             </div>
 
             <div class="stat-info">
 
-              <span>Ofertas</span>
+              <span>
+                Ofertas
+              </span>
 
-              <strong id="statOfertas">
+              <strong id="totalOfertas">
                 0
               </strong>
 
@@ -347,14 +362,16 @@
           <div class="stat-card">
 
             <div class="stat-icon coupons">
-              🎟️
+              <i class="fa-solid fa-ticket"></i>
             </div>
 
             <div class="stat-info">
 
-              <span>Cupones</span>
+              <span>
+                Cupones
+              </span>
 
-              <strong id="statCupones">
+              <strong id="totalCupones">
                 0
               </strong>
 
@@ -366,14 +383,16 @@
           <div class="stat-card">
 
             <div class="stat-icon clicks">
-              👆
+              <i class="fa-solid fa-copy"></i>
             </div>
 
             <div class="stat-info">
 
-              <span>Clics totales</span>
+              <span>
+                Clics / Copias
+              </span>
 
-              <strong id="statClicks">
+              <strong id="totalCopias">
                 0
               </strong>
 
@@ -385,15 +404,59 @@
           <div class="stat-card">
 
             <div class="stat-icon users">
-              👥
+              <i class="fa-solid fa-users"></i>
             </div>
 
             <div class="stat-info">
 
-              <span>Usuarios</span>
+              <span>
+                Usuarios
+              </span>
 
-              <strong id="statUsuarios">
+              <strong id="totalUsuarios">
                 0
+              </strong>
+
+            </div>
+
+          </div>
+
+
+          <div class="stat-card">
+
+            <div class="stat-icon visits">
+              <i class="fa-solid fa-eye"></i>
+            </div>
+
+            <div class="stat-info">
+
+              <span>
+                Visitas
+              </span>
+
+              <strong id="totalVisitas">
+                0
+              </strong>
+
+            </div>
+
+          </div>
+
+
+          <div class="stat-card">
+
+            <div class="stat-icon savings">
+              <i class="fa-solid fa-piggy-bank"></i>
+            </div>
+
+            <div class="stat-info">
+
+              <span>
+                Ahorro registrado
+              </span>
+
+              <strong id="totalAhorro">
+                $0
               </strong>
 
             </div>
@@ -403,91 +466,84 @@
         </div>
 
 
-        <!-- CONTENEDORES -->
+        <!-- ACCIONES RÁPIDAS -->
 
-        <div class="dashboard-grid">
+        <div class="section-card">
 
+          <div class="section-card-header">
 
-          <!-- OFERTAS RECIENTES -->
+            <div>
 
-          <div class="panel-card">
+              <h3>
+                Acciones rápidas
+              </h3>
 
-            <div class="panel-header">
-
-              <div>
-
-                <h3>
-                  🛍️ Ofertas recientes
-                </h3>
-
-                <p>
-                  Últimas ofertas publicadas
-                </p>
-
-              </div>
-
-              <button
-                class="small-button"
-                data-go-section="ofertas"
-              >
-                Ver todas
-              </button>
-
-            </div>
-
-            <div
-              id="recentOffers"
-              class="recent-list"
-            >
-
-              <div class="empty-state">
-                <span>🛍️</span>
-                <p>No hay ofertas todavía</p>
-              </div>
+              <p>
+                Administra tu página rápidamente
+              </p>
 
             </div>
 
           </div>
 
 
-          <!-- CUPONES RECIENTES -->
+          <div class="quick-actions">
 
-          <div class="panel-card">
-
-            <div class="panel-header">
-
-              <div>
-
-                <h3>
-                  🎟️ Cupones
-                </h3>
-
-                <p>
-                  Cupones disponibles
-                </p>
-
-              </div>
-
-              <button
-                class="small-button"
-                data-go-section="cupones"
-              >
-                Ver todos
-              </button>
-
-            </div>
-
-            <div
-              id="recentCoupons"
-              class="recent-list"
+            <button
+              class="quick-action"
+              data-section="ofertas"
             >
 
-              <div class="empty-state">
-                <span>🎟️</span>
-                <p>No hay cupones todavía</p>
-              </div>
+              <i class="fa-solid fa-plus"></i>
 
-            </div>
+              <span>
+                Nueva oferta
+              </span>
+
+            </button>
+
+
+            <button
+              class="quick-action"
+              data-section="cupones"
+            >
+
+              <i class="fa-solid fa-ticket"></i>
+
+              <span>
+                Nuevo cupón
+              </span>
+
+            </button>
+
+
+            <button
+              class="quick-action"
+              data-section="estadisticas"
+            >
+
+              <i class="fa-solid fa-chart-column"></i>
+
+              <span>
+                Ver estadísticas
+              </span>
+
+            </button>
+
+
+            <a
+              href="index.html"
+              target="_blank"
+              class="quick-action"
+            >
+
+              <i class="fa-solid fa-globe"></i>
+
+              <span>
+                Ver página
+              </span>
+
+            </a>
 
           </div>
 
@@ -496,18 +552,18 @@
 
         <!-- ACTIVIDAD -->
 
-        <div class="panel-card activity-panel">
+        <div class="section-card">
 
-          <div class="panel-header">
+          <div class="section-card-header">
 
             <div>
 
               <h3>
-                📊 Actividad
+                Actividad reciente
               </h3>
 
               <p>
-                Información de tu página
+                Últimos movimientos registrados
               </p>
 
             </div>
@@ -515,13 +571,18 @@
           </div>
 
           <div
-            id="activityContainer"
-            class="activity-container"
+            id="recentActivity"
+            class="activity-list"
           >
 
             <div class="empty-state">
-              <span>📊</span>
-              <p>Sin actividad registrada</p>
+
+              <i class="fa-solid fa-clock"></i>
+
+              <p>
+                Cargando actividad...
+              </p>
+
             </div>
 
           </div>
@@ -540,11 +601,13 @@
         class="admin-section"
       >
 
-        <div class="section-heading">
+        <div class="page-section-header">
 
           <div>
 
-            <h2>🛍️ Administrar ofertas</h2>
+            <h2>
+              🔥 Ofertas
+            </h2>
 
             <p>
               Publica y administra las ofertas de tu página.
@@ -553,68 +616,28 @@
           </div>
 
           <button
-            id="addOfferButton"
+            id="newOfertaButton"
             class="primary-button"
           >
-            ➕ Nueva oferta
+            <i class="fa-solid fa-plus"></i>
+            Nueva oferta
           </button>
 
         </div>
 
 
-        <div class="toolbar">
+        <div
+          id="ofertasContainer"
+          class="data-grid"
+        >
 
-          <div class="search-box">
+          <div class="empty-state">
 
-            <span>🔎</span>
+            <i class="fa-solid fa-fire"></i>
 
-            <input
-              type="search"
-              id="offerSearch"
-              placeholder="Buscar oferta..."
-            >
-
-          </div>
-
-        </div>
-
-
-        <div class="table-card">
-
-          <div class="table-wrapper">
-
-            <table>
-
-              <thead>
-
-                <tr>
-
-                  <th>Imagen</th>
-                  <th>Oferta</th>
-                  <th>Precio anterior</th>
-                  <th>Precio actual</th>
-                  <th>Acciones</th>
-
-                </tr>
-
-              </thead>
-
-              <tbody id="offersTableBody">
-
-                <tr>
-
-                  <td
-                    colspan="5"
-                    class="table-empty"
-                  >
-                    Cargando ofertas...
-                  </td>
-
-                </tr>
-
-              </tbody>
-
-            </table>
+            <p>
+              Cargando ofertas...
+            </p>
 
           </div>
 
@@ -632,286 +655,43 @@
         class="admin-section"
       >
 
-        <div class="section-heading">
+        <div class="page-section-header">
 
           <div>
 
-            <h2>🎟️ Administrar cupones</h2>
+            <h2>
+              🎟️ Cupones
+            </h2>
 
             <p>
-              Administra los códigos y promociones.
+              Administra los cupones publicados.
             </p>
 
           </div>
 
           <button
-            id="addCouponButton"
+            id="newCuponButton"
             class="primary-button"
           >
-            ➕ Nuevo cupón
+            <i class="fa-solid fa-plus"></i>
+            Nuevo cupón
           </button>
 
         </div>
 
 
-        <div class="toolbar">
+        <div
+          id="cuponesContainer"
+          class="data-grid"
+        >
 
-          <div class="search-box">
+          <div class="empty-state">
 
-            <span>🔎</span>
-
-            <input
-              type="search"
-              id="couponSearch"
-              placeholder="Buscar cupón..."
-            >
-
-          </div>
-
-        </div>
-
-
-        <div class="table-card">
-
-          <div class="table-wrapper">
-
-            <table>
-
-              <thead>
-
-                <tr>
-
-                  <th>Código</th>
-                  <th>Descuento</th>
-                  <th>Mínimo</th>
-                  <th>Máximo</th>
-                  <th>Estado</th>
-                  <th>Copias</th>
-                  <th>Acciones</th>
-
-                </tr>
-
-              </thead>
-
-              <tbody id="couponsTableBody">
-
-                <tr>
-
-                  <td
-                    colspan="7"
-                    class="table-empty"
-                  >
-                    Cargando cupones...
-                  </td>
-
-                </tr>
-
-              </tbody>
-
-            </table>
-
-          </div>
-
-        </div>
-
-      </section>
-
-
-      <!-- =================================================
-           COPIAS
-      ================================================== -->
-
-      <section
-        id="section-copias"
-        class="admin-section"
-      >
-
-        <div class="section-heading">
-
-          <div>
-
-            <h2>📋 Copias de cupones</h2>
+            <i class="fa-solid fa-ticket"></i>
 
             <p>
-              Consulta cuántas veces se han copiado tus cupones.
+              Cargando cupones...
             </p>
-
-          </div>
-
-        </div>
-
-
-        <div class="stats-grid">
-
-          <div class="stat-card">
-
-            <div class="stat-icon clicks">
-              📋
-            </div>
-
-            <div class="stat-info">
-
-              <span>Copias totales</span>
-
-              <strong id="totalCopies">
-                0
-              </strong>
-
-            </div>
-
-          </div>
-
-
-          <div class="stat-card">
-
-            <div class="stat-icon coupons">
-              🏆
-            </div>
-
-            <div class="stat-info">
-
-              <span>Cupón más copiado</span>
-
-              <strong
-                id="topCoupon"
-                class="stat-text"
-              >
-                —
-              </strong>
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <div class="table-card">
-
-          <div class="table-wrapper">
-
-            <table>
-
-              <thead>
-
-                <tr>
-
-                  <th>Cupón</th>
-                  <th>Copias</th>
-                  <th>Última copia</th>
-
-                </tr>
-
-              </thead>
-
-              <tbody id="copiesTableBody">
-
-                <tr>
-
-                  <td
-                    colspan="3"
-                    class="table-empty"
-                  >
-                    Cargando estadísticas...
-
-                  </td>
-
-                </tr>
-
-              </tbody>
-
-            </table>
-
-          </div>
-
-        </div>
-
-      </section>
-
-
-      <!-- =================================================
-           USUARIOS
-      ================================================== -->
-
-      <section
-        id="section-usuarios"
-        class="admin-section"
-      >
-
-        <div class="section-heading">
-
-          <div>
-
-            <h2>👥 Usuarios</h2>
-
-            <p>
-              Usuarios registrados en tu página.
-            </p>
-
-          </div>
-
-        </div>
-
-
-        <div class="stats-grid">
-
-          <div class="stat-card">
-
-            <div class="stat-icon users">
-              👥
-            </div>
-
-            <div class="stat-info">
-
-              <span>Usuarios registrados</span>
-
-              <strong id="usersTotal">
-                0
-              </strong>
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <div class="table-card">
-
-          <div class="table-wrapper">
-
-            <table>
-
-              <thead>
-
-                <tr>
-
-                  <th>Nombre</th>
-                  <th>Email</th>
-                  <th>Estado</th>
-                  <th>Registro</th>
-
-                </tr>
-
-              </thead>
-
-              <tbody id="usersTableBody">
-
-                <tr>
-
-                  <td
-                    colspan="4"
-                    class="table-empty"
-                  >
-                    Cargando usuarios...
-
-                  </td>
-
-                </tr>
-
-              </tbody>
-
-            </table>
 
           </div>
 
@@ -929,14 +709,153 @@
         class="admin-section"
       >
 
-        <div class="section-heading">
+        <div class="page-section-header">
 
           <div>
 
-            <h2>📈 Estadísticas</h2>
+            <h2>
+              📊 Estadísticas
+            </h2>
 
             <p>
               Analiza el rendimiento de tu página.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div class="charts-grid">
+
+
+          <div class="chart-card">
+
+            <div class="chart-header">
+
+              <h3>
+                Copias de cupones
+              </h3>
+
+              <span>
+                Total
+              </span>
+
+            </div>
+
+            <div
+              id="couponChart"
+              class="chart-container"
+            >
+
+              <div class="empty-state">
+                <i class="fa-solid fa-chart-column"></i>
+                <p>Cargando estadísticas...</p>
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div class="chart-card">
+
+            <div class="chart-header">
+
+              <h3>
+                Visitas
+              </h3>
+
+              <span>
+                Últimos días
+              </span>
+
+            </div>
+
+            <div
+              id="visitsChart"
+              class="chart-container"
+            >
+
+              <div class="empty-state">
+                <i class="fa-solid fa-chart-line"></i>
+                <p>Cargando estadísticas...</p>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =================================================
+           USUARIOS
+      ================================================== -->
+
+      <section
+        id="section-usuarios"
+        class="admin-section"
+      >
+
+        <div class="page-section-header">
+
+          <div>
+
+            <h2>
+              👥 Usuarios
+            </h2>
+
+            <p>
+              Usuarios registrados en tu página.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div
+          id="usuariosContainer"
+          class="data-table-container"
+        >
+
+          <div class="empty-state">
+
+            <i class="fa-solid fa-users"></i>
+
+            <p>
+              Cargando usuarios...
+            </p>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =================================================
+           VISITAS
+      ================================================== -->
+
+      <section
+        id="section-visitas"
+        class="admin-section"
+      >
+
+        <div class="page-section-header">
+
+          <div>
+
+            <h2>
+              👁️ Visitas
+            </h2>
+
+            <p>
+              Registro de visitas a tu página.
             </p>
 
           </div>
@@ -948,15 +867,17 @@
 
           <div class="stat-card">
 
-            <div class="stat-icon clicks">
-              👆
+            <div class="stat-icon visits">
+              <i class="fa-solid fa-eye"></i>
             </div>
 
             <div class="stat-info">
 
-              <span>Clics totales</span>
+              <span>
+                Visitas totales
+              </span>
 
-              <strong id="analyticsClicks">
+              <strong id="visitasTotales">
                 0
               </strong>
 
@@ -968,53 +889,17 @@
           <div class="stat-card">
 
             <div class="stat-icon users">
-              👁️
+              <i class="fa-solid fa-calendar-day"></i>
             </div>
 
             <div class="stat-info">
 
-              <span>Visitas</span>
+              <span>
+                Visitas hoy
+              </span>
 
-              <strong id="analyticsVisits">
+              <strong id="visitasHoy">
                 0
-              </strong>
-
-            </div>
-
-          </div>
-
-
-          <div class="stat-card">
-
-            <div class="stat-icon coupons">
-              🎟️
-            </div>
-
-            <div class="stat-info">
-
-              <span>Cupones usados</span>
-
-              <strong id="analyticsCoupons">
-                0
-              </strong>
-
-            </div>
-
-          </div>
-
-
-          <div class="stat-card">
-
-            <div class="stat-icon offers">
-              💰
-            </div>
-
-            <div class="stat-info">
-
-              <span>Ahorro registrado</span>
-
-              <strong id="analyticsSavings">
-                $0
               </strong>
 
             </div>
@@ -1024,70 +909,18 @@
         </div>
 
 
-        <div class="charts-grid">
+        <div
+          id="visitasContainer"
+          class="data-table-container"
+        >
 
-          <div class="panel-card">
+          <div class="empty-state">
 
-            <div class="panel-header">
+            <i class="fa-solid fa-eye"></i>
 
-              <div>
-
-                <h3>
-                  👆 Clics por día
-                </h3>
-
-                <p>
-                  Actividad reciente
-                </p>
-
-              </div>
-
-            </div>
-
-            <div
-              id="clicksChart"
-              class="chart-container"
-            >
-
-              <div class="empty-state">
-                <span>📊</span>
-                <p>No hay datos suficientes</p>
-              </div>
-
-            </div>
-
-          </div>
-
-
-          <div class="panel-card">
-
-            <div class="panel-header">
-
-              <div>
-
-                <h3>
-                  🎟️ Cupones más copiados
-                </h3>
-
-                <p>
-                  Ranking de cupones
-                </p>
-
-              </div>
-
-            </div>
-
-            <div
-              id="couponChart"
-              class="chart-container"
-            >
-
-              <div class="empty-state">
-                <span>🏆</span>
-                <p>No hay datos suficientes</p>
-              </div>
-
-            </div>
+            <p>
+              Cargando visitas...
+            </p>
 
           </div>
 
@@ -1105,14 +938,16 @@
         class="admin-section"
       >
 
-        <div class="section-heading">
+        <div class="page-section-header">
 
           <div>
 
-            <h2>⚙️ Configuración</h2>
+            <h2>
+              ⚙️ Configuración
+            </h2>
 
             <p>
-              Configuración del panel administrativo.
+              Configuración del panel de administración.
             </p>
 
           </div>
@@ -1120,116 +955,91 @@
         </div>
 
 
-        <div class="settings-grid">
+        <div class="settings-card">
 
-          <div class="panel-card">
+          <div class="setting-row">
 
-            <div class="panel-header">
+            <div>
 
-              <div>
-
-                <h3>
-                  🔥 Firebase
-                </h3>
-
-                <p>
-                  Estado de conexión
-                </p>
-
-              </div>
-
-            </div>
-
-
-            <div class="firebase-status">
-
-              <span
-                id="firebaseStatusDot"
-                class="status-dot"
-              ></span>
-
-              <strong id="firebaseStatus">
-                Comprobando...
+              <strong>
+                Cuenta administradora
               </strong>
 
-            </div>
-
-
-            <div class="firebase-info">
-
-              <div>
-
-                <span>Proyecto</span>
-
-                <strong>
-                  el-patron-de-las-ofertas
-                </strong>
-
-              </div>
-
-              <div>
-
-                <span>Base de datos</span>
-
-                <strong>
-                  Firestore
-                </strong>
-
-              </div>
-
-              <div>
-
-                <span>Autenticación</span>
-
-                <strong>
-                  Firebase Auth
-                </strong>
-
-              </div>
+              <p id="settingsEmail">
+                Cargando...
+              </p>
 
             </div>
+
+            <i class="fa-solid fa-user-shield"></i>
 
           </div>
 
 
-          <div class="panel-card">
+          <div class="setting-row">
 
-            <div class="panel-header">
+            <div>
 
-              <div>
+              <strong>
+                Firebase
+              </strong>
 
-                <h3>
-                  👤 Cuenta actual
-                </h3>
-
-                <p>
-                  Administrador conectado
-                </p>
-
-              </div>
+              <p>
+                Conexión activa
+              </p>
 
             </div>
 
+            <span
+              id="firebaseStatus"
+              class="status-active"
+            >
+              ● CONECTADO
+            </span>
 
-            <div class="account-info">
+          </div>
 
-              <div class="account-avatar">
-                👤
-              </div>
 
-              <div>
+          <div class="setting-row">
 
-                <strong id="settingsAdminName">
-                  Administrador
-                </strong>
+            <div>
 
-                <span id="settingsAdminEmail">
-                  —
-                </span>
+              <strong>
+                Base de datos
+              </strong>
 
-              </div>
+              <p>
+                Cloud Firestore
+              </p>
 
             </div>
+
+            <i class="fa-solid fa-database"></i>
+
+          </div>
+
+
+          <div class="setting-row">
+
+            <div>
+
+              <strong>
+                Página principal
+              </strong>
+
+              <p>
+                index.html
+              </p>
+
+            </div>
+
+            <a
+              href="index.html"
+              target="_blank"
+              class="secondary-button"
+            >
+              Abrir
+            </a>
 
           </div>
 
@@ -1248,24 +1058,24 @@
   ====================================================== -->
 
   <div
-    id="offerModal"
+    id="ofertaModal"
     class="modal hidden"
   >
 
     <div class="modal-overlay"></div>
 
-    <div class="modal-card">
+    <div class="modal-box">
 
       <div class="modal-header">
 
         <div>
 
-          <h2 id="offerModalTitle">
+          <h2 id="ofertaModalTitle">
             Nueva oferta
           </h2>
 
           <p>
-            Completa los datos de la oferta.
+            Publicar en la página principal
           </p>
 
         </div>
@@ -1273,32 +1083,32 @@
         <button
           type="button"
           class="modal-close"
-          data-close-modal="offerModal"
+          data-close-modal="ofertaModal"
         >
-          ✕
+          ×
         </button>
 
       </div>
 
 
-      <form id="offerForm">
+      <form id="ofertaForm">
 
         <input
           type="hidden"
-          id="offerId"
+          id="ofertaId"
         >
 
 
         <div class="form-group">
 
-          <label for="offerTitle">
-            Título
+          <label for="ofertaTitulo">
+            Título de la oferta
           </label>
 
           <input
             type="text"
-            id="offerTitle"
-            placeholder="Ej. Audífonos Bluetooth"
+            id="ofertaTitulo"
+            placeholder="Ej. iPhone 15 Pro"
             required
           >
 
@@ -1309,17 +1119,16 @@
 
           <div class="form-group">
 
-            <label for="offerBefore">
+            <label for="ofertaPrecioAntes">
               Precio anterior
             </label>
 
             <input
               type="number"
-              id="offerBefore"
+              id="ofertaPrecioAntes"
               min="0"
               step="0.01"
-              placeholder="999"
-              required
+              placeholder="29999"
             >
 
           </div>
@@ -1327,16 +1136,16 @@
 
           <div class="form-group">
 
-            <label for="offerPrice">
+            <label for="ofertaPrecioActual">
               Precio actual
             </label>
 
             <input
               type="number"
-              id="offerPrice"
+              id="ofertaPrecioActual"
               min="0"
               step="0.01"
-              placeholder="499"
+              placeholder="19999"
               required
             >
 
@@ -1347,13 +1156,13 @@
 
         <div class="form-group">
 
-          <label for="offerImage">
+          <label for="ofertaImagen">
             URL de imagen
           </label>
 
           <input
             type="url"
-            id="offerImage"
+            id="ofertaImagen"
             placeholder="https://..."
           >
 
@@ -1362,13 +1171,13 @@
 
         <div class="form-group">
 
-          <label for="offerLink">
+          <label for="ofertaLink">
             Link de Mercado Libre
           </label>
 
           <input
             type="url"
-            id="offerLink"
+            id="ofertaLink"
             placeholder="https://..."
             required
           >
@@ -1376,18 +1185,12 @@
         </div>
 
 
-        <div
-          id="offerPreview"
-          class="form-preview hidden"
-        ></div>
-
-
         <div class="modal-actions">
 
           <button
             type="button"
             class="secondary-button"
-            data-close-modal="offerModal"
+            data-close-modal="ofertaModal"
           >
             Cancelar
           </button>
@@ -1396,7 +1199,8 @@
             type="submit"
             class="primary-button"
           >
-            💾 Guardar oferta
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            Guardar oferta
           </button>
 
         </div>
@@ -1413,24 +1217,24 @@
   ====================================================== -->
 
   <div
-    id="couponModal"
+    id="cuponModal"
     class="modal hidden"
   >
 
     <div class="modal-overlay"></div>
 
-    <div class="modal-card">
+    <div class="modal-box">
 
       <div class="modal-header">
 
         <div>
 
-          <h2 id="couponModalTitle">
+          <h2 id="cuponModalTitle">
             Nuevo cupón
           </h2>
 
           <p>
-            Completa los datos del cupón.
+            Publicar cupón
           </p>
 
         </div>
@@ -1438,33 +1242,33 @@
         <button
           type="button"
           class="modal-close"
-          data-close-modal="couponModal"
+          data-close-modal="cuponModal"
         >
-          ✕
+          ×
         </button>
 
       </div>
 
 
-      <form id="couponForm">
+      <form id="cuponForm">
 
         <input
           type="hidden"
-          id="couponId"
+          id="cuponId"
         >
 
 
         <div class="form-group">
 
-          <label for="couponCode">
+          <label for="cuponCodigo">
             Código del cupón
           </label>
 
           <input
             type="text"
-            id="couponCode"
-            placeholder="EJEMPLO100"
-            style="text-transform: uppercase;"
+            id="cuponCodigo"
+            placeholder="EJEMPLO2026"
+            autocomplete="off"
             required
           >
 
@@ -1475,19 +1279,34 @@
         </div>
 
 
+        <div class="form-group">
+
+          <label for="cuponTitulo">
+            Título
+          </label>
+
+          <input
+            type="text"
+            id="cuponTitulo"
+            placeholder="Cupón especial"
+            required
+          >
+
+        </div>
+
+
         <div class="form-row">
 
           <div class="form-group">
 
-            <label for="couponDiscount">
+            <label for="cuponDescuento">
               Descuento
             </label>
 
             <input
               type="text"
-              id="couponDiscount"
-              placeholder="10% OFF o $100 OFF"
-              required
+              id="cuponDescuento"
+              placeholder="20% OFF"
             >
 
           </div>
@@ -1495,13 +1314,13 @@
 
           <div class="form-group">
 
-            <label for="couponMinimum">
+            <label for="cuponMinimo">
               Compra mínima
             </label>
 
             <input
               type="number"
-              id="couponMinimum"
+              id="cuponMinimo"
               min="0"
               step="0.01"
               placeholder="1000"
@@ -1516,13 +1335,13 @@
 
           <div class="form-group">
 
-            <label for="couponMaximum">
+            <label for="cuponMaximo">
               Descuento máximo
             </label>
 
             <input
               type="number"
-              id="couponMaximum"
+              id="cuponMaximo"
               min="0"
               step="0.01"
               placeholder="500"
@@ -1533,73 +1352,25 @@
 
           <div class="form-group">
 
-            <label for="couponType">
-              Tipo
+            <label for="cuponCategoria">
+              Categoría
             </label>
 
-            <select id="couponType">
+            <select id="cuponCategoria">
 
               <option value="relampago">
                 ⚡ Relámpago
               </option>
 
-              <option value="bancario">
-                🏦 Bancario
+              <option value="bancarios">
+                💳 Bancarios
               </option>
 
-              <option value="melimas">
-                ⭐ Meli+
-              </option>
-
-              <option value="general">
-                🎟️ General
+              <option value="exclusivos">
+                ⭐ Meli+ Exclusive
               </option>
 
             </select>
-
-          </div>
-
-        </div>
-
-
-        <div class="form-row">
-
-          <div class="form-group">
-
-            <label for="couponStatus">
-              Estado
-            </label>
-
-            <select id="couponStatus">
-
-              <option value="activo">
-                🟢 Activo
-              </option>
-
-              <option value="por_agotarse">
-                🟠 Por agotarse
-              </option>
-
-              <option value="agotado">
-                🔴 Agotado
-              </option>
-
-            </select>
-
-          </div>
-
-
-          <div class="form-group">
-
-            <label for="couponLink">
-              Link
-            </label>
-
-            <input
-              type="url"
-              id="couponLink"
-              placeholder="https://..."
-            >
 
           </div>
 
@@ -1608,15 +1379,40 @@
 
         <div class="form-group">
 
-          <label for="couponDescription">
-            Descripción
+          <label for="cuponLink">
+            Link de Mercado Libre
           </label>
 
-          <textarea
-            id="couponDescription"
-            rows="3"
-            placeholder="Información adicional del cupón..."
-          ></textarea>
+          <input
+            type="url"
+            id="cuponLink"
+            placeholder="https://..."
+          >
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label for="cuponEstado">
+            Estado
+          </label>
+
+          <select id="cuponEstado">
+
+            <option value="activo">
+              🟢 ACTIVO
+            </option>
+
+            <option value="por_agotarse">
+              🟠 POR AGOTARSE
+            </option>
+
+            <option value="agotado">
+              🔴 AGOTADO
+            </option>
+
+          </select>
 
         </div>
 
@@ -1626,7 +1422,7 @@
           <button
             type="button"
             class="secondary-button"
-            data-close-modal="couponModal"
+            data-close-modal="cuponModal"
           >
             Cancelar
           </button>
@@ -1635,7 +1431,8 @@
             type="submit"
             class="primary-button"
           >
-            💾 Guardar cupón
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            Guardar cupón
           </button>
 
         </div>
@@ -1648,7 +1445,7 @@
 
 
   <!-- =====================================================
-       TOAST
+       NOTIFICACIÓN
   ====================================================== -->
 
   <div
@@ -1656,61 +1453,19 @@
     class="toast hidden"
   >
 
-    <span id="toastIcon">
-      ✅
-    </span>
+    <div class="toast-icon">
+      <i class="fa-solid fa-check"></i>
+    </div>
 
-    <span id="toastMessage">
-      Listo
-    </span>
+    <div>
 
-  </div>
+      <strong id="toastTitle">
+        Listo
+      </strong>
 
-
-  <!-- =====================================================
-       CONFIRMACIÓN
-  ====================================================== -->
-
-  <div
-    id="confirmModal"
-    class="modal hidden"
-  >
-
-    <div class="modal-overlay"></div>
-
-    <div class="confirm-card">
-
-      <div class="confirm-icon">
-        ⚠️
-      </div>
-
-      <h2 id="confirmTitle">
-        ¿Eliminar?
-      </h2>
-
-      <p id="confirmMessage">
-        Esta acción no se puede deshacer.
+      <p id="toastMessage">
+        Operación realizada.
       </p>
-
-      <div class="modal-actions">
-
-        <button
-          type="button"
-          id="confirmCancel"
-          class="secondary-button"
-        >
-          Cancelar
-        </button>
-
-        <button
-          type="button"
-          id="confirmAccept"
-          class="danger-button"
-        >
-          Eliminar
-        </button>
-
-      </div>
 
     </div>
 
@@ -1718,10 +1473,10 @@
 
 
   <!-- =====================================================
-       JAVASCRIPT
+       FIREBASE + ADMIN JS
   ====================================================== -->
 
-  <script src="admin-pro.js"></script>
+  <script type="module" src="admin-pro.js"></script>
 
 </body>
 </html>
