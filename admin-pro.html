@@ -1,452 +1,386 @@
 <!DOCTYPE html>
-
 <html lang="es">
-
 <head>
-
   <meta charset="UTF-8">
 
   <meta
-
     name="viewport"
-
     content="width=device-width, initial-scale=1.0"
-
   >
 
-  <title>⚡ EL PATRÓN ADMIN PRO</title>
+  <meta
+    name="robots"
+    content="noindex,nofollow"
+  >
+
+  <title>Admin PRO | El Patrón de las Ofertas</title>
 
   <link
-
     rel="stylesheet"
-
-    href="./admin-pro.css"
-
+    href="admin-pro.css"
   >
-
 </head>
 
 <body>
 
-<!-- =========================================================
-     APP
-========================================================= -->
+  <!-- =====================================================
+       PANTALLA DE CARGA
+  ====================================================== -->
 
-<div class="admin-app">
+  <div id="loadingScreen" class="loading-screen">
 
-  <!-- =======================================================
-       SIDEBAR
-  ======================================================== -->
+    <div class="loading-box">
 
-  <aside
-    class="sidebar"
-    id="sidebar"
+      <div class="loading-logo">
+        ⚡
+      </div>
+
+      <h2>
+        EL PATRÓN DE LAS OFERTAS
+      </h2>
+
+      <p>
+        Cargando Admin PRO...
+      </p>
+
+      <div class="loading-spinner"></div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =====================================================
+       LOGIN
+  ====================================================== -->
+
+  <section
+    id="loginScreen"
+    class="login-screen"
+    style="display:none;"
   >
 
-    <div class="sidebar-header">
+    <div class="login-card">
 
-      <a
-        href="./index.html"
-        class="admin-logo"
-      >
+      <div class="login-logo">
+        ⚡
+      </div>
 
-        <span class="admin-logo-icon">
+      <h1>
+        EL PATRÓN DE LAS OFERTAS
+      </h1>
+
+      <div class="login-title">
+        ADMIN PRO
+      </div>
+
+      <p class="login-description">
+        Inicia sesión para administrar tu página.
+      </p>
+
+
+      <form id="loginForm">
+
+        <div class="form-group">
+
+          <label for="loginEmail">
+            Correo electrónico
+          </label>
+
+          <input
+            type="email"
+            id="loginEmail"
+            placeholder="Correo electrónico"
+            autocomplete="email"
+            required
+          >
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label for="loginPassword">
+            Contraseña
+          </label>
+
+          <div class="password-wrapper">
+
+            <input
+              type="password"
+              id="loginPassword"
+              placeholder="Contraseña"
+              autocomplete="current-password"
+              required
+            >
+
+            <button
+              type="button"
+              id="togglePassword"
+              class="password-toggle"
+            >
+              👁️
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <button
+          type="submit"
+          class="login-button"
+        >
+          🔐 ENTRAR
+        </button>
+
+
+        <div
+          id="loginError"
+          class="login-error"
+        ></div>
+
+      </form>
+
+      <div class="login-footer">
+        ⚡ El Patrón de las Ofertas
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- =====================================================
+       ADMIN PRINCIPAL
+  ====================================================== -->
+
+  <div
+    id="adminApp"
+    class="admin-app"
+    style="display:none;"
+  >
+
+
+    <!-- ===================================================
+         SIDEBAR
+    ==================================================== -->
+
+    <aside
+      id="sidebar"
+      class="sidebar"
+    >
+
+      <div class="sidebar-header">
+
+        <div class="brand-logo">
           ⚡
-        </span>
+        </div>
 
-        <div>
+        <div class="brand-text">
 
           <strong>
             EL PATRÓN
           </strong>
 
-          <small>
-            ADMIN PRO
+          <span>
+            DE LAS OFERTAS
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <div class="admin-user">
+
+        <div class="admin-avatar">
+          👤
+        </div>
+
+        <div>
+
+          <strong>
+            Administrador
+          </strong>
+
+          <small id="adminEmail">
+            colaborador1angel@gmail.com
           </small>
 
         </div>
 
-      </a>
-
-      <button
-        type="button"
-        class="sidebar-close"
-        id="sidebarClose"
-        aria-label="Cerrar menú"
-      >
-        ×
-      </button>
-
-    </div>
-
-    <!-- =====================================================
-         ADMIN USER
-    ====================================================== -->
-
-    <div class="admin-profile">
-
-      <div class="admin-avatar">
-        👑
       </div>
 
-      <div class="admin-profile-info">
 
-        <strong>
-          Administrador
-        </strong>
-
-        <span>
-          Panel PRO
-        </span>
-
-      </div>
-
-      <span class="online-dot"></span>
-
-    </div>
-
-    <!-- =====================================================
-         NAVIGATION
-    ====================================================== -->
-
-    <nav class="admin-navigation">
-
-      <div class="nav-title">
-        PRINCIPAL
-      </div>
-
-      <button
-        type="button"
-        class="nav-item active"
-        data-section="dashboard"
-      >
-
-        <span class="nav-icon">
-          📊
-        </span>
-
-        <span>
-          Dashboard
-        </span>
-
-      </button>
-
-      <button
-        type="button"
-        class="nav-item"
-        data-section="ofertas"
-      >
-
-        <span class="nav-icon">
-          🔥
-        </span>
-
-        <span>
-          Ofertas
-        </span>
-
-      </button>
-
-      <button
-        type="button"
-        class="nav-item"
-        data-section="cupones"
-      >
-
-        <span class="nav-icon">
-          🎟️
-        </span>
-
-        <span>
-          Cupones
-        </span>
-
-        <span
-          class="nav-badge"
-          id="navCouponCount"
-        >
-          0
-        </span>
-
-      </button>
-
-      <button
-        type="button"
-        class="nav-item"
-        data-section="usuarios"
-      >
-
-        <span class="nav-icon">
-          👥
-        </span>
-
-        <span>
-          Usuarios
-        </span>
-
-        <span
-          class="nav-badge"
-          id="navUserCount"
-        >
-          0
-        </span>
-
-      </button>
-
-      <div class="nav-title">
-        ESTADÍSTICAS
-      </div>
-
-      <button
-        type="button"
-        class="nav-item"
-        data-section="estadisticas"
-      >
-
-        <span class="nav-icon">
-          📈
-        </span>
-
-        <span>
-          Estadísticas
-        </span>
-
-      </button>
-
-      <button
-        type="button"
-        class="nav-item"
-        data-section="clics"
-      >
-
-        <span class="nav-icon">
-          👆
-        </span>
-
-        <span>
-          Clics
-        </span>
-
-      </button>
-
-      <button
-        type="button"
-        class="nav-item"
-        data-section="ranking"
-      >
-
-        <span class="nav-icon">
-          🏆
-        </span>
-
-        <span>
-          Ranking
-        </span>
-
-      </button>
-
-      <div class="nav-title">
-        SISTEMA
-      </div>
-
-      <button
-        type="button"
-        class="nav-item"
-        data-section="configuracion"
-      >
-
-        <span class="nav-icon">
-          ⚙️
-        </span>
-
-        <span>
-          Configuración
-        </span>
-
-      </button>
-
-    </nav>
-
-    <!-- =====================================================
-         SIDEBAR FOOTER
-    ====================================================== -->
-
-    <div class="sidebar-footer">
-
-      <a
-        href="./index.html"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="view-site-button"
-      >
-
-        🌐
-
-        <span>
-          Ver página
-        </span>
-
-      </a>
-
-      <div class="admin-version">
-
-        <span>
-          Admin PRO
-        </span>
-
-        <strong>
-          v2.0
-        </strong>
-
-      </div>
-
-    </div>
-
-  </aside>
-
-  <!-- =======================================================
-       OVERLAY MOBILE
-  ======================================================== -->
-
-  <div
-    class="sidebar-overlay"
-    id="sidebarOverlay"
-  ></div>
-
-  <!-- =======================================================
-       MAIN
-  ======================================================== -->
-
-  <main class="main-content">
-
-    <!-- =====================================================
-         TOPBAR
-    ====================================================== -->
-
-    <header class="topbar">
-
-      <div class="topbar-left">
+      <nav class="sidebar-menu">
 
         <button
-          type="button"
-          class="mobile-menu-button"
-          id="mobileMenuButton"
-          aria-label="Abrir menú"
+          class="menu-item active"
+          data-section="dashboard"
+        >
+          <span>📊</span>
+          <span>Dashboard</span>
+        </button>
+
+
+        <button
+          class="menu-item"
+          data-section="ofertas"
+        >
+          <span>🔥</span>
+          <span>Ofertas</span>
+        </button>
+
+
+        <button
+          class="menu-item"
+          data-section="cupones"
+        >
+          <span>🎟️</span>
+          <span>Cupones</span>
+        </button>
+
+
+        <button
+          class="menu-item"
+          data-section="usuarios"
+        >
+          <span>👥</span>
+          <span>Usuarios</span>
+        </button>
+
+
+        <button
+          class="menu-item"
+          data-section="estadisticas"
+        >
+          <span>📈</span>
+          <span>Estadísticas</span>
+        </button>
+
+
+        <button
+          class="menu-item"
+          data-section="configuracion"
+        >
+          <span>⚙️</span>
+          <span>Configuración</span>
+        </button>
+
+      </nav>
+
+
+      <div class="sidebar-bottom">
+
+        <button
+          id="logoutBtn"
+          class="logout-button"
+        >
+          🚪 Cerrar sesión
+        </button>
+
+      </div>
+
+    </aside>
+
+
+    <!-- ===================================================
+         CONTENIDO
+    ==================================================== -->
+
+    <main class="main-content">
+
+
+      <!-- ================================================
+           HEADER
+      ================================================= -->
+
+      <header class="topbar">
+
+        <button
+          id="mobileMenu"
+          class="mobile-menu"
         >
           ☰
         </button>
 
-        <div>
 
-          <span
-            class="breadcrumb"
-            id="breadcrumb"
-          >
-            Dashboard
-          </span>
+        <div class="topbar-title">
 
           <h1 id="pageTitle">
-            Panel de control
+            Dashboard
           </h1>
 
-        </div>
-
-      </div>
-
-      <div class="topbar-right">
-
-        <div
-          class="firebase-status"
-          id="firebaseStatus"
-        >
-
-          <span class="status-dot"></span>
-
-          <span>
-            Conectando...
-          </span>
+          <p id="pageSubtitle">
+            Resumen general de tu página
+          </p>
 
         </div>
 
-        <button
-          type="button"
-          class="refresh-button"
-          id="refreshButton"
-          title="Actualizar estadísticas"
-        >
-          🔄
-        </button>
 
-        <a
-          href="./index.html"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="topbar-site-button"
-        >
-          Ver página →
-        </a>
+        <div class="topbar-actions">
 
-      </div>
+          <button
+            id="refreshBtn"
+            class="topbar-btn"
+            title="Actualizar"
+          >
+            🔄
+          </button>
 
-    </header>
+          <div class="connection-status">
 
-    <!-- =====================================================
-         CONTENT
-    ====================================================== -->
+            <span
+              id="connectionDot"
+              class="status-dot online"
+            ></span>
 
-    <div class="content-container">
+            <span id="connectionText">
+              Firebase conectado
+            </span>
 
-      <!-- ===================================================
+          </div>
+
+        </div>
+
+      </header>
+
+
+      <!-- ================================================
            DASHBOARD
-      ==================================================== -->
+      ================================================= -->
 
       <section
-        class="admin-section active"
         id="section-dashboard"
+        class="admin-section active"
       >
 
-        <div class="page-intro">
+        <div class="section-heading">
 
           <div>
 
-            <span class="page-label">
-              RESUMEN GENERAL
-            </span>
-
             <h2>
-              👋 Bienvenido al Admin PRO
+              📊 Resumen general
             </h2>
 
             <p>
-              Aquí puedes controlar ofertas, cupones,
-              usuarios y estadísticas de tu página.
+              Estadísticas de tu página en tiempo real.
             </p>
 
           </div>
 
-          <div class="last-update">
-
-            <span>
-              Última actualización
-            </span>
-
-            <strong id="lastUpdate">
-              --:--
-            </strong>
-
-          </div>
-
         </div>
 
-        <!-- =================================================
-             STAT CARDS
-        ================================================== -->
+
+        <!-- TARJETAS -->
 
         <div class="stats-grid">
 
+
           <div class="stat-card">
 
-            <div class="stat-icon blue">
+            <div class="stat-icon">
               🔥
             </div>
 
@@ -456,69 +390,39 @@
                 Ofertas
               </span>
 
-              <strong id="statOffers">
+              <strong id="totalOfertas">
                 0
               </strong>
-
-              <small>
-                Publicadas
-              </small>
 
             </div>
 
           </div>
 
+
           <div class="stat-card">
 
-            <div class="stat-icon yellow">
+            <div class="stat-icon">
               🎟️
             </div>
 
             <div class="stat-info">
 
               <span>
-                Cupones activos
+                Cupones
               </span>
 
-              <strong id="statCoupons">
+              <strong id="totalCupones">
                 0
               </strong>
-
-              <small>
-                Disponibles
-              </small>
 
             </div>
 
           </div>
 
-          <div class="stat-card">
-
-            <div class="stat-icon green">
-              👥
-            </div>
-
-            <div class="stat-info">
-
-              <span>
-                Usuarios
-              </span>
-
-              <strong id="statUsers">
-                0
-              </strong>
-
-              <small>
-                Registrados
-              </small>
-
-            </div>
-
-          </div>
 
           <div class="stat-card">
 
-            <div class="stat-icon purple">
+            <div class="stat-icon">
               👆
             </div>
 
@@ -528,45 +432,60 @@
                 Clics totales
               </span>
 
-              <strong id="statClicks">
+              <strong id="totalClics">
                 0
               </strong>
-
-              <small>
-                Cupones copiados
-              </small>
 
             </div>
 
           </div>
 
+
           <div class="stat-card">
 
-            <div class="stat-icon orange">
+            <div class="stat-icon">
+              👥
+            </div>
+
+            <div class="stat-info">
+
+              <span>
+                Usuarios
+              </span>
+
+              <strong id="totalUsuarios">
+                0
+              </strong>
+
+            </div>
+
+          </div>
+
+
+          <div class="stat-card">
+
+            <div class="stat-icon">
               💰
             </div>
 
             <div class="stat-info">
 
               <span>
-                Ahorro total
+                Ahorro generado
               </span>
 
-              <strong id="statSavings">
+              <strong id="ahorroTotal">
                 $0
               </strong>
-
-              <small>
-                Usuarios
-              </small>
 
             </div>
 
           </div>
 
+
           <div class="stat-card">
 
-            <div class="stat-icon pink">
+            <div class="stat-icon">
               🛒
             </div>
 
@@ -576,292 +495,195 @@
                 Compras
               </span>
 
-              <strong id="statPurchases">
+              <strong id="totalCompras">
                 0
               </strong>
 
-              <small>
-                Registradas
-              </small>
-
             </div>
 
           </div>
 
+
         </div>
 
-        <!-- =================================================
-             MAIN DASHBOARD GRID
-        ================================================== -->
+
+        <!-- DASHBOARD GRID -->
 
         <div class="dashboard-grid">
 
-          <!-- ===============================================
-               MOST COPIED COUPON
-          ================================================ -->
 
-          <div class="panel-card">
+          <div class="panel">
 
             <div class="panel-header">
 
               <div>
 
-                <span class="panel-label">
-                  RENDIMIENTO
-                </span>
-
                 <h3>
-                  🎟️ Cupón más copiado
+                  🔥 Ofertas recientes
                 </h3>
+
+                <p>
+                  Últimas ofertas publicadas
+                </p>
 
               </div>
 
-              <span class="panel-icon">
-                🏆
-              </span>
+              <button
+                class="panel-action"
+                data-section="ofertas"
+              >
+                Ver todas
+              </button>
 
             </div>
 
             <div
-              class="top-coupon"
-              id="topCoupon"
+              id="recentOffers"
+              class="recent-list"
             >
 
-              <div class="empty-state-small">
-
-                <span>
-                  🎟️
-                </span>
-
-                <p>
-                  Cargando estadísticas...
-                </p>
-
+              <div class="empty-state">
+                Cargando ofertas...
               </div>
 
             </div>
 
           </div>
 
-          <!-- ===============================================
-               RECENT ACTIVITY
-          ================================================ -->
 
-          <div class="panel-card">
+          <div class="panel">
 
             <div class="panel-header">
 
               <div>
 
-                <span class="panel-label">
-                  ACTIVIDAD
-                </span>
-
                 <h3>
-                  ⚡ Actividad reciente
+                  🎟️ Cupones más usados
                 </h3>
 
+                <p>
+                  Cupones con más copias
+                </p>
+
               </div>
+
+              <button
+                class="panel-action"
+                data-section="cupones"
+              >
+                Ver todos
+              </button>
 
             </div>
 
             <div
-              class="activity-list"
-              id="activityList"
+              id="topCoupons"
+              class="recent-list"
             >
 
-              <div class="empty-state-small">
-
-                <span>
-                  ⏳
-                </span>
-
-                <p>
-                  Cargando actividad...
-                </p>
-
+              <div class="empty-state">
+                Cargando cupones...
               </div>
 
             </div>
 
           </div>
+
 
         </div>
 
-        <!-- =================================================
-             QUICK ACTIONS
-        ================================================== -->
 
-        <div class="quick-actions-panel">
+        <!-- TOP OFERTA -->
+
+        <div class="panel top-offer-panel">
 
           <div class="panel-header">
 
             <div>
 
-              <span class="panel-label">
-                ACCIONES RÁPIDAS
-              </span>
-
               <h3>
-                ⚡ Administrar página
+                🏆 Oferta más popular
               </h3>
+
+              <p>
+                La oferta con más clics
+              </p>
 
             </div>
 
           </div>
 
-          <div class="quick-actions">
+          <div id="topOffer">
 
-            <button
-              type="button"
-              class="quick-action"
-              data-section-target="cupones"
-            >
-
-              <span>
-                🎟️
-              </span>
-
-              <strong>
-                Cupones
-              </strong>
-
-              <small>
-                Administrar cupones
-              </small>
-
-            </button>
-
-            <button
-              type="button"
-              class="quick-action"
-              data-section-target="ofertas"
-            >
-
-              <span>
-                🔥
-              </span>
-
-              <strong>
-                Ofertas
-              </strong>
-
-              <small>
-                Administrar ofertas
-              </small>
-
-            </button>
-
-            <button
-              type="button"
-              class="quick-action"
-              data-section-target="usuarios"
-            >
-
-              <span>
-                👥
-              </span>
-
-              <strong>
-                Usuarios
-              </strong>
-
-              <small>
-                Ver usuarios
-              </small>
-
-            </button>
-
-            <button
-              type="button"
-              class="quick-action"
-              data-section-target="estadisticas"
-            >
-
-              <span>
-                📊
-              </span>
-
-              <strong>
-                Estadísticas
-              </strong>
-
-              <small>
-                Ver rendimiento
-              </small>
-
-            </button>
+            <div class="empty-state">
+              Cargando...
+            </div>
 
           </div>
 
         </div>
 
+
       </section>
 
-      <!-- ===================================================
+
+      <!-- ================================================
            OFERTAS
-      ==================================================== -->
+      ================================================= -->
 
       <section
-        class="admin-section"
         id="section-ofertas"
+        class="admin-section"
       >
 
-        <div class="section-page-header">
+        <div class="section-heading">
 
           <div>
 
-            <span class="page-label">
-              CONTENIDO
-            </span>
-
             <h2>
-              🔥 Ofertas
+              🔥 Administrar ofertas
             </h2>
 
             <p>
-              Administra las ofertas que aparecen
-              en la página principal.
+              Crea, edita y elimina las ofertas de tu página.
             </p>
 
           </div>
 
           <button
-            type="button"
+            id="newOfferBtn"
             class="primary-button"
-            id="newOfferButton"
           >
-            ＋ Nueva oferta
+            ➕ Nueva oferta
           </button>
 
         </div>
 
-        <div class="table-panel">
+
+        <div class="panel">
 
           <div class="table-toolbar">
 
-            <div class="table-search">
-
-              🔎
-
-              <input
-                type="search"
-                id="offerSearch"
-                placeholder="Buscar oferta..."
-              >
-
-            </div>
-
-            <span
-              id="offerTableCount"
-              class="table-count"
+            <input
+              type="search"
+              id="offerSearch"
+              class="search-input"
+              placeholder="🔎 Buscar oferta..."
             >
-              0 ofertas
-            </span>
+
+            <select
+              id="offerCategoryFilter"
+              class="filter-select"
+            >
+              <option value="">
+                Todas las categorías
+              </option>
+            </select>
 
           </div>
 
-          <div class="table-responsive">
+
+          <div class="table-container">
 
             <table class="admin-table">
 
@@ -882,7 +704,7 @@
                   </th>
 
                   <th>
-                    Descuento
+                    Categoría
                   </th>
 
                   <th>
@@ -897,9 +719,7 @@
 
               </thead>
 
-              <tbody
-                id="offersTableBody"
-              >
+              <tbody id="offersTable">
 
                 <tr>
 
@@ -922,183 +742,80 @@
 
       </section>
 
-      <!-- ===================================================
+
+      <!-- ================================================
            CUPONES
-      ==================================================== -->
+      ================================================= -->
 
       <section
-        class="admin-section"
         id="section-cupones"
+        class="admin-section"
       >
 
-        <div class="section-page-header">
+        <div class="section-heading">
 
           <div>
 
-            <span class="page-label">
-              CUPONES
-            </span>
-
             <h2>
-              🎟️ Administración de cupones
+              🎟️ Administrar cupones
             </h2>
 
             <p>
-              Crea, edita y controla todos los cupones
-              publicados en la página.
+              Gestiona todos los cupones de la página.
             </p>
 
           </div>
 
           <button
-            type="button"
+            id="newCouponBtn"
             class="primary-button"
-            id="newCouponButton"
           >
-            ＋ Nuevo cupón
+            ➕ Nuevo cupón
           </button>
 
         </div>
 
-        <!-- ===============================================
-             COUPON SUMMARY
-        ================================================ -->
 
-        <div class="mini-stats-grid">
-
-          <div class="mini-stat">
-
-            <span class="mini-stat-icon">
-              🟢
-            </span>
-
-            <div>
-
-              <small>
-                Activos
-              </small>
-
-              <strong id="couponActiveCount">
-                0
-              </strong>
-
-            </div>
-
-          </div>
-
-          <div class="mini-stat">
-
-            <span class="mini-stat-icon">
-              🟠
-            </span>
-
-            <div>
-
-              <small>
-                Por agotarse
-              </small>
-
-              <strong id="couponWarningCount">
-                0
-              </strong>
-
-            </div>
-
-          </div>
-
-          <div class="mini-stat">
-
-            <span class="mini-stat-icon">
-              🔴
-            </span>
-
-            <div>
-
-              <small>
-                Agotados
-              </small>
-
-              <strong id="couponExpiredCount">
-                0
-              </strong>
-
-            </div>
-
-          </div>
-
-          <div class="mini-stat">
-
-            <span class="mini-stat-icon">
-              👆
-            </span>
-
-            <div>
-
-              <small>
-                Copias
-              </small>
-
-              <strong id="couponCopiesCount">
-                0
-              </strong>
-
-            </div>
-
-          </div>
-
-        </div>
-
-        <div class="table-panel">
+        <div class="panel">
 
           <div class="table-toolbar">
 
-            <div class="table-search">
-
-              🔎
-
-              <input
-                type="search"
-                id="couponSearch"
-                placeholder="Buscar cupón..."
-              >
-
-            </div>
+            <input
+              type="search"
+              id="couponSearch"
+              class="search-input"
+              placeholder="🔎 Buscar cupón..."
+            >
 
             <select
               id="couponTypeFilter"
-              class="table-select"
+              class="filter-select"
             >
 
-              <option value="all">
+              <option value="">
                 Todos
               </option>
 
-              <option value="flash">
+              <option value="relampago">
                 ⚡ Relámpago
               </option>
 
-              <option value="exclusive">
-                🎁 Exclusivos
+              <option value="bancario">
+                🏦 Bancario
               </option>
 
-              <option value="bank">
-                🏦 Bancarios
+              <option value="meliplus">
+                💛 Meli+
               </option>
 
             </select>
 
-            <span
-              id="couponTableCount"
-              class="table-count"
-            >
-              0 cupones
-            </span>
-
           </div>
 
-          <div class="table-responsive">
 
-            <table class="admin-table coupon-table">
+          <div class="table-container">
+
+            <table class="admin-table">
 
               <thead>
 
@@ -1125,10 +842,6 @@
                   </th>
 
                   <th>
-                    Estado
-                  </th>
-
-                  <th>
                     Copias
                   </th>
 
@@ -1140,14 +853,12 @@
 
               </thead>
 
-              <tbody
-                id="couponsTableBody"
-              >
+              <tbody id="couponsTable">
 
                 <tr>
 
                   <td
-                    colspan="8"
+                    colspan="7"
                     class="table-loading"
                   >
                     Cargando cupones...
@@ -1165,177 +876,48 @@
 
       </section>
 
-      <!-- ===================================================
+
+      <!-- ================================================
            USUARIOS
-      ==================================================== -->
+      ================================================= -->
 
       <section
-        class="admin-section"
         id="section-usuarios"
+        class="admin-section"
       >
 
-        <div class="section-page-header">
+        <div class="section-heading">
 
           <div>
-
-            <span class="page-label">
-              COMUNIDAD
-            </span>
 
             <h2>
               👥 Usuarios
             </h2>
 
             <p>
-              Consulta usuarios registrados, ahorro,
-              compras y estado de verificación.
+              Usuarios registrados en tu página.
             </p>
 
           </div>
 
-          <button
-            type="button"
-            class="secondary-button"
-            id="refreshUsersButton"
-          >
-            🔄 Actualizar
-          </button>
-
         </div>
 
-        <div class="mini-stats-grid">
 
-          <div class="mini-stat">
-
-            <span class="mini-stat-icon">
-              👥
-            </span>
-
-            <div>
-
-              <small>
-                Registrados
-              </small>
-
-              <strong id="usersRegisteredCount">
-                0
-              </strong>
-
-            </div>
-
-          </div>
-
-          <div class="mini-stat">
-
-            <span class="mini-stat-icon">
-              ✅
-            </span>
-
-            <div>
-
-              <small>
-                Verificados
-              </small>
-
-              <strong id="usersVerifiedCount">
-                0
-              </strong>
-
-            </div>
-
-          </div>
-
-          <div class="mini-stat">
-
-            <span class="mini-stat-icon">
-              ⏳
-            </span>
-
-            <div>
-
-              <small>
-                Pendientes
-              </small>
-
-              <strong id="usersPendingCount">
-                0
-              </strong>
-
-            </div>
-
-          </div>
-
-          <div class="mini-stat">
-
-            <span class="mini-stat-icon">
-              💰
-            </span>
-
-            <div>
-
-              <small>
-                Ahorro total
-              </small>
-
-              <strong id="usersSavingsCount">
-                $0
-              </strong>
-
-            </div>
-
-          </div>
-
-        </div>
-
-        <div class="table-panel">
+        <div class="panel">
 
           <div class="table-toolbar">
 
-            <div class="table-search">
-
-              🔎
-
-              <input
-                type="search"
-                id="userSearch"
-                placeholder="Buscar nombre, correo o estado..."
-              >
-
-            </div>
-
-            <select
-              id="userStatusFilter"
-              class="table-select"
+            <input
+              type="search"
+              id="userSearch"
+              class="search-input"
+              placeholder="🔎 Buscar usuario..."
             >
-
-              <option value="all">
-                Todos los estados
-              </option>
-
-              <option value="pendiente">
-                Pendientes
-              </option>
-
-              <option value="verificado">
-                Verificados
-              </option>
-
-              <option value="rechazado">
-                Rechazados
-              </option>
-
-            </select>
-
-            <span
-              id="userTableCount"
-              class="table-count"
-            >
-              0 usuarios
-            </span>
 
           </div>
 
-          <div class="table-responsive">
+
+          <div class="table-container">
 
             <table class="admin-table">
 
@@ -1348,19 +930,19 @@
                   </th>
 
                   <th>
+                    Correo
+                  </th>
+
+                  <th>
                     Estado
                   </th>
 
                   <th>
-                    Estado de México
+                    Visitas
                   </th>
 
                   <th>
                     Compras
-                  </th>
-
-                  <th>
-                    Cupones
                   </th>
 
                   <th>
@@ -1371,22 +953,16 @@
                     Registro
                   </th>
 
-                  <th>
-                    Acciones
-                  </th>
-
                 </tr>
 
               </thead>
 
-              <tbody
-                id="usersTableBody"
-              >
+              <tbody id="usersTable">
 
                 <tr>
 
                   <td
-                    colspan="8"
+                    colspan="7"
                     class="table-loading"
                   >
                     Cargando usuarios...
@@ -1404,188 +980,93 @@
 
       </section>
 
-      <!-- ===================================================
+
+      <!-- ================================================
            ESTADÍSTICAS
-      ==================================================== -->
+      ================================================= -->
 
       <section
-        class="admin-section"
         id="section-estadisticas"
+        class="admin-section"
       >
 
-        <div class="section-page-header">
+        <div class="section-heading">
 
           <div>
-
-            <span class="page-label">
-              ANALÍTICA
-            </span>
 
             <h2>
               📈 Estadísticas
             </h2>
 
             <p>
-              Analiza el rendimiento de tus cupones
-              y la actividad de los usuarios.
+              Analiza el rendimiento de tu página.
             </p>
-
-          </div>
-
-          <div class="period-selector">
-
-            <button
-              type="button"
-              class="period-button active"
-              data-period="7"
-            >
-              7 días
-            </button>
-
-            <button
-              type="button"
-              class="period-button"
-              data-period="30"
-            >
-              30 días
-            </button>
-
-            <button
-              type="button"
-              class="period-button"
-              data-period="all"
-            >
-              Todo
-            </button>
 
           </div>
 
         </div>
 
-        <!-- ===============================================
-             CHARTS
-        ================================================ -->
 
-        <div class="charts-grid">
+        <div class="analytics-grid">
 
-          <!-- =============================================
-               CLICKS BY DAY
-          ============================================== -->
 
-          <div class="chart-panel chart-large">
+          <div class="panel">
 
             <div class="panel-header">
 
               <div>
 
-                <span class="panel-label">
-                  ACTIVIDAD DIARIA
-                </span>
-
                 <h3>
-                  👆 Días con más clics
+                  👆 Clics
                 </h3>
-
-              </div>
-
-              <div
-                class="chart-total"
-                id="chartClicksTotal"
-              >
-                0 clics
-              </div>
-
-            </div>
-
-            <div class="chart-wrapper">
-
-              <canvas
-                id="clicksByDayChart"
-              ></canvas>
-
-              <div
-                class="chart-empty"
-                id="clicksChartEmpty"
-              >
-
-                <span>
-                  📊
-                </span>
 
                 <p>
-                  Cargando datos...
+                  Actividad reciente
                 </p>
-
-              </div>
-
-            </div>
-
-          </div>
-
-          <!-- =============================================
-               COUPON RANKING
-          ============================================== -->
-
-          <div class="chart-panel">
-
-            <div class="panel-header">
-
-              <div>
-
-                <span class="panel-label">
-                  CUPONES
-                </span>
-
-                <h3>
-                  🏆 Copias por cupón
-                </h3>
 
               </div>
 
             </div>
 
             <div
-              class="coupon-ranking-list"
-              id="couponRankingList"
-            >
+              id="clickStats"
+              class="stats-list"
+            ></div>
 
-              <div class="empty-state-small">
+          </div>
 
-                <span>
-                  🎟️
-                </span>
+
+          <div class="panel">
+
+            <div class="panel-header">
+
+              <div>
+
+                <h3>
+                  🎟️ Cupones
+                </h3>
 
                 <p>
-                  Cargando...
+                  Cupones más utilizados
                 </p>
 
               </div>
 
             </div>
 
+            <div
+              id="couponStats"
+              class="stats-list"
+            ></div>
+
           </div>
 
-        </div>
 
-        <!-- ===============================================
-             SECOND CHART ROW
-        ================================================ -->
-
-        <div class="charts-grid">
-
-          <!-- =============================================
-               USERS BY STATE
-          ============================================== -->
-
-          <div class="chart-panel">
+          <div class="panel">
 
             <div class="panel-header">
 
               <div>
-
-                <span class="panel-label">
-                  UBICACIÓN
-                </span>
 
                 <h3>
                   🇲🇽 Usuarios por estado
@@ -1595,1135 +1076,631 @@
 
             </div>
 
-            <div class="state-chart-wrapper">
-
-              <canvas
-                id="usersByStateChart"
-              ></canvas>
-
-              <div
-                class="chart-empty"
-                id="stateChartEmpty"
-              >
-
-                <span>
-                  🇲🇽
-                </span>
-
-                <p>
-                  Cargando datos...
-                </p>
-
-              </div>
-
-            </div>
-
             <div
-              class="state-list"
-              id="stateList"
+              id="stateStats"
+              class="stats-list"
             ></div>
 
           </div>
 
-          <!-- =============================================
-               GENERAL PERFORMANCE
-          ============================================== -->
 
-          <div class="chart-panel">
+          <div class="panel">
 
             <div class="panel-header">
 
               <div>
 
-                <span class="panel-label">
-                  RENDIMIENTO
-                </span>
-
                 <h3>
-                  📊 Resumen
+                  📅 Actividad diaria
                 </h3>
 
               </div>
 
             </div>
 
-            <div class="performance-list">
-
-              <div class="performance-row">
-
-                <div class="performance-icon">
-                  👆
-                </div>
-
-                <div class="performance-content">
-
-                  <span>
-                    Clics totales
-                  </span>
-
-                  <strong id="performanceClicks">
-                    0
-                  </strong>
-
-                </div>
-
-              </div>
-
-              <div class="performance-row">
-
-                <div class="performance-icon">
-                  🎟️
-                </div>
-
-                <div class="performance-content">
-
-                  <span>
-                    Cupones copiados
-                  </span>
-
-                  <strong id="performanceCoupons">
-                    0
-                  </strong>
-
-                </div>
-
-              </div>
-
-              <div class="performance-row">
-
-                <div class="performance-icon">
-                  👥
-                </div>
-
-                <div class="performance-content">
-
-                  <span>
-                    Usuarios
-                  </span>
-
-                  <strong id="performanceUsers">
-                    0
-                  </strong>
-
-                </div>
-
-              </div>
-
-              <div class="performance-row">
-
-                <div class="performance-icon">
-                  💰
-                </div>
-
-                <div class="performance-content">
-
-                  <span>
-                    Ahorro generado
-                  </span>
-
-                  <strong id="performanceSavings">
-                    $0
-                  </strong>
-
-                </div>
-
-              </div>
-
-              <div class="performance-row">
-
-                <div class="performance-icon">
-                  🛒
-                </div>
-
-                <div class="performance-content">
-
-                  <span>
-                    Compras registradas
-                  </span>
-
-                  <strong id="performancePurchases">
-                    0
-                  </strong>
-
-                </div>
-
-              </div>
-
-            </div>
+            <div
+              id="dailyStats"
+              class="stats-list"
+            ></div>
 
           </div>
+
 
         </div>
 
       </section>
 
-      <!-- ===================================================
-           CLICS
-      ==================================================== -->
 
-      <section
-        class="admin-section"
-        id="section-clics"
-      >
-
-        <div class="section-page-header">
-
-          <div>
-
-            <span class="page-label">
-              ACTIVIDAD
-            </span>
-
-            <h2>
-              👆 Clics y copias
-            </h2>
-
-            <p>
-              Revisa cuándo, qué cupón y cuántas veces
-              fue utilizado.
-            </p>
-
-          </div>
-
-        </div>
-
-        <div class="mini-stats-grid">
-
-          <div class="mini-stat">
-
-            <span class="mini-stat-icon">
-              👆
-            </span>
-
-            <div>
-
-              <small>
-                Clics totales
-              </small>
-
-              <strong id="clicksTotal">
-                0
-              </strong>
-
-            </div>
-
-          </div>
-
-          <div class="mini-stat">
-
-            <span class="mini-stat-icon">
-              📅
-            </span>
-
-            <div>
-
-              <small>
-                Hoy
-              </small>
-
-              <strong id="clicksToday">
-                0
-              </strong>
-
-            </div>
-
-          </div>
-
-          <div class="mini-stat">
-
-            <span class="mini-stat-icon">
-              📈
-            </span>
-
-            <div>
-
-              <small>
-                Promedio diario
-              </small>
-
-              <strong id="clicksAverage">
-                0
-              </strong>
-
-            </div>
-
-          </div>
-
-          <div class="mini-stat">
-
-            <span class="mini-stat-icon">
-              🏆
-            </span>
-
-            <div>
-
-              <small>
-                Más popular
-              </small>
-
-              <strong
-                id="mostCopiedShort"
-              >
-                —
-              </strong>
-
-            </div>
-
-          </div>
-
-        </div>
-
-        <div class="table-panel">
-
-          <div class="table-toolbar">
-
-            <div class="table-search">
-
-              🔎
-
-              <input
-                type="search"
-                id="clickSearch"
-                placeholder="Buscar código..."
-              >
-
-            </div>
-
-            <span
-              id="clickTableCount"
-              class="table-count"
-            >
-              0 registros
-            </span>
-
-          </div>
-
-          <div class="table-responsive">
-
-            <table class="admin-table">
-
-              <thead>
-
-                <tr>
-
-                  <th>
-                    Cupón
-                  </th>
-
-                  <th>
-                    Usuario
-                  </th>
-
-                  <th>
-                    Fecha
-                  </th>
-
-                  <th>
-                    Hora
-                  </th>
-
-                  <th>
-                    Estado
-                  </th>
-
-                </tr>
-
-              </thead>
-
-              <tbody
-                id="clicksTableBody"
-              >
-
-                <tr>
-
-                  <td
-                    colspan="5"
-                    class="table-loading"
-                  >
-                    Cargando actividad...
-                  </td>
-
-                </tr>
-
-              </tbody>
-
-            </table>
-
-          </div>
-
-        </div>
-
-      </section>
-
-      <!-- ===================================================
-           RANKING
-      ==================================================== -->
-
-      <section
-        class="admin-section"
-        id="section-ranking"
-      >
-
-        <div class="section-page-header">
-
-          <div>
-
-            <span class="page-label">
-              COMUNIDAD
-            </span>
-
-            <h2>
-              🏆 Comprador del mes
-            </h2>
-
-            <p>
-              Ranking automático basado en el ahorro
-              registrado por cada usuario.
-            </p>
-
-          </div>
-
-        </div>
-
-        <div
-          class="ranking-grid"
-          id="rankingGrid"
-        >
-
-          <div class="ranking-loading">
-
-            🏆
-
-            <p>
-              Cargando ranking...
-            </p>
-
-          </div>
-
-        </div>
-
-        <div class="table-panel">
-
-          <div class="panel-header">
-
-            <div>
-
-              <span class="panel-label">
-                CLASIFICACIÓN
-              </span>
-
-              <h3>
-                Usuarios con mayor ahorro
-              </h3>
-
-            </div>
-
-          </div>
-
-          <div class="table-responsive">
-
-            <table class="admin-table">
-
-              <thead>
-
-                <tr>
-
-                  <th>
-                    Posición
-                  </th>
-
-                  <th>
-                    Usuario
-                  </th>
-
-                  <th>
-                    Ahorro
-                  </th>
-
-                  <th>
-                    Compras
-                  </th>
-
-                  <th>
-                    Cupones
-                  </th>
-
-                  <th>
-                    Estado
-                  </th>
-
-                </tr>
-
-              </thead>
-
-              <tbody
-                id="rankingTableBody"
-              >
-
-                <tr>
-
-                  <td
-                    colspan="6"
-                    class="table-loading"
-                  >
-                    Cargando ranking...
-                  </td>
-
-                </tr>
-
-              </tbody>
-
-            </table>
-
-          </div>
-
-        </div>
-
-      </section>
-
-      <!-- ===================================================
+      <!-- ================================================
            CONFIGURACIÓN
-      ==================================================== -->
+      ================================================= -->
 
       <section
-        class="admin-section"
         id="section-configuracion"
+        class="admin-section"
       >
 
-        <div class="section-page-header">
+        <div class="section-heading">
 
           <div>
-
-            <span class="page-label">
-              SISTEMA
-            </span>
 
             <h2>
               ⚙️ Configuración
             </h2>
 
             <p>
-              Configuración general del panel administrativo.
+              Configuración general del administrador.
             </p>
 
           </div>
 
         </div>
+
 
         <div class="settings-grid">
 
-          <div class="settings-card">
 
-            <div class="settings-icon">
-              🔥
+          <div class="panel">
+
+            <div class="panel-header">
+
+              <div>
+
+                <h3>
+                  🔥 Firebase
+                </h3>
+
+                <p>
+                  Estado de conexión
+                </p>
+
+              </div>
+
             </div>
 
-            <div>
 
-              <h3>
-                Firebase
-              </h3>
+            <div class="setting-row">
 
-              <p>
-                Estado de conexión con Firestore.
-              </p>
+              <span>
+                Proyecto
+              </span>
 
-              <div
-                class="settings-status"
-                id="settingsFirebaseStatus"
+              <strong>
+                el-patron-de-las-ofertas
+              </strong>
+
+            </div>
+
+
+            <div class="setting-row">
+
+              <span>
+                Base de datos
+              </span>
+
+              <strong>
+                Firestore
+              </strong>
+
+            </div>
+
+
+            <div class="setting-row">
+
+              <span>
+                Authentication
+              </span>
+
+              <strong
+                id="authStatus"
+                class="status-active"
               >
-                Conectando...
+                Activo
+              </strong>
+
+            </div>
+
+          </div>
+
+
+          <div class="panel">
+
+            <div class="panel-header">
+
+              <div>
+
+                <h3>
+                  👤 Cuenta administradora
+                </h3>
+
               </div>
 
             </div>
 
-          </div>
 
-          <div class="settings-card">
+            <div class="account-box">
 
-            <div class="settings-icon">
-              🎟️
-            </div>
+              <div class="account-avatar">
+                👤
+              </div>
 
-            <div>
+              <div>
 
-              <h3>
-                Registro de copias
-              </h3>
+                <strong id="settingsEmail">
+                  colaborador1angel@gmail.com
+                </strong>
 
-              <p>
-                Cada cupón debe registrarse como máximo
-                una vez por usuario por día.
-              </p>
+                <span>
+                  Administrador autorizado
+                </span>
 
-              <div class="settings-status success">
-                Sistema preparado
               </div>
 
             </div>
 
-          </div>
 
-          <div class="settings-card">
-
-            <div class="settings-icon">
-                📊
-            </div>
-
-            <div>
-
-              <h3>
-                Estadísticas
-              </h3>
-
-              <p>
-                Las estadísticas se calculan directamente
-                desde Firestore.
-              </p>
-
-              <div class="settings-status success">
-                Activas
-              </div>
-
-            </div>
+            <button
+              id="settingsLogoutBtn"
+              class="danger-button"
+            >
+              🚪 Cerrar sesión
+            </button>
 
           </div>
 
-          <div class="settings-card">
-
-            <div class="settings-icon">
-              🖼️
-            </div>
-
-            <div>
-
-              <h3>
-                Imágenes
-              </h3>
-
-              <p>
-                Las imágenes pueden guardarse directamente
-                como Base64 en Firestore.
-              </p>
-
-              <div class="settings-status success">
-                Sin Firebase Storage
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-
-        <div class="info-panel">
-
-          <div class="info-icon">
-            ℹ️
-          </div>
-
-          <div>
-
-            <h3>
-              Estructura utilizada
-            </h3>
-
-            <p>
-              Este panel utiliza las colecciones
-              <strong>cupones</strong>,
-              <strong>ofertas</strong>,
-              <strong>usuarios</strong> y
-              <strong>copias</strong> de Firestore.
-              Las estadísticas se generan a partir
-              de esos datos.
-            </p>
-
-          </div>
 
         </div>
 
       </section>
 
-    </div>
 
-  </main>
-
-</div>
-
-<!-- =========================================================
-     MODAL CUPÓN
-========================================================= -->
-
-<div
-  class="admin-modal"
-  id="couponModal"
->
-
-  <div class="admin-modal-box">
-
-    <div class="modal-header">
-
-      <div>
-
-        <span class="page-label">
-          ADMINISTRACIÓN
-        </span>
-
-        <h2 id="couponModalTitle">
-          🎟️ Nuevo cupón
-        </h2>
-
-      </div>
-
-      <button
-        type="button"
-        class="modal-close"
-        data-close-modal="couponModal"
-      >
-        ×
-      </button>
-
-    </div>
-
-    <form
-      id="couponForm"
-      class="admin-form"
-    >
-
-      <input
-        type="hidden"
-        id="couponId"
-      >
-
-      <div class="form-grid">
-
-        <label>
-
-          Código
-
-          <input
-            type="text"
-            id="couponCode"
-            placeholder="EJEMPLO2026"
-            maxlength="50"
-            required
-          >
-
-        </label>
-
-        <label>
-
-          Título
-
-          <input
-            type="text"
-            id="couponTitle"
-            placeholder="$500 OFF"
-            maxlength="150"
-            required
-          >
-
-        </label>
-
-        <label>
-
-          Descuento
-
-          <input
-            type="text"
-            id="couponDiscount"
-            placeholder="$500 OFF / 20%"
-          >
-
-        </label>
-
-        <label>
-
-          Tipo
-
-          <select
-            id="couponType"
-          >
-
-            <option value="flash">
-              ⚡ Relámpago
-            </option>
-
-            <option value="exclusive">
-              🎁 Exclusivo
-            </option>
-
-            <option value="bank">
-              🏦 Bancario
-            </option>
-
-          </select>
-
-        </label>
-
-        <label>
-
-          Compra mínima
-
-          <input
-            type="number"
-            id="couponMinimum"
-            placeholder="1000"
-            min="0"
-          >
-
-        </label>
-
-        <label>
-
-          Tope
-
-          <input
-            type="number"
-            id="couponMaximum"
-            placeholder="150"
-            min="0"
-          >
-
-        </label>
-
-        <label>
-
-          Estado
-
-          <select
-            id="couponStatus"
-          >
-
-            <option value="activo">
-              🟢 Activo
-            </option>
-
-            <option value="por agotarse">
-              🟠 Por agotarse
-            </option>
-
-            <option value="agotado">
-              🔴 Agotado
-            </option>
-
-          </select>
-
-        </label>
-
-        <label>
-
-          Categoría
-
-          <input
-            type="text"
-            id="couponCategory"
-            placeholder="General"
-          >
-
-        </label>
-
-        <label class="form-full">
-
-          Enlace de Mercado Libre
-
-          <input
-            type="url"
-            id="couponLink"
-            placeholder="https://meli.la/..."
-          >
-
-        </label>
-
-        <label class="form-full">
-
-          Banco / tienda
-
-          <input
-            type="text"
-            id="couponBank"
-            placeholder="Opcional"
-          >
-
-        </label>
-
-      </div>
-
-      <div
-        class="form-message"
-        id="couponFormMessage"
-      ></div>
-
-      <div class="modal-actions">
-
-        <button
-          type="button"
-          class="secondary-button"
-          data-close-modal="couponModal"
-        >
-          Cancelar
-        </button>
-
-        <button
-          type="submit"
-          class="primary-button"
-          id="saveCouponButton"
-        >
-          GUARDAR CUPÓN
-        </button>
-
-      </div>
-
-    </form>
+    </main>
 
   </div>
 
-</div>
 
-<!-- =========================================================
-     MODAL OFERTA
-========================================================= -->
+  <!-- =====================================================
+       MODAL OFERTA
+  ====================================================== -->
 
-<div
-  class="admin-modal"
-  id="offerModal"
->
+  <div
+    id="offerModal"
+    class="modal-overlay"
+    style="display:none;"
+  >
 
-  <div class="admin-modal-box">
+    <div class="modal">
 
-    <div class="modal-header">
+      <div class="modal-header">
 
-      <div>
+        <div>
 
-        <span class="page-label">
-          ADMINISTRACIÓN
-        </span>
+          <h2 id="offerModalTitle">
+            Nueva oferta
+          </h2>
 
-        <h2>
-          🔥 Nueva oferta
-        </h2>
+          <p>
+            Completa la información de la oferta.
+          </p>
 
-      </div>
-
-      <button
-        type="button"
-        class="modal-close"
-        data-close-modal="offerModal"
-      >
-        ×
-      </button>
-
-    </div>
-
-    <form
-      id="offerForm"
-      class="admin-form"
-    >
-
-      <input
-        type="hidden"
-        id="offerId"
-      >
-
-      <div class="form-grid">
-
-        <label class="form-full">
-
-          Título
-
-          <input
-            type="text"
-            id="offerTitle"
-            placeholder="Nombre del producto"
-            required
-          >
-
-        </label>
-
-        <label>
-
-          Precio anterior
-
-          <input
-            type="number"
-            id="offerOldPrice"
-            min="0"
-            step="0.01"
-          >
-
-        </label>
-
-        <label>
-
-          Precio actual
-
-          <input
-            type="number"
-            id="offerCurrentPrice"
-            min="0"
-            step="0.01"
-            required
-          >
-
-        </label>
-
-        <label>
-
-          Categoría
-
-          <input
-            type="text"
-            id="offerCategory"
-            placeholder="Electrónica"
-          >
-
-        </label>
-
-        <label>
-
-          Enlace
-
-          <input
-            type="url"
-            id="offerLink"
-            placeholder="https://meli.la/..."
-            required
-          >
-
-        </label>
-
-        <label class="form-full">
-
-          Imagen Base64
-
-          <textarea
-            id="offerImage"
-            rows="4"
-            placeholder="Pega aquí la imagen Base64..."
-          ></textarea>
-
-        </label>
-
-      </div>
-
-      <div
-        class="form-message"
-        id="offerFormMessage"
-      ></div>
-
-      <div class="modal-actions">
+        </div>
 
         <button
-          type="button"
-          class="secondary-button"
-          data-close-modal="offerModal"
+          class="modal-close"
+          data-close="offerModal"
         >
-          Cancelar
-        </button>
-
-        <button
-          type="submit"
-          class="primary-button"
-          id="saveOfferButton"
-        >
-          GUARDAR OFERTA
+          ✕
         </button>
 
       </div>
 
-    </form>
 
-  </div>
+      <form id="offerForm">
 
-</div>
+        <input
+          type="hidden"
+          id="offerId"
+        >
 
-<!-- =========================================================
-     MODAL USUARIO
-========================================================= -->
 
-<div
-  class="admin-modal"
-  id="userModal"
->
+        <div class="form-grid">
 
-  <div class="admin-modal-box">
 
-    <div class="modal-header">
+          <div class="form-group full">
 
-      <div>
+            <label>
+              Título
+            </label>
 
-        <span class="page-label">
-          USUARIO
-        </span>
+            <input
+              type="text"
+              id="offerTitle"
+              placeholder="Ej. Audífonos Bluetooth"
+              required
+            >
 
-        <h2>
-          👤 Información
-        </h2>
+          </div>
 
-      </div>
 
-      <button
-        type="button"
-        class="modal-close"
-        data-close-modal="userModal"
-      >
-        ×
-      </button>
+          <div class="form-group">
 
-    </div>
+            <label>
+              Precio anterior
+            </label>
 
-    <div
-      id="userModalContent"
-      class="user-modal-content"
-    >
+            <input
+              type="number"
+              id="offerOldPrice"
+              placeholder="0"
+              step="0.01"
+              min="0"
+            >
 
-      Cargando...
+          </div>
 
-    </div>
 
-    <div class="modal-actions">
+          <div class="form-group">
 
-      <button
-        type="button"
-        class="secondary-button"
-        data-close-modal="userModal"
-      >
-        Cerrar
-      </button>
+            <label>
+              Precio actual
+            </label>
+
+            <input
+              type="number"
+              id="offerPrice"
+              placeholder="0"
+              step="0.01"
+              min="0"
+              required
+            >
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label>
+              Categoría
+            </label>
+
+            <input
+              type="text"
+              id="offerCategory"
+              placeholder="Ej. Electrónica"
+            >
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label>
+              Clics iniciales
+            </label>
+
+            <input
+              type="number"
+              id="offerClicks"
+              value="0"
+              min="0"
+            >
+
+          </div>
+
+
+          <div class="form-group full">
+
+            <label>
+              Link de Mercado Libre
+            </label>
+
+            <input
+              type="url"
+              id="offerLink"
+              placeholder="https://..."
+              required
+            >
+
+          </div>
+
+
+          <div class="form-group full">
+
+            <label>
+              Imagen
+            </label>
+
+            <input
+              type="file"
+              id="offerImage"
+              accept="image/*"
+            >
+
+            <div
+              id="offerImagePreview"
+              class="image-preview"
+            ></div>
+
+          </div>
+
+
+        </div>
+
+
+        <div class="modal-footer">
+
+          <button
+            type="button"
+            class="secondary-button"
+            data-close="offerModal"
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="submit"
+            class="primary-button"
+          >
+            💾 Guardar oferta
+          </button>
+
+        </div>
+
+      </form>
 
     </div>
 
   </div>
 
-</div>
 
-<!-- =========================================================
-     TOAST
-========================================================= -->
+  <!-- =====================================================
+       MODAL CUPÓN
+  ====================================================== -->
 
-<div
-  class="admin-toast"
-  id="adminToast"
-  role="status"
-  aria-live="polite"
-></div>
+  <div
+    id="couponModal"
+    class="modal-overlay"
+    style="display:none;"
+  >
 
-<!-- =========================================================
-     CHART.JS
-========================================================= -->
+    <div class="modal">
 
-<script
-  src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"
-></script>
+      <div class="modal-header">
 
-<!-- =========================================================
-     ADMIN JAVASCRIPT
-========================================================= -->
+        <div>
 
-<script
-  type="module"
-  src="./admin-pro.js?v=20260813"
-></script>
+          <h2 id="couponModalTitle">
+            Nuevo cupón
+          </h2>
+
+          <p>
+            Completa la información del cupón.
+          </p>
+
+        </div>
+
+        <button
+          class="modal-close"
+          data-close="couponModal"
+        >
+          ✕
+        </button>
+
+      </div>
+
+
+      <form id="couponForm">
+
+        <input
+          type="hidden"
+          id="couponId"
+        >
+
+
+        <div class="form-grid">
+
+
+          <div class="form-group full">
+
+            <label>
+              Código del cupón
+            </label>
+
+            <input
+              type="text"
+              id="couponCode"
+              placeholder="Ej. MELI10"
+              required
+            >
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label>
+              Tipo
+            </label>
+
+            <select id="couponType">
+
+              <option value="relampago">
+                ⚡ Relámpago
+              </option>
+
+              <option value="bancario">
+                🏦 Bancario
+              </option>
+
+              <option value="meliplus">
+                💛 Meli+
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label>
+              Descuento
+            </label>
+
+            <input
+              type="text"
+              id="couponDiscount"
+              placeholder="Ej. 14% OFF"
+            >
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label>
+              Compra mínima
+            </label>
+
+            <input
+              type="number"
+              id="couponMinimum"
+              placeholder="0"
+              step="0.01"
+              min="0"
+            >
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label>
+              Descuento máximo
+            </label>
+
+            <input
+              type="number"
+              id="couponMaximum"
+              placeholder="0"
+              step="0.01"
+              min="0"
+            >
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label>
+              Copias iniciales
+            </label>
+
+            <input
+              type="number"
+              id="couponCopies"
+              value="0"
+              min="0"
+            >
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label>
+              Estado
+            </label>
+
+            <select id="couponStatus">
+
+              <option value="activo">
+                🟢 Activo
+              </option>
+
+              <option value="por-agotarse">
+                🟠 Por agotarse
+              </option>
+
+              <option value="agotado">
+                🔴 Agotado
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <div class="form-group full">
+
+            <label>
+              Descripción
+            </label>
+
+            <textarea
+              id="couponDescription"
+              rows="3"
+              placeholder="Información adicional del cupón..."
+            ></textarea>
+
+          </div>
+
+
+        </div>
+
+
+        <div class="modal-footer">
+
+          <button
+            type="button"
+            class="secondary-button"
+            data-close="couponModal"
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="submit"
+            class="primary-button"
+          >
+            💾 Guardar cupón
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
+
+  </div>
+
+
+  <!-- =====================================================
+       TOAST
+  ====================================================== -->
+
+  <div
+    id="toast"
+    class="toast"
+  >
+
+    <span id="toastIcon">
+      ✅
+    </span>
+
+    <span id="toastMessage">
+      Listo
+    </span>
+
+  </div>
+
+
+  <!-- =====================================================
+       FIREBASE / ADMIN JS
+  ====================================================== -->
+
+
+  <script type="module" src="admin-pro.js"></script>
 
 </body>
 </html>
