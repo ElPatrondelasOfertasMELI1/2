@@ -2,11 +2,13 @@
    ⚡ EL PATRÓN DE LAS OFERTAS
    ADMIN PRO
    Firebase + Firestore + Authentication
+
    Compatible con admin-pro.html actual
 ========================================================= */
 
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
   getAuth,
@@ -20,15 +22,10 @@ import {
   collection,
   addDoc,
   getDocs,
-  getDoc,
   doc,
   updateDoc,
   deleteDoc,
-  query,
-  orderBy,
-  limit,
-  serverTimestamp,
-  increment
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 
@@ -37,18 +34,53 @@ import {
 ========================================================= */
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDOoYZZhaTn6hbBQ0ml--mq8ByT0KdF9e0",
-  authDomain: "el-patron-de-las-ofertas.firebaseapp.com",
-  projectId: "el-patron-de-las-ofertas",
-  storageBucket: "el-patron-de-las-ofertas.firebasestorage.app",
-  messagingSenderId: "996329026447",
-  appId: "1:996329026447:web:46eba80378d58de587d1fa",
-  measurementId: "G-1LYNHBZVDM"
+
+  apiKey:
+    "AIzaSyDOoYZZhaTn6hbBQ0ml--mq8ByT0KdF9e0",
+
+  authDomain:
+    "el-patron-de-las-ofertas.firebaseapp.com",
+
+  projectId:
+    "el-patron-de-las-ofertas",
+
+  storageBucket:
+    "el-patron-de-las-ofertas.firebasestorage.app",
+
+  messagingSenderId:
+    "996329026447",
+
+  /*
+     MISMO APP ID UTILIZADO POR LA PÁGINA PÚBLICA
+  */
+  appId:
+    "1:996329026447:web:dde5b6748aff41e087d1fa",
+
+  measurementId:
+    "G-1LYNHBZVDM"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+
+/* =========================================================
+   INICIALIZAR FIREBASE
+========================================================= */
+
+const app =
+  initializeApp(firebaseConfig);
+
+const auth =
+  getAuth(app);
+
+const db =
+  getFirestore(app);
+
+
+/* =========================================================
+   ADMINISTRADOR AUTORIZADO
+========================================================= */
+
+const ADMIN_EMAIL =
+  "colaborador1angel@gmail.com";
 
 
 /* =========================================================
@@ -71,54 +103,162 @@ let cuponEditando = null;
    UTILIDADES
 ========================================================= */
 
-const $ = (id) => document.getElementById(id);
+const $ = id =>
+  document.getElementById(id);
+
 
 function texto(valor) {
-  if (valor === undefined || valor === null) return "";
+
+  if (
+    valor === undefined ||
+    valor === null
+  ) {
+    return "";
+  }
+
   return String(valor);
 }
 
+
 function numero(valor) {
-  const n = Number(valor);
-  return Number.isFinite(n) ? n : 0;
+
+  const n =
+    Number(valor);
+
+  return Number.isFinite(n)
+    ? n
+    : 0;
 }
+
 
 function dinero(valor) {
-  return new Intl.NumberFormat("es-MX", {
-    style: "currency",
-    currency: "MXN"
-  }).format(numero(valor));
+
+  return new Intl.NumberFormat(
+    "es-MX",
+    {
+      style: "currency",
+      currency: "MXN"
+    }
+  ).format(
+    numero(valor)
+  );
 }
+
 
 function escaparHTML(valor) {
+
   return texto(valor)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+
+    .replaceAll(
+      "&",
+      "&amp;"
+    )
+
+    .replaceAll(
+      "<",
+      "&lt;"
+    )
+
+    .replaceAll(
+      ">",
+      "&gt;"
+    )
+
+    .replaceAll(
+      '"',
+      "&quot;"
+    )
+
+    .replaceAll(
+      "'",
+      "&#039;"
+    );
 }
 
+
 function fecha(valor) {
-  if (!valor) return "Sin fecha";
+
+  if (!valor) {
+    return "Sin fecha";
+  }
 
   try {
-    const d = valor?.toDate
-      ? valor.toDate()
-      : new Date(valor);
 
-    if (Number.isNaN(d.getTime())) {
+    const d =
+      valor?.toDate
+        ? valor.toDate()
+        : new Date(valor);
+
+    if (
+      Number.isNaN(
+        d.getTime()
+      )
+    ) {
       return "Sin fecha";
     }
 
-    return d.toLocaleString("es-MX", {
-      dateStyle: "short",
-      timeStyle: "short"
-    });
+    return d.toLocaleString(
+      "es-MX",
+      {
+        dateStyle: "short",
+        timeStyle: "short"
+      }
+    );
 
   } catch {
+
     return "Sin fecha";
   }
+}
+
+
+function obtenerMillis(valor) {
+
+  if (!valor) {
+    return 0;
+  }
+
+  try {
+
+    if (
+      typeof valor.toDate ===
+      "function"
+    ) {
+
+      return valor
+        .toDate()
+        .getTime();
+    }
+
+    const d =
+      new Date(valor);
+
+    return Number.isNaN(
+      d.getTime()
+    )
+      ? 0
+      : d.getTime();
+
+  } catch {
+
+    return 0;
+  }
+}
+
+
+/* =========================================================
+   COMPROBAR ADMIN
+========================================================= */
+
+function esAdministrador() {
+
+  return !!(
+    usuarioActual &&
+    usuarioActual.email &&
+    usuarioActual.email
+      .toLowerCase() ===
+      ADMIN_EMAIL.toLowerCase()
+  );
 }
 
 
@@ -126,36 +266,64 @@ function fecha(valor) {
    TOAST
 ========================================================= */
 
-function toast(mensaje, tipo = "success") {
+function toast(
+  mensaje,
+  tipo = "success"
+) {
 
-  const caja = $("toast");
+  const caja =
+    $("toast");
 
   if (!caja) {
-    console.log(mensaje);
+
+    console.log(
+      mensaje
+    );
+
     return;
   }
 
-  const icono = $("toastIcon");
-  const textoToast = $("toastMessage");
+  const icono =
+    $("toastIcon");
+
+  const textoToast =
+    $("toastMessage");
 
   if (textoToast) {
-    textoToast.textContent = mensaje;
+
+    textoToast.textContent =
+      mensaje;
   }
 
   if (icono) {
+
     icono.textContent =
-      tipo === "error" ? "❌" :
-      tipo === "warning" ? "⚠️" :
-      "✅";
+      tipo === "error"
+        ? "❌"
+        : tipo === "warning"
+        ? "⚠️"
+        : "✅";
   }
 
-  caja.classList.add("show");
+  caja.classList.add(
+    "show"
+  );
 
-  clearTimeout(window.__toastTimer);
+  clearTimeout(
+    window.__toastTimer
+  );
 
-  window.__toastTimer = setTimeout(() => {
-    caja.classList.remove("show");
-  }, 3500);
+  window.__toastTimer =
+    setTimeout(
+      () => {
+
+        caja.classList.remove(
+          "show"
+        );
+
+      },
+      3500
+    );
 }
 
 
@@ -165,44 +333,69 @@ function toast(mensaje, tipo = "success") {
 
 function ocultarCarga() {
 
-  const loading = $("loadingScreen");
+  const loading =
+    $("loadingScreen");
 
-  if (!loading) return;
+  if (!loading) {
+    return;
+  }
 
-  loading.style.display = "none";
+  loading.style.display =
+    "none";
 }
+
 
 function mostrarCarga() {
 
-  const loading = $("loadingScreen");
+  const loading =
+    $("loadingScreen");
 
-  if (!loading) return;
+  if (!loading) {
+    return;
+  }
 
-  loading.style.display = "flex";
+  loading.style.display =
+    "flex";
 }
 
 
 /* =========================================================
-   LOGIN / AUTH
+   LOGIN
 ========================================================= */
 
-async function iniciarSesion(event) {
+async function iniciarSesion(
+  event
+) {
 
   if (event) {
     event.preventDefault();
   }
 
-  const email = $("loginEmail")?.value.trim();
-  const password = $("loginPassword")?.value;
+  const email =
+    $("loginEmail")
+      ?.value
+      .trim();
 
-  const errorBox = $("loginError");
+  const password =
+    $("loginPassword")
+      ?.value;
+
+  const errorBox =
+    $("loginError");
 
   if (errorBox) {
-    errorBox.textContent = "";
-    errorBox.style.display = "none";
+
+    errorBox.textContent =
+      "";
+
+    errorBox.style.display =
+      "none";
   }
 
-  if (!email || !password) {
+  if (
+    !email ||
+    !password
+  ) {
 
     mostrarErrorLogin(
       "Escribe tu correo electrónico y contraseña."
@@ -211,73 +404,146 @@ async function iniciarSesion(event) {
     return;
   }
 
-  const boton = document.querySelector(
-    "#loginForm button[type='submit']"
-  );
+  const boton =
+    document.querySelector(
+      "#loginForm button[type='submit']"
+    );
 
   if (boton) {
-    boton.disabled = true;
-    boton.textContent = "⏳ ENTRANDO...";
+
+    boton.disabled =
+      true;
+
+    boton.textContent =
+      "⏳ ENTRANDO...";
   }
 
   try {
 
-    await signInWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
+    const credencial =
+      await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
 
-    toast("Sesión iniciada correctamente.");
+    /*
+       SEGURIDAD EXTRA EN EL ADMIN
+
+       Aunque Firestore también protege
+       las colecciones, aquí impedimos
+       que otro usuario vea el panel.
+    */
+
+    const correo =
+      credencial.user.email
+        ?.toLowerCase();
+
+    if (
+      correo !==
+      ADMIN_EMAIL.toLowerCase()
+    ) {
+
+      await signOut(auth);
+
+      mostrarErrorLogin(
+        "Este usuario no está autorizado como administrador."
+      );
+
+      return;
+    }
+
+    toast(
+      "Sesión iniciada correctamente."
+    );
 
   } catch (error) {
 
-    console.error("Error login:", error);
+    console.error(
+      "Error login:",
+      error
+    );
 
-    let mensaje = "No se pudo iniciar sesión.";
+    let mensaje =
+      "No se pudo iniciar sesión.";
 
     if (
-      error.code === "auth/invalid-credential" ||
-      error.code === "auth/wrong-password" ||
-      error.code === "auth/user-not-found"
+      error.code ===
+        "auth/invalid-credential" ||
+      error.code ===
+        "auth/wrong-password" ||
+      error.code ===
+        "auth/user-not-found"
     ) {
-      mensaje = "Correo o contraseña incorrectos.";
+
+      mensaje =
+        "Correo o contraseña incorrectos.";
     }
 
-    if (error.code === "auth/invalid-email") {
-      mensaje = "El correo no es válido.";
+    if (
+      error.code ===
+      "auth/invalid-email"
+    ) {
+
+      mensaje =
+        "El correo no es válido.";
     }
 
-    if (error.code === "auth/too-many-requests") {
+    if (
+      error.code ===
+      "auth/too-many-requests"
+    ) {
+
       mensaje =
         "Demasiados intentos. Espera unos minutos.";
     }
 
-    mostrarErrorLogin(mensaje);
+    mostrarErrorLogin(
+      mensaje
+    );
 
   } finally {
 
     if (boton) {
-      boton.disabled = false;
-      boton.textContent = "🔐 ENTRAR";
+
+      boton.disabled =
+        false;
+
+      boton.textContent =
+        "🔐 ENTRAR";
     }
   }
 }
 
 
-function mostrarErrorLogin(mensaje) {
+function mostrarErrorLogin(
+  mensaje
+) {
 
-  const errorBox = $("loginError");
+  const errorBox =
+    $("loginError");
 
   if (!errorBox) {
-    toast(mensaje, "error");
+
+    toast(
+      mensaje,
+      "error"
+    );
+
     return;
   }
 
-  errorBox.textContent = mensaje;
-  errorBox.style.display = "block";
+  errorBox.textContent =
+    mensaje;
+
+  errorBox.style.display =
+    "block";
 }
 
+
+/* =========================================================
+   CERRAR SESIÓN
+========================================================= */
 
 async function cerrarSesion() {
 
@@ -285,11 +551,15 @@ async function cerrarSesion() {
 
     await signOut(auth);
 
-    toast("Sesión cerrada.");
+    toast(
+      "Sesión cerrada."
+    );
 
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      error
+    );
 
     toast(
       "No se pudo cerrar la sesión.",
@@ -300,34 +570,53 @@ async function cerrarSesion() {
 
 
 /* =========================================================
-   MOSTRAR / OCULTAR PANELES
+   MOSTRAR ADMIN
 ========================================================= */
 
 function mostrarAdmin() {
 
-  const login = $("loginScreen");
-  const admin = $("adminApp");
+  const login =
+    $("loginScreen");
+
+  const admin =
+    $("adminApp");
 
   if (login) {
-    login.style.display = "none";
+
+    login.style.display =
+      "none";
   }
 
   if (admin) {
-    admin.style.display = "";
+
+    admin.style.display =
+      "";
   }
 }
 
+
+/* =========================================================
+   MOSTRAR LOGIN
+========================================================= */
+
 function mostrarLogin() {
 
-  const login = $("loginScreen");
-  const admin = $("adminApp");
+  const login =
+    $("loginScreen");
+
+  const admin =
+    $("adminApp");
 
   if (admin) {
-    admin.style.display = "none";
+
+    admin.style.display =
+      "none";
   }
 
   if (login) {
-    login.style.display = "flex";
+
+    login.style.display =
+      "flex";
   }
 }
 
@@ -336,73 +625,124 @@ function mostrarLogin() {
    AUTH STATE
 ========================================================= */
 
-onAuthStateChanged(auth, async (user) => {
+onAuthStateChanged(
+  auth,
+  async user => {
 
-  try {
+    try {
 
-    usuarioActual = user;
+      usuarioActual =
+        user;
 
-    ocultarCarga();
+      ocultarCarga();
 
-    if (user) {
+      if (user) {
 
-      console.log(
-        "Administrador conectado:",
-        user.email
-      );
+        const correo =
+          user.email
+            ?.toLowerCase();
 
-      mostrarAdmin();
+        /*
+           NO ADMIN
+        */
 
-      const emailElement = $("adminEmail");
+        if (
+          correo !==
+          ADMIN_EMAIL.toLowerCase()
+        ) {
 
-      if (emailElement) {
-        emailElement.textContent = user.email || "";
+          console.warn(
+            "Usuario no autorizado:",
+            user.email
+          );
+
+          await signOut(auth);
+
+          mostrarLogin();
+
+          actualizarConexion(
+            false
+          );
+
+          mostrarErrorLogin(
+            "Este usuario no tiene permisos de administrador."
+          );
+
+          return;
+        }
+
+        console.log(
+          "Administrador conectado:",
+          user.email
+        );
+
+        mostrarAdmin();
+
+        const emailElement =
+          $("adminEmail");
+
+        if (emailElement) {
+
+          emailElement.textContent =
+            user.email || "";
+        }
+
+        actualizarConexion(
+          true
+        );
+
+        await cargarTodo();
+
+      } else {
+
+        console.log(
+          "No hay administrador conectado."
+        );
+
+        mostrarLogin();
+
+        actualizarConexion(
+          false
+        );
       }
 
-      actualizarConexion(true);
+    } catch (error) {
 
-      await cargarTodo();
-
-    } else {
-
-      console.log(
-        "No hay administrador conectado."
+      console.error(
+        "Error inicializando Admin PRO:",
+        error
       );
+
+      ocultarCarga();
 
       mostrarLogin();
 
-      actualizarConexion(false);
+      actualizarConexion(
+        false
+      );
+
+      toast(
+        "Error conectando con Firebase.",
+        "error"
+      );
     }
-
-  } catch (error) {
-
-    console.error(
-      "Error inicializando Admin PRO:",
-      error
-    );
-
-    ocultarCarga();
-
-    mostrarLogin();
-
-    actualizarConexion(false);
-
-    toast(
-      "Error conectando con Firebase.",
-      "error"
-    );
   }
-});
+);
 
 
 /* =========================================================
    CONEXIÓN
 ========================================================= */
 
-function actualizarConexion(conectado) {
+function actualizarConexion(
+  conectado
+) {
 
-  const dot = $("connectionDot");
-  const text = $("connectionText");
+  const dot =
+    $("connectionDot");
+
+  const text =
+    $("connectionText");
 
   if (dot) {
 
@@ -419,9 +759,10 @@ function actualizarConexion(conectado) {
 
   if (text) {
 
-    text.textContent = conectado
-      ? "Firebase conectado"
-      : "Firebase desconectado";
+    text.textContent =
+      conectado
+        ? "Firebase conectado"
+        : "Firebase desconectado";
   }
 }
 
@@ -433,14 +774,21 @@ function actualizarConexion(conectado) {
 async function cargarTodo() {
 
   await Promise.allSettled([
+
     cargarOfertas(),
+
     cargarCupones(),
+
     cargarUsuarios(),
+
     cargarCopias(),
+
     cargarVisitas()
+
   ]);
 
   actualizarDashboard();
+
   cargarEstadisticas();
 }
 
@@ -453,19 +801,30 @@ async function cargarOfertas() {
 
   try {
 
-    const snapshot = await getDocs(
-      collection(db, "ofertas")
-    );
+    const snapshot =
+      await getDocs(
+        collection(
+          db,
+          "ofertas"
+        )
+      );
 
-    ofertas = snapshot.docs.map(d => ({
-      id: d.id,
-      ...d.data()
-    }));
+    ofertas =
+      snapshot.docs.map(
+        d => ({
+          id: d.id,
+          ...d.data()
+        })
+      );
 
     ofertas.sort(
       (a, b) =>
-        obtenerMillis(b.fechaCreacion) -
-        obtenerMillis(a.fechaCreacion)
+        obtenerMillis(
+          b.fechaCreacion
+        ) -
+        obtenerMillis(
+          a.fechaCreacion
+        )
     );
 
     renderOfertas();
@@ -485,9 +844,11 @@ async function cargarOfertas() {
 
     renderOfertas();
 
-    const tabla = $("offersTable");
+    const tabla =
+      $("offersTable");
 
     if (tabla) {
+
       tabla.innerHTML = `
         <tr>
           <td colspan="6" class="table-loading">
@@ -500,66 +861,69 @@ async function cargarOfertas() {
 }
 
 
-function obtenerMillis(valor) {
-
-  if (!valor) return 0;
-
-  try {
-
-    if (valor.toDate) {
-      return valor.toDate().getTime();
-    }
-
-    const fecha = new Date(valor);
-
-    return Number.isNaN(fecha.getTime())
-      ? 0
-      : fecha.getTime();
-
-  } catch {
-    return 0;
-  }
-}
-
+/* =========================================================
+   RENDER OFERTAS
+========================================================= */
 
 function renderOfertas() {
 
-  const tabla = $("offersTable");
+  const tabla =
+    $("offersTable");
 
-  if (!tabla) return;
+  if (!tabla) {
+    return;
+  }
 
   const busqueda =
-    $("offerSearch")?.value
+    $("offerSearch")
+      ?.value
       .trim()
       .toLowerCase() || "";
 
   const categoria =
-    $("offerCategoryFilter")?.value || "";
+    $("offerCategoryFilter")
+      ?.value || "";
 
-  let lista = [...ofertas];
+  let lista =
+    [...ofertas];
 
   if (busqueda) {
 
-    lista = lista.filter(oferta => {
+    lista =
+      lista.filter(
+        oferta => {
 
-      return (
-        texto(oferta.titulo)
-          .toLowerCase()
-          .includes(busqueda) ||
+          return (
 
-        texto(oferta.categoria)
-          .toLowerCase()
-          .includes(busqueda)
+            texto(
+              oferta.titulo
+            )
+              .toLowerCase()
+              .includes(
+                busqueda
+              ) ||
+
+            texto(
+              oferta.categoria
+            )
+              .toLowerCase()
+              .includes(
+                busqueda
+              )
+          );
+        }
       );
-    });
   }
 
   if (categoria) {
 
-    lista = lista.filter(
-      oferta =>
-        texto(oferta.categoria) === categoria
-    );
+    lista =
+      lista.filter(
+        oferta =>
+          texto(
+            oferta.categoria
+          ) === categoria
+      );
   }
 
   if (!lista.length) {
@@ -575,113 +939,140 @@ function renderOfertas() {
     return;
   }
 
-  tabla.innerHTML = lista.map(oferta => {
+  tabla.innerHTML =
+    lista
+      .map(
+        oferta => {
 
-    const precioAntes =
-      numero(oferta.precioAntes);
+          const precioAntes =
+            numero(
+              oferta.precioAntes
+            );
 
-    const precioActual =
-      numero(
-        oferta.precioActual ??
-        oferta.precio
-      );
+          const precioActual =
+            numero(
+              oferta.precioActual ??
+              oferta.precio
+            );
 
-    const clicks =
-      numero(
-        oferta.clics ??
-        oferta.clicks
-      );
+          const clicks =
+            numero(
+              oferta.clics ??
+              oferta.clicks
+            );
 
-    const imagen =
-      texto(oferta.imagen);
+          const imagen =
+            texto(
+              oferta.imagen
+            );
 
-    return `
-      <tr>
+          return `
+            <tr>
 
-        <td>
-          <div class="table-product">
+              <td>
 
-            ${
-              imagen
-                ? `<img
-                    src="${escaparHTML(imagen)}"
-                    alt=""
-                    class="table-image"
-                  >`
-                : `<div class="table-image-placeholder">
-                    🔥
-                  </div>`
-            }
+                <div class="table-product">
 
-            <div>
-              <strong>
+                  ${
+                    imagen
+
+                      ? `
+                        <img
+                          src="${escaparHTML(imagen)}"
+                          alt=""
+                          class="table-image"
+                        >
+                      `
+
+                      : `
+                        <div class="table-image-placeholder">
+                          🔥
+                        </div>
+                      `
+                  }
+
+                  <div>
+
+                    <strong>
+                      ${escaparHTML(
+                        oferta.titulo ||
+                        "Sin título"
+                      )}
+                    </strong>
+
+                    <small>
+                      ${escaparHTML(
+                        oferta.tipo ||
+                        ""
+                      )}
+                    </small>
+
+                  </div>
+
+                </div>
+
+              </td>
+
+              <td>
+                ${
+                  precioAntes
+                    ? dinero(
+                        precioAntes
+                      )
+                    : "—"
+                }
+              </td>
+
+              <td>
+                <strong>
+                  ${dinero(
+                    precioActual
+                  )}
+                </strong>
+              </td>
+
+              <td>
                 ${escaparHTML(
-                  oferta.titulo || "Sin título"
+                  oferta.categoria ||
+                  "Sin categoría"
                 )}
-              </strong>
+              </td>
 
-              <small>
-                ${escaparHTML(
-                  oferta.tipo || ""
+              <td>
+                ${clicks.toLocaleString(
+                  "es-MX"
                 )}
-              </small>
-            </div>
+              </td>
 
-          </div>
-        </td>
+              <td>
 
-        <td>
-          ${
-            precioAntes
-              ? dinero(precioAntes)
-              : "—"
-          }
-        </td>
+                <div class="table-actions">
 
-        <td>
-          <strong>
-            ${dinero(precioActual)}
-          </strong>
-        </td>
+                  <button
+                    class="action-btn edit"
+                    data-edit-offer="${escaparHTML(oferta.id)}"
+                    title="Editar"
+                  >
+                    ✏️
+                  </button>
 
-        <td>
-          ${escaparHTML(
-            oferta.categoria || "Sin categoría"
-          )}
-        </td>
+                  <button
+                    class="action-btn delete"
+                    data-delete-offer="${escaparHTML(oferta.id)}"
+                    title="Eliminar"
+                  >
+                    🗑️
+                  </button>
 
-        <td>
-          ${clicks.toLocaleString("es-MX")}
-        </td>
+                </div>
 
-        <td>
+              </td>
 
-          <div class="table-actions">
-
-            <button
-              class="action-btn edit"
-              data-edit-offer="${oferta.id}"
-              title="Editar"
-            >
-              ✏️
-            </button>
-
-            <button
-              class="action-btn delete"
-              data-delete-offer="${oferta.id}"
-              title="Eliminar"
-            >
-              🗑️
-            </button>
-
-          </div>
-
-        </td>
-
-      </tr>
-    `;
-
-  }).join("");
+            </tr>
+          `;
+        }
+      )
+      .join("");
 }
 
 
@@ -694,31 +1085,49 @@ function cargarCategorias() {
   const select =
     $("offerCategoryFilter");
 
-  if (!select) return;
+  if (!select) {
+    return;
+  }
 
-  const actual = select.value;
+  const actual =
+    select.value;
 
-  const categorias = [
-    ...new Set(
-      ofertas
-        .map(o => texto(o.categoria).trim())
-        .filter(Boolean)
-    )
-  ].sort();
+  const categorias =
+    [
+      ...new Set(
+        ofertas
+          .map(
+            o =>
+              texto(
+                o.categoria
+              ).trim()
+          )
+          .filter(Boolean)
+      )
+    ].sort();
 
   select.innerHTML = `
     <option value="">
       Todas las categorías
     </option>
 
-    ${categorias.map(categoria => `
-      <option value="${escaparHTML(categoria)}">
-        ${escaparHTML(categoria)}
-      </option>
-    `).join("")}
+    ${
+      categorias
+        .map(
+          categoria => `
+            <option
+              value="${escaparHTML(categoria)}"
+            >
+              ${escaparHTML(categoria)}
+            </option>
+          `
+        )
+        .join("")
+    }
   `;
 
-  select.value = actual;
+  select.value =
+    actual;
 }
 
 
@@ -731,10 +1140,15 @@ function renderOfertasRecientes() {
   const contenedor =
     $("recentOffers");
 
-  if (!contenedor) return;
+  if (!contenedor) {
+    return;
+  }
 
   const lista =
-    ofertas.slice(0, 5);
+    ofertas.slice(
+      0,
+      5
+    );
 
   if (!lista.length) {
 
@@ -748,37 +1162,38 @@ function renderOfertasRecientes() {
   }
 
   contenedor.innerHTML =
-    lista.map(oferta => {
+    lista
+      .map(
+        oferta => `
+          <div class="recent-item">
 
-      return `
-        <div class="recent-item">
+            <div class="recent-icon">
+              🔥
+            </div>
 
-          <div class="recent-icon">
-            🔥
+            <div class="recent-info">
+
+              <strong>
+                ${escaparHTML(
+                  oferta.titulo ||
+                  "Oferta"
+                )}
+              </strong>
+
+              <small>
+                ${dinero(
+                  oferta.precioActual ??
+                  oferta.precio ??
+                  0
+                )}
+              </small>
+
+            </div>
+
           </div>
-
-          <div class="recent-info">
-
-            <strong>
-              ${escaparHTML(
-                oferta.titulo || "Oferta"
-              )}
-            </strong>
-
-            <small>
-              ${dinero(
-                oferta.precioActual ??
-                oferta.precio ??
-                0
-              )}
-            </small>
-
-          </div>
-
-        </div>
-      `;
-
-    }).join("");
+        `
+      )
+      .join("");
 }
 
 
@@ -788,7 +1203,8 @@ function renderOfertasRecientes() {
 
 function abrirNuevaOferta() {
 
-  ofertaEditando = null;
+  ofertaEditando =
+    null;
 
   limpiarFormularioOferta();
 
@@ -796,11 +1212,14 @@ function abrirNuevaOferta() {
     $("offerModalTitle");
 
   if (titulo) {
+
     titulo.textContent =
       "Nueva oferta";
   }
 
-  abrirModal("offerModal");
+  abrirModal(
+    "offerModal"
+  );
 }
 
 
@@ -808,38 +1227,70 @@ function abrirNuevaOferta() {
    EDITAR OFERTA
 ========================================================= */
 
-async function editarOferta(id) {
+async function editarOferta(
+  id
+) {
+
+  if (!esAdministrador()) {
+
+    toast(
+      "No tienes permisos de administrador.",
+      "error"
+    );
+
+    return;
+  }
 
   const oferta =
-    ofertas.find(o => o.id === id);
+    ofertas.find(
+      o => o.id === id
+    );
 
-  if (!oferta) return;
+  if (!oferta) {
+    return;
+  }
 
-  ofertaEditando = id;
+  ofertaEditando =
+    id;
 
-  $("offerId").value = id;
+  if ($("offerId")) {
+    $("offerId").value =
+      id;
+  }
 
-  $("offerTitle").value =
-    oferta.titulo || "";
+  if ($("offerTitle")) {
+    $("offerTitle").value =
+      oferta.titulo || "";
+  }
 
-  $("offerOldPrice").value =
-    oferta.precioAntes ?? "";
+  if ($("offerOldPrice")) {
+    $("offerOldPrice").value =
+      oferta.precioAntes ?? "";
+  }
 
-  $("offerPrice").value =
-    oferta.precioActual ??
-    oferta.precio ??
-    "";
+  if ($("offerPrice")) {
+    $("offerPrice").value =
+      oferta.precioActual ??
+      oferta.precio ??
+      "";
+  }
 
-  $("offerCategory").value =
-    oferta.categoria || "";
+  if ($("offerCategory")) {
+    $("offerCategory").value =
+      oferta.categoria || "";
+  }
 
-  $("offerClicks").value =
-    oferta.clics ??
-    oferta.clicks ??
-    0;
+  if ($("offerClicks")) {
+    $("offerClicks").value =
+      oferta.clics ??
+      oferta.clicks ??
+      0;
+  }
 
-  $("offerLink").value =
-    oferta.link || "";
+  if ($("offerLink")) {
+    $("offerLink").value =
+      oferta.link || "";
+  }
 
   const preview =
     $("offerImagePreview");
@@ -848,9 +1299,16 @@ async function editarOferta(id) {
 
     preview.innerHTML =
       oferta.imagen
-        ? `<img src="${escaparHTML(
-            oferta.imagen
-          )}" alt="Vista previa">`
+
+        ? `
+          <img
+            src="${escaparHTML(
+              oferta.imagen
+            )}"
+            alt="Vista previa"
+          >
+        `
+
         : "";
   }
 
@@ -858,11 +1316,14 @@ async function editarOferta(id) {
     $("offerModalTitle");
 
   if (titulo) {
+
     titulo.textContent =
       "Editar oferta";
   }
 
-  abrirModal("offerModal");
+  abrirModal(
+    "offerModal"
+  );
 }
 
 
@@ -870,16 +1331,18 @@ async function editarOferta(id) {
    GUARDAR OFERTA
 ========================================================= */
 
-async function guardarOferta(event) {
+async function guardarOferta(
+  event
+) {
 
   if (event) {
     event.preventDefault();
   }
 
-  if (!usuarioActual) {
+  if (!esAdministrador()) {
 
     toast(
-      "Debes iniciar sesión.",
+      "No tienes permisos de administrador.",
       "error"
     );
 
@@ -887,31 +1350,41 @@ async function guardarOferta(event) {
   }
 
   const titulo =
-    $("offerTitle")?.value.trim();
+    $("offerTitle")
+      ?.value
+      .trim();
 
   const precioAntes =
     numero(
-      $("offerOldPrice")?.value
+      $("offerOldPrice")
+        ?.value
     );
 
   const precioActual =
     numero(
-      $("offerPrice")?.value
+      $("offerPrice")
+        ?.value
     );
 
   const categoria =
-    $("offerCategory")?.value.trim();
+    $("offerCategory")
+      ?.value
+      .trim();
 
   const clicks =
     numero(
-      $("offerClicks")?.value
+      $("offerClicks")
+        ?.value
     );
 
   const link =
-    $("offerLink")?.value.trim();
+    $("offerLink")
+      ?.value
+      .trim();
 
   const archivo =
-    $("offerImage")?.files?.[0];
+    $("offerImage")
+      ?.files?.[0];
 
   if (!titulo) {
 
@@ -943,30 +1416,65 @@ async function guardarOferta(event) {
     return;
   }
 
+  /*
+     Límite razonable para evitar
+     documentos enormes en Firestore.
+  */
+
+  if (
+    archivo &&
+    archivo.size >
+      2 * 1024 * 1024
+  ) {
+
+    toast(
+      "La imagen debe pesar menos de 2 MB.",
+      "error"
+    );
+
+    return;
+  }
+
   const boton =
     document.querySelector(
       "#offerForm button[type='submit']"
     );
 
   if (boton) {
-    boton.disabled = true;
-    boton.textContent = "⏳ GUARDANDO...";
+
+    boton.disabled =
+      true;
+
+    boton.textContent =
+      "⏳ GUARDANDO...";
   }
 
   try {
 
     let imagen = "";
 
+    /*
+       Si estamos editando,
+       conservar imagen existente.
+    */
+
     if (ofertaEditando) {
 
       const existente =
         ofertas.find(
-          o => o.id === ofertaEditando
+          o =>
+            o.id ===
+            ofertaEditando
         );
 
       imagen =
-        existente?.imagen || "";
+        existente?.imagen ||
+        "";
     }
+
+    /*
+       Nueva imagen
+    */
 
     if (archivo) {
 
@@ -975,6 +1483,12 @@ async function guardarOferta(event) {
           archivo
         );
     }
+
+    /*
+       Usamos nombres consistentes.
+       Se mantiene "clics" porque es
+       el campo principal del Admin.
+    */
 
     const datos = {
 
@@ -987,8 +1501,6 @@ async function guardarOferta(event) {
       categoria,
 
       clics: clicks,
-
-      clicks,
 
       link,
 
@@ -1005,11 +1517,13 @@ async function guardarOferta(event) {
     if (ofertaEditando) {
 
       await updateDoc(
+
         doc(
           db,
           "ofertas",
           ofertaEditando
         ),
+
         datos
       );
 
@@ -1020,8 +1534,14 @@ async function guardarOferta(event) {
     } else {
 
       await addDoc(
-        collection(db, "ofertas"),
+
+        collection(
+          db,
+          "ofertas"
+        ),
+
         {
+
           ...datos,
 
           creadoPor:
@@ -1040,7 +1560,9 @@ async function guardarOferta(event) {
       );
     }
 
-    cerrarModal("offerModal");
+    cerrarModal(
+      "offerModal"
+    );
 
     limpiarFormularioOferta();
 
@@ -1063,7 +1585,10 @@ async function guardarOferta(event) {
   } finally {
 
     if (boton) {
-      boton.disabled = false;
+
+      boton.disabled =
+        false;
+
       boton.textContent =
         "💾 Guardar oferta";
     }
@@ -1075,24 +1600,42 @@ async function guardarOferta(event) {
    ELIMINAR OFERTA
 ========================================================= */
 
-async function eliminarOferta(id) {
+async function eliminarOferta(
+  id
+) {
 
-  if (!usuarioActual) return;
+  if (!esAdministrador()) {
+
+    toast(
+      "No tienes permisos de administrador.",
+      "error"
+    );
+
+    return;
+  }
 
   const oferta =
-    ofertas.find(o => o.id === id);
+    ofertas.find(
+      o => o.id === id
+    );
 
   const confirmar =
     confirm(
       `¿Eliminar la oferta "${oferta?.titulo || ""}"?`
     );
 
-  if (!confirmar) return;
+  if (!confirmar) {
+    return;
+  }
 
   try {
 
     await deleteDoc(
-      doc(db, "ofertas", id)
+      doc(
+        db,
+        "ofertas",
+        id
+      )
     );
 
     toast(
@@ -1128,19 +1671,28 @@ async function cargarCupones() {
 
     const snapshot =
       await getDocs(
-        collection(db, "cupones")
+        collection(
+          db,
+          "cupones"
+        )
       );
 
     cupones =
-      snapshot.docs.map(d => ({
-        id: d.id,
-        ...d.data()
-      }));
+      snapshot.docs.map(
+        d => ({
+          id: d.id,
+          ...d.data()
+        })
+      );
 
     cupones.sort(
       (a, b) =>
-        obtenerMillis(b.fechaCreacion) -
-        obtenerMillis(a.fechaCreacion)
+        obtenerMillis(
+          b.fechaCreacion
+        ) -
+        obtenerMillis(
+          a.fechaCreacion
+        )
     );
 
     renderCupones();
@@ -1161,39 +1713,58 @@ async function cargarCupones() {
 }
 
 
+/* =========================================================
+   RENDER CUPONES
+========================================================= */
+
 function renderCupones() {
 
   const tabla =
     $("couponsTable");
 
-  if (!tabla) return;
+  if (!tabla) {
+    return;
+  }
 
   const busqueda =
-    $("couponSearch")?.value
+    $("couponSearch")
+      ?.value
       .trim()
       .toLowerCase() || "";
 
   const tipo =
-    $("couponTypeFilter")?.value || "";
+    $("couponTypeFilter")
+      ?.value || "";
 
-  let lista = [...cupones];
+  let lista =
+    [...cupones];
 
   if (busqueda) {
 
     lista =
-      lista.filter(cupon => {
+      lista.filter(
+        cupon => {
 
-        return (
-          texto(cupon.codigo)
-            .toLowerCase()
-            .includes(busqueda) ||
+          return (
 
-          texto(cupon.descripcion)
-            .toLowerCase()
-            .includes(busqueda)
-        );
+            texto(
+              cupon.codigo
+            )
+              .toLowerCase()
+              .includes(
+                busqueda
+              ) ||
 
-      });
+            texto(
+              cupon.descripcion
+            )
+              .toLowerCase()
+              .includes(
+                busqueda
+              )
+          );
+        }
+      );
   }
 
   if (tipo) {
@@ -1201,7 +1772,9 @@ function renderCupones() {
     lista =
       lista.filter(
         cupon =>
-          texto(cupon.tipo) === tipo
+          texto(
+            cupon.tipo
+          ) === tipo
       );
   }
 
@@ -1219,124 +1792,162 @@ function renderCupones() {
   }
 
   tabla.innerHTML =
-    lista.map(cupon => {
+    lista
+      .map(
+        cupon => {
 
-      const copias =
-        numero(
-          cupon.copias ??
-          cupon.copies
-        );
+          const copias =
+            numero(
+              cupon.copias ??
+              cupon.copies
+            );
 
-      const estado =
-        cupon.estado ||
-        cupon.status ||
-        "activo";
+          const estado =
+            cupon.estado ||
+            cupon.status ||
+            "activo";
 
-      const clase =
-        estado === "agotado"
-          ? "danger"
-          : estado === "por-agotarse"
-          ? "warning"
-          : "success";
+          const clase =
+            estado === "agotado"
 
-      return `
-        <tr>
+              ? "danger"
 
-          <td>
-            <strong>
-              ${escaparHTML(
-                cupon.codigo || "—"
-              )}
-            </strong>
-          </td>
+              : estado ===
+                "por-agotarse"
 
-          <td>
-            ${tipoCupon(
-              cupon.tipo
-            )}
-          </td>
+              ? "warning"
 
-          <td>
-            ${escaparHTML(
-              cupon.descuento || "—"
-            )}
-          </td>
+              : "success";
 
-          <td>
-            ${
-              numero(cupon.minimo)
-                ? dinero(cupon.minimo)
-                : "—"
-            }
-          </td>
+          return `
+            <tr>
 
-          <td>
-            ${
-              numero(cupon.tope)
-                ? dinero(cupon.tope)
-                : "—"
-            }
-          </td>
+              <td>
+                <strong>
+                  ${escaparHTML(
+                    cupon.codigo ||
+                    "—"
+                  )}
+                </strong>
+              </td>
 
-          <td>
-            ${copias.toLocaleString("es-MX")}
-          </td>
+              <td>
+                ${tipoCupon(
+                  cupon.tipo
+                )}
+              </td>
 
-          <td>
+              <td>
+                ${escaparHTML(
+                  cupon.descuento ||
+                  "—"
+                )}
+              </td>
 
-            <span class="status-badge ${clase}">
-              ${
-                estado === "agotado"
-                  ? "🔴 Agotado"
-                  : estado === "por-agotarse"
-                  ? "🟠 Por agotarse"
-                  : "🟢 Activo"
-              }
-            </span>
+              <td>
+                ${
+                  numero(
+                    cupon.minimo
+                  )
+                    ? dinero(
+                        cupon.minimo
+                      )
+                    : "—"
+                }
+              </td>
 
-            <div class="table-actions">
+              <td>
+                ${
+                  numero(
+                    cupon.tope
+                  )
+                    ? dinero(
+                        cupon.tope
+                      )
+                    : "—"
+                }
+              </td>
 
-              <button
-                class="action-btn edit"
-                data-edit-coupon="${cupon.id}"
-              >
-                ✏️
-              </button>
+              <td>
+                ${copias.toLocaleString(
+                  "es-MX"
+                )}
+              </td>
 
-              <button
-                class="action-btn delete"
-                data-delete-coupon="${cupon.id}"
-              >
-                🗑️
-              </button>
+              <td>
 
-            </div>
+                <span
+                  class="status-badge ${clase}"
+                >
+                  ${
+                    estado === "agotado"
 
-          </td>
+                      ? "🔴 Agotado"
 
-        </tr>
-      `;
+                      : estado ===
+                        "por-agotarse"
 
-    }).join("");
+                      ? "🟠 Por agotarse"
+
+                      : "🟢 Activo"
+                  }
+                </span>
+
+                <div class="table-actions">
+
+                  <button
+                    class="action-btn edit"
+                    data-edit-coupon="${escaparHTML(cupon.id)}"
+                  >
+                    ✏️
+                  </button>
+
+                  <button
+                    class="action-btn delete"
+                    data-delete-coupon="${escaparHTML(cupon.id)}"
+                  >
+                    🗑️
+                  </button>
+
+                </div>
+
+              </td>
+
+            </tr>
+          `;
+        }
+      )
+      .join("");
 }
 
 
-function tipoCupon(tipo) {
+/* =========================================================
+   TIPO CUPÓN
+========================================================= */
+
+function tipoCupon(
+  tipo
+) {
 
   switch (tipo) {
 
     case "relampago":
+
       return "⚡ Relámpago";
 
     case "bancario":
+
       return "🏦 Bancario";
 
     case "meliplus":
+
       return "💛 Meli+";
 
     default:
+
       return escaparHTML(
-        tipo || "Otro"
+        tipo ||
+        "Otro"
       );
   }
 }
@@ -1348,7 +1959,8 @@ function tipoCupon(tipo) {
 
 function abrirNuevoCupon() {
 
-  cuponEditando = null;
+  cuponEditando =
+    null;
 
   limpiarFormularioCupon();
 
@@ -1356,11 +1968,14 @@ function abrirNuevoCupon() {
     $("couponModalTitle");
 
   if (titulo) {
+
     titulo.textContent =
       "Nuevo cupón";
   }
 
-  abrirModal("couponModal");
+  abrirModal(
+    "couponModal"
+  );
 }
 
 
@@ -1368,54 +1983,95 @@ function abrirNuevoCupon() {
    EDITAR CUPÓN
 ========================================================= */
 
-function editarCupon(id) {
+function editarCupon(
+  id
+) {
+
+  if (!esAdministrador()) {
+
+    toast(
+      "No tienes permisos de administrador.",
+      "error"
+    );
+
+    return;
+  }
 
   const cupon =
-    cupones.find(c => c.id === id);
+    cupones.find(
+      c => c.id === id
+    );
 
-  if (!cupon) return;
+  if (!cupon) {
+    return;
+  }
 
-  cuponEditando = id;
+  cuponEditando =
+    id;
 
-  $("couponId").value = id;
+  if ($("couponId")) {
+    $("couponId").value =
+      id;
+  }
 
-  $("couponCode").value =
-    cupon.codigo || "";
+  if ($("couponCode")) {
+    $("couponCode").value =
+      cupon.codigo || "";
+  }
 
-  $("couponType").value =
-    cupon.tipo || "relampago";
+  if ($("couponType")) {
+    $("couponType").value =
+      cupon.tipo ||
+      "relampago";
+  }
 
-  $("couponDiscount").value =
-    cupon.descuento || "";
+  if ($("couponDiscount")) {
+    $("couponDiscount").value =
+      cupon.descuento || "";
+  }
 
-  $("couponMinimum").value =
-    cupon.minimo ?? "";
+  if ($("couponMinimum")) {
+    $("couponMinimum").value =
+      cupon.minimo ?? "";
+  }
 
-  $("couponMaximum").value =
-    cupon.tope ?? "";
+  if ($("couponMaximum")) {
+    $("couponMaximum").value =
+      cupon.tope ?? "";
+  }
 
-  $("couponCopies").value =
-    cupon.copias ??
-    cupon.copies ??
-    0;
+  if ($("couponCopies")) {
+    $("couponCopies").value =
+      cupon.copias ??
+      cupon.copies ??
+      0;
+  }
 
-  $("couponStatus").value =
-    cupon.estado ||
-    cupon.status ||
-    "activo";
+  if ($("couponStatus")) {
+    $("couponStatus").value =
+      cupon.estado ||
+      cupon.status ||
+      "activo";
+  }
 
-  $("couponDescription").value =
-    cupon.descripcion || "";
+  if ($("couponDescription")) {
+    $("couponDescription").value =
+      cupon.descripcion ||
+      "";
+  }
 
   const titulo =
     $("couponModalTitle");
 
   if (titulo) {
+
     titulo.textContent =
       "Editar cupón";
   }
 
-  abrirModal("couponModal");
+  abrirModal(
+    "couponModal"
+  );
 }
 
 
@@ -1423,16 +2079,18 @@ function editarCupon(id) {
    GUARDAR CUPÓN
 ========================================================= */
 
-async function guardarCupon(event) {
+async function guardarCupon(
+  event
+) {
 
   if (event) {
     event.preventDefault();
   }
 
-  if (!usuarioActual) {
+  if (!esAdministrador()) {
 
     toast(
-      "Debes iniciar sesión.",
+      "No tienes permisos de administrador.",
       "error"
     );
 
@@ -1440,35 +2098,47 @@ async function guardarCupon(event) {
   }
 
   const codigo =
-    $("couponCode")?.value.trim();
+    $("couponCode")
+      ?.value
+      .trim()
+      .toUpperCase();
 
   const tipo =
-    $("couponType")?.value;
+    $("couponType")
+      ?.value;
 
   const descuento =
-    $("couponDiscount")?.value.trim();
+    $("couponDiscount")
+      ?.value
+      .trim();
 
   const minimo =
     numero(
-      $("couponMinimum")?.value
+      $("couponMinimum")
+        ?.value
     );
 
   const tope =
     numero(
-      $("couponMaximum")?.value
+      $("couponMaximum")
+        ?.value
     );
 
   const copias =
     numero(
-      $("couponCopies")?.value
+      $("couponCopies")
+        ?.value
     );
 
   const estado =
-    $("couponStatus")?.value ||
+    $("couponStatus")
+      ?.value ||
     "activo";
 
   const descripcion =
-    $("couponDescription")?.value.trim();
+    $("couponDescription")
+      ?.value
+      .trim();
 
   if (!codigo) {
 
@@ -1486,11 +2156,23 @@ async function guardarCupon(event) {
     );
 
   if (boton) {
-    boton.disabled = true;
-    boton.textContent = "⏳ GUARDANDO...";
+
+    boton.disabled =
+      true;
+
+    boton.textContent =
+      "⏳ GUARDANDO...";
   }
 
   try {
+
+    /*
+       Campos principales consistentes.
+
+       También conservamos copies/status
+       para compatibilidad con documentos
+       antiguos de tu base.
+    */
 
     const datos = {
 
@@ -1525,11 +2207,13 @@ async function guardarCupon(event) {
     if (cuponEditando) {
 
       await updateDoc(
+
         doc(
           db,
           "cupones",
           cuponEditando
         ),
+
         datos
       );
 
@@ -1540,8 +2224,14 @@ async function guardarCupon(event) {
     } else {
 
       await addDoc(
-        collection(db, "cupones"),
+
+        collection(
+          db,
+          "cupones"
+        ),
+
         {
+
           ...datos,
 
           creadoPor:
@@ -1560,7 +2250,9 @@ async function guardarCupon(event) {
       );
     }
 
-    cerrarModal("couponModal");
+    cerrarModal(
+      "couponModal"
+    );
 
     limpiarFormularioCupon();
 
@@ -1583,7 +2275,10 @@ async function guardarCupon(event) {
   } finally {
 
     if (boton) {
-      boton.disabled = false;
+
+      boton.disabled =
+        false;
+
       boton.textContent =
         "💾 Guardar cupón";
     }
@@ -1595,22 +2290,42 @@ async function guardarCupon(event) {
    ELIMINAR CUPÓN
 ========================================================= */
 
-async function eliminarCupon(id) {
+async function eliminarCupon(
+  id
+) {
+
+  if (!esAdministrador()) {
+
+    toast(
+      "No tienes permisos de administrador.",
+      "error"
+    );
+
+    return;
+  }
 
   const cupon =
-    cupones.find(c => c.id === id);
+    cupones.find(
+      c => c.id === id
+    );
 
   const confirmar =
     confirm(
       `¿Eliminar el cupón "${cupon?.codigo || ""}"?`
     );
 
-  if (!confirmar) return;
+  if (!confirmar) {
+    return;
+  }
 
   try {
 
     await deleteDoc(
-      doc(db, "cupones", id)
+      doc(
+        db,
+        "cupones",
+        id
+      )
     );
 
     toast(
@@ -1646,19 +2361,28 @@ async function cargarUsuarios() {
 
     const snapshot =
       await getDocs(
-        collection(db, "usuarios")
+        collection(
+          db,
+          "usuarios"
+        )
       );
 
     usuarios =
-      snapshot.docs.map(d => ({
-        id: d.id,
-        ...d.data()
-      }));
+      snapshot.docs.map(
+        d => ({
+          id: d.id,
+          ...d.data()
+        })
+      );
 
     usuarios.sort(
       (a, b) =>
-        obtenerMillis(b.fechaRegistro) -
-        obtenerMillis(a.fechaRegistro)
+        obtenerMillis(
+          b.fechaRegistro
+        ) -
+        obtenerMillis(
+          a.fechaRegistro
+        )
     );
 
     renderUsuarios();
@@ -1677,35 +2401,54 @@ async function cargarUsuarios() {
 }
 
 
+/* =========================================================
+   RENDER USUARIOS
+========================================================= */
+
 function renderUsuarios() {
 
   const tabla =
     $("usersTable");
 
-  if (!tabla) return;
+  if (!tabla) {
+    return;
+  }
 
   const busqueda =
-    $("userSearch")?.value
+    $("userSearch")
+      ?.value
       .trim()
       .toLowerCase() || "";
 
-  let lista = [...usuarios];
+  let lista =
+    [...usuarios];
 
   if (busqueda) {
 
     lista =
-      lista.filter(usuario => {
+      lista.filter(
+        usuario => {
 
-        return (
-          texto(usuario.nombre)
-            .toLowerCase()
-            .includes(busqueda) ||
+          return (
 
-          texto(usuario.email)
-            .toLowerCase()
-            .includes(busqueda)
-        );
-      });
+            texto(
+              usuario.nombre
+            )
+              .toLowerCase()
+              .includes(
+                busqueda
+              ) ||
+
+            texto(
+              usuario.email
+            )
+              .toLowerCase()
+              .includes(
+                busqueda
+              )
+          );
+        }
+      );
   }
 
   if (!lista.length) {
@@ -1722,61 +2465,67 @@ function renderUsuarios() {
   }
 
   tabla.innerHTML =
-    lista.map(usuario => {
+    lista
+      .map(
+        usuario => `
 
-      return `
-        <tr>
+          <tr>
 
-          <td>
-            <strong>
+            <td>
+              <strong>
+                ${escaparHTML(
+                  usuario.nombre ||
+                  "Sin nombre"
+                )}
+              </strong>
+            </td>
+
+            <td>
               ${escaparHTML(
-                usuario.nombre ||
-                "Sin nombre"
+                usuario.email ||
+                "—"
               )}
-            </strong>
-          </td>
+            </td>
 
-          <td>
-            ${escaparHTML(
-              usuario.email || "—"
-            )}
-          </td>
+            <td>
+              <span class="status-badge success">
+                🟢 Registrado
+              </span>
+            </td>
 
-          <td>
-            <span class="status-badge success">
-              🟢 Registrado
-            </span>
-          </td>
+            <td>
+              ${numero(
+                usuario.visitas
+              ).toLocaleString(
+                "es-MX"
+              )}
+            </td>
 
-          <td>
-            ${numero(
-              usuario.visitas
-            ).toLocaleString("es-MX")}
-          </td>
+            <td>
+              ${numero(
+                usuario.compras
+              ).toLocaleString(
+                "es-MX"
+              )}
+            </td>
 
-          <td>
-            ${numero(
-              usuario.compras
-            ).toLocaleString("es-MX")}
-          </td>
+            <td>
+              ${dinero(
+                usuario.ahorroTotal
+              )}
+            </td>
 
-          <td>
-            ${dinero(
-              usuario.ahorroTotal
-            )}
-          </td>
+            <td>
+              ${fecha(
+                usuario.fechaRegistro ||
+                usuario.creadoEn
+              )}
+            </td>
 
-          <td>
-            ${fecha(
-              usuario.fechaRegistro ||
-              usuario.creadoEn
-            )}
-          </td>
-
-        </tr>
-      `;
-
-    }).join("");
+          </tr>
+        `
+      )
+      .join("");
 }
 
 
@@ -1790,14 +2539,19 @@ async function cargarCopias() {
 
     const snapshot =
       await getDocs(
-        collection(db, "copias")
+        collection(
+          db,
+          "copias"
+        )
       );
 
     copias =
-      snapshot.docs.map(d => ({
-        id: d.id,
-        ...d.data()
-      }));
+      snapshot.docs.map(
+        d => ({
+          id: d.id,
+          ...d.data()
+        })
+      );
 
   } catch (error) {
 
@@ -1821,14 +2575,19 @@ async function cargarVisitas() {
 
     const snapshot =
       await getDocs(
-        collection(db, "visitas")
+        collection(
+          db,
+          "visitas"
+        )
       );
 
     visitas =
-      snapshot.docs.map(d => ({
-        id: d.id,
-        ...d.data()
-      }));
+      snapshot.docs.map(
+        d => ({
+          id: d.id,
+          ...d.data()
+        })
+      );
 
   } catch (error) {
 
@@ -1868,24 +2627,39 @@ function actualizarDashboard() {
 
 
   if (totalOfertas) {
+
     totalOfertas.textContent =
-      ofertas.length.toLocaleString("es-MX");
+      ofertas.length
+        .toLocaleString(
+          "es-MX"
+        );
   }
 
   if (totalCupones) {
+
     totalCupones.textContent =
-      cupones.length.toLocaleString("es-MX");
+      cupones.length
+        .toLocaleString(
+          "es-MX"
+        );
   }
 
   if (totalUsuarios) {
+
     totalUsuarios.textContent =
-      usuarios.length.toLocaleString("es-MX");
+      usuarios.length
+        .toLocaleString(
+          "es-MX"
+        );
   }
 
 
   const clics =
     ofertas.reduce(
-      (total, oferta) =>
+      (
+        total,
+        oferta
+      ) =>
         total +
         numero(
           oferta.clics ??
@@ -1895,36 +2669,55 @@ function actualizarDashboard() {
     );
 
   if (totalClics) {
+
     totalClics.textContent =
-      clics.toLocaleString("es-MX");
+      clics.toLocaleString(
+        "es-MX"
+      );
   }
 
 
   const compras =
     usuarios.reduce(
-      (total, usuario) =>
+      (
+        total,
+        usuario
+      ) =>
         total +
-        numero(usuario.compras),
+        numero(
+          usuario.compras
+        ),
       0
     );
 
   if (totalCompras) {
+
     totalCompras.textContent =
-      compras.toLocaleString("es-MX");
+      compras.toLocaleString(
+        "es-MX"
+      );
   }
 
 
   const ahorro =
     usuarios.reduce(
-      (total, usuario) =>
+      (
+        total,
+        usuario
+      ) =>
         total +
-        numero(usuario.ahorroTotal),
+        numero(
+          usuario.ahorroTotal
+        ),
       0
     );
 
   if (ahorroTotal) {
+
     ahorroTotal.textContent =
-      dinero(ahorro);
+      dinero(
+        ahorro
+      );
   }
 
 
@@ -1941,7 +2734,9 @@ function renderOfertaPopular() {
   const contenedor =
     $("topOffer");
 
-  if (!contenedor) return;
+  if (!contenedor) {
+    return;
+  }
 
   if (!ofertas.length) {
 
@@ -1955,17 +2750,18 @@ function renderOfertaPopular() {
   }
 
   const oferta =
-    [...ofertas].sort(
-      (a, b) =>
-        numero(
-          b.clics ??
-          b.clicks
-        ) -
-        numero(
-          a.clics ??
-          a.clicks
-        )
-    )[0];
+    [...ofertas]
+      .sort(
+        (a, b) =>
+          numero(
+            b.clics ??
+            b.clicks
+          ) -
+          numero(
+            a.clics ??
+            a.clicks
+          )
+      )[0];
 
   const clicks =
     numero(
@@ -1974,27 +2770,35 @@ function renderOfertaPopular() {
     );
 
   contenedor.innerHTML = `
+
     <div class="top-offer">
 
       ${
         oferta.imagen
-          ? `<img
+
+          ? `
+            <img
               src="${escaparHTML(
                 oferta.imagen
               )}"
               alt=""
               class="top-offer-image"
-            >`
-          : `<div class="top-offer-image">
+            >
+          `
+
+          : `
+            <div class="top-offer-image">
               🔥
-            </div>`
+            </div>
+          `
       }
 
       <div class="top-offer-info">
 
         <h3>
           ${escaparHTML(
-            oferta.titulo || "Oferta"
+            oferta.titulo ||
+            "Oferta"
           )}
         </h3>
 
@@ -2007,7 +2811,9 @@ function renderOfertaPopular() {
         </strong>
 
         <span>
-          👆 ${clicks.toLocaleString("es-MX")} clics
+          👆 ${clicks.toLocaleString(
+            "es-MX"
+          )} clics
         </span>
 
       </div>
@@ -2026,7 +2832,9 @@ function renderTopCupones() {
   const contenedor =
     $("topCoupons");
 
-  if (!contenedor) return;
+  if (!contenedor) {
+    return;
+  }
 
   const lista =
     [...cupones]
@@ -2041,7 +2849,10 @@ function renderTopCupones() {
             a.copies
           )
       )
-      .slice(0, 5);
+      .slice(
+        0,
+        5
+      );
 
   if (!lista.length) {
 
@@ -2055,37 +2866,41 @@ function renderTopCupones() {
   }
 
   contenedor.innerHTML =
-    lista.map(cupon => {
+    lista
+      .map(
+        cupon => `
 
-      return `
-        <div class="recent-item">
+          <div class="recent-item">
 
-          <div class="recent-icon">
-            🎟️
+            <div class="recent-icon">
+              🎟️
+            </div>
+
+            <div class="recent-info">
+
+              <strong>
+                ${escaparHTML(
+                  cupon.codigo ||
+                  "Cupón"
+                )}
+              </strong>
+
+              <small>
+                ${numero(
+                  cupon.copias ??
+                  cupon.copies
+                ).toLocaleString(
+                  "es-MX"
+                )}
+                copias
+              </small>
+
+            </div>
+
           </div>
-
-          <div class="recent-info">
-
-            <strong>
-              ${escaparHTML(
-                cupon.codigo || "Cupón"
-              )}
-            </strong>
-
-            <small>
-              ${numero(
-                cupon.copias ??
-                cupon.copies
-              ).toLocaleString("es-MX")}
-              copias
-            </small>
-
-          </div>
-
-        </div>
-      `;
-
-    }).join("");
+        `
+      )
+      .join("");
 }
 
 
@@ -2096,18 +2911,27 @@ function renderTopCupones() {
 function cargarEstadisticas() {
 
   cargarClickStats();
+
   cargarCouponStats();
+
   cargarStateStats();
+
   cargarDailyStats();
 }
 
+
+/* =========================================================
+   ESTADÍSTICAS DE CLICS
+========================================================= */
 
 function cargarClickStats() {
 
   const contenedor =
     $("clickStats");
 
-  if (!contenedor) return;
+  if (!contenedor) {
+    return;
+  }
 
   const lista =
     [...ofertas]
@@ -2122,52 +2946,69 @@ function cargarClickStats() {
             a.clicks
           )
       )
-      .slice(0, 10);
+      .slice(
+        0,
+        10
+      );
 
   if (!lista.length) {
 
     contenedor.innerHTML =
-      `<div class="empty-state">
-        Sin datos todavía.
-      </div>`;
+      `
+        <div class="empty-state">
+          Sin datos todavía.
+        </div>
+      `;
 
     return;
   }
 
   contenedor.innerHTML =
-    lista.map((oferta, index) => {
+    lista
+      .map(
+        (
+          oferta,
+          index
+        ) => `
 
-      return `
-        <div class="stat-row">
+          <div class="stat-row">
 
-          <span>
-            ${index + 1}. 
-            ${escaparHTML(
-              oferta.titulo ||
-              "Oferta"
-            )}
-          </span>
+            <span>
+              ${index + 1}.
+              ${escaparHTML(
+                oferta.titulo ||
+                "Oferta"
+              )}
+            </span>
 
-          <strong>
-            ${numero(
-              oferta.clics ??
-              oferta.clicks
-            ).toLocaleString("es-MX")}
-          </strong>
+            <strong>
+              ${numero(
+                oferta.clics ??
+                oferta.clicks
+              ).toLocaleString(
+                "es-MX"
+              )}
+            </strong>
 
-        </div>
-      `;
-
-    }).join("");
+          </div>
+        `
+      )
+      .join("");
 }
 
+
+/* =========================================================
+   ESTADÍSTICAS DE CUPONES
+========================================================= */
 
 function cargarCouponStats() {
 
   const contenedor =
     $("couponStats");
 
-  if (!contenedor) return;
+  if (!contenedor) {
+    return;
+  }
 
   const lista =
     [...cupones]
@@ -2182,171 +3023,257 @@ function cargarCouponStats() {
             a.copies
           )
       )
-      .slice(0, 10);
+      .slice(
+        0,
+        10
+      );
 
   if (!lista.length) {
 
     contenedor.innerHTML =
-      `<div class="empty-state">
-        Sin datos todavía.
-      </div>`;
+      `
+        <div class="empty-state">
+          Sin datos todavía.
+        </div>
+      `;
 
     return;
   }
 
   contenedor.innerHTML =
-    lista.map((cupon, index) => {
+    lista
+      .map(
+        (
+          cupon,
+          index
+        ) => `
 
-      return `
-        <div class="stat-row">
+          <div class="stat-row">
 
-          <span>
-            ${index + 1}.
-            ${escaparHTML(
-              cupon.codigo ||
-              "Cupón"
-            )}
-          </span>
+            <span>
+              ${index + 1}.
+              ${escaparHTML(
+                cupon.codigo ||
+                "Cupón"
+              )}
+            </span>
 
-          <strong>
-            ${numero(
-              cupon.copias ??
-              cupon.copies
-            ).toLocaleString("es-MX")}
-          </strong>
+            <strong>
+              ${numero(
+                cupon.copias ??
+                cupon.copies
+              ).toLocaleString(
+                "es-MX"
+              )}
+            </strong>
 
-        </div>
-      `;
-
-    }).join("");
+          </div>
+        `
+      )
+      .join("");
 }
 
+
+/* =========================================================
+   ESTADÍSTICAS POR ESTADO
+========================================================= */
 
 function cargarStateStats() {
 
   const contenedor =
     $("stateStats");
 
-  if (!contenedor) return;
+  if (!contenedor) {
+    return;
+  }
 
   const estados = {};
 
-  usuarios.forEach(usuario => {
+  usuarios.forEach(
+    usuario => {
 
-    const estado =
-      texto(
-        usuario.estado ||
-        usuario.state ||
-        "Sin estado"
-      ).trim();
+      const estado =
+        texto(
+          usuario.estado ||
+          usuario.state ||
+          "Sin estado"
+        ).trim();
 
-    estados[estado] =
-      (estados[estado] || 0) + 1;
-  });
+      estados[estado] =
+        (
+          estados[estado] ||
+          0
+        ) + 1;
+    }
+  );
 
   const lista =
-    Object.entries(estados)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 15);
+    Object.entries(
+      estados
+    )
+      .sort(
+        (a, b) =>
+          b[1] -
+          a[1]
+      )
+      .slice(
+        0,
+        15
+      );
 
   if (!lista.length) {
 
     contenedor.innerHTML =
-      `<div class="empty-state">
-        Sin usuarios todavía.
-      </div>`;
+      `
+        <div class="empty-state">
+          Sin usuarios todavía.
+        </div>
+      `;
 
     return;
   }
 
   contenedor.innerHTML =
-    lista.map(([estado, cantidad]) => {
+    lista
+      .map(
+        (
+          [
+            estado,
+            cantidad
+          ]
+        ) => `
 
-      return `
-        <div class="stat-row">
+          <div class="stat-row">
 
-          <span>
-            🇲🇽 ${escaparHTML(estado)}
-          </span>
+            <span>
+              🇲🇽
+              ${escaparHTML(
+                estado
+              )}
+            </span>
 
-          <strong>
-            ${cantidad.toLocaleString("es-MX")}
-          </strong>
+            <strong>
+              ${cantidad.toLocaleString(
+                "es-MX"
+              )}
+            </strong>
 
-        </div>
-      `;
-
-    }).join("");
+          </div>
+        `
+      )
+      .join("");
 }
 
+
+/* =========================================================
+   ESTADÍSTICAS DIARIAS
+========================================================= */
 
 function cargarDailyStats() {
 
   const contenedor =
     $("dailyStats");
 
-  if (!contenedor) return;
+  if (!contenedor) {
+    return;
+  }
 
   const dias = {};
 
-  [...visitas, ...copias].forEach(item => {
+  [
+    ...visitas,
+    ...copias
+  ].forEach(
+    item => {
 
-    const timestamp =
-      item.fecha ||
-      item.fechaCreacion ||
-      item.creadoEn ||
-      item.timestamp;
+      const timestamp =
+        item.fecha ||
+        item.fechaCreacion ||
+        item.creadoEn ||
+        item.timestamp;
 
-    const millis =
-      obtenerMillis(timestamp);
+      const millis =
+        obtenerMillis(
+          timestamp
+        );
 
-    if (!millis) return;
+      if (!millis) {
+        return;
+      }
 
-    const d =
-      new Date(millis);
+      const d =
+        new Date(
+          millis
+        );
 
-    const clave =
-      d.toLocaleDateString(
-        "es-MX"
-      );
+      const clave =
+        d.toLocaleDateString(
+          "es-MX"
+        );
 
-    dias[clave] =
-      (dias[clave] || 0) + 1;
-  });
+      dias[clave] =
+        (
+          dias[clave] ||
+          0
+        ) + 1;
+    }
+  );
 
   const lista =
-    Object.entries(dias)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10);
+    Object.entries(
+      dias
+    )
+      .sort(
+        (a, b) =>
+          b[1] -
+          a[1]
+      )
+      .slice(
+        0,
+        10
+      );
 
   if (!lista.length) {
 
     contenedor.innerHTML =
-      `<div class="empty-state">
-        Sin actividad registrada.
-      </div>`;
+      `
+        <div class="empty-state">
+          Sin actividad registrada.
+        </div>
+      `;
 
     return;
   }
 
   contenedor.innerHTML =
-    lista.map(([dia, cantidad]) => {
+    lista
+      .map(
+        (
+          [
+            dia,
+            cantidad
+          ]
+        ) => `
 
-      return `
-        <div class="stat-row">
+          <div class="stat-row">
 
-          <span>
-            📅 ${escaparHTML(dia)}
-          </span>
+            <span>
+              📅
+              ${escaparHTML(
+                dia
+              )}
+            </span>
 
-          <strong>
-            ${cantidad.toLocaleString("es-MX")}
-          </strong>
+            <strong>
+              ${cantidad.toLocaleString(
+                "es-MX"
+              )}
+            </strong>
 
-        </div>
-      `;
-
-    }).join("");
+          </div>
+        `
+      )
+      .join("");
 }
 
 
@@ -2354,13 +3281,19 @@ function cargarDailyStats() {
    MODALES
 ========================================================= */
 
-function abrirModal(id) {
+function abrirModal(
+  id
+) {
 
-  const modal = $(id);
+  const modal =
+    $(id);
 
-  if (!modal) return;
+  if (!modal) {
+    return;
+  }
 
-  modal.style.display = "flex";
+  modal.style.display =
+    "flex";
 
   document.body.classList.add(
     "modal-open"
@@ -2368,13 +3301,19 @@ function abrirModal(id) {
 }
 
 
-function cerrarModal(id) {
+function cerrarModal(
+  id
+) {
 
-  const modal = $(id);
+  const modal =
+    $(id);
 
-  if (!modal) return;
+  if (!modal) {
+    return;
+  }
 
-  modal.style.display = "none";
+  modal.style.display =
+    "none";
 
   document.body.classList.remove(
     "modal-open"
@@ -2388,7 +3327,8 @@ function cerrarModal(id) {
 
 function limpiarFormularioOferta() {
 
-  ofertaEditando = null;
+  ofertaEditando =
+    null;
 
   const form =
     $("offerForm");
@@ -2398,24 +3338,31 @@ function limpiarFormularioOferta() {
   }
 
   if ($("offerId")) {
-    $("offerId").value = "";
+
+    $("offerId").value =
+      "";
   }
 
   if ($("offerClicks")) {
-    $("offerClicks").value = 0;
+
+    $("offerClicks").value =
+      0;
   }
 
   const preview =
     $("offerImagePreview");
 
   if (preview) {
-    preview.innerHTML = "";
+
+    preview.innerHTML =
+      "";
   }
 
   const titulo =
     $("offerModalTitle");
 
   if (titulo) {
+
     titulo.textContent =
       "Nueva oferta";
   }
@@ -2423,12 +3370,13 @@ function limpiarFormularioOferta() {
 
 
 /* =========================================================
-   LIMPIAR CUPÓN
+   LIMPIAR FORMULARIO CUPÓN
 ========================================================= */
 
 function limpiarFormularioCupon() {
 
-  cuponEditando = null;
+  cuponEditando =
+    null;
 
   const form =
     $("couponForm");
@@ -2438,19 +3386,25 @@ function limpiarFormularioCupon() {
   }
 
   if ($("couponId")) {
-    $("couponId").value = "";
+
+    $("couponId").value =
+      "";
   }
 
   if ($("couponCopies")) {
-    $("couponCopies").value = 0;
+
+    $("couponCopies").value =
+      0;
   }
 
   if ($("couponStatus")) {
+
     $("couponStatus").value =
       "activo";
   }
 
   if ($("couponType")) {
+
     $("couponType").value =
       "relampago";
   }
@@ -2459,6 +3413,7 @@ function limpiarFormularioCupon() {
     $("couponModalTitle");
 
   if (titulo) {
+
     titulo.textContent =
       "Nuevo cupón";
   }
@@ -2466,23 +3421,30 @@ function limpiarFormularioCupon() {
 
 
 /* =========================================================
-   IMAGEN A BASE64
+   IMAGEN BASE64
 ========================================================= */
 
-function convertirImagenBase64(archivo) {
+function convertirImagenBase64(
+  archivo
+) {
 
   return new Promise(
-    (resolve, reject) => {
+    (
+      resolve,
+      reject
+    ) => {
 
       const lector =
         new FileReader();
 
-      lector.onload = () =>
-        resolve(
-          lector.result
-        );
+      lector.onload =
+        () =>
+          resolve(
+            lector.result
+          );
 
-      lector.onerror = reject;
+      lector.onerror =
+        reject;
 
       lector.readAsDataURL(
         archivo
@@ -2493,22 +3455,28 @@ function convertirImagenBase64(archivo) {
 
 
 /* =========================================================
-   VISTA PREVIA DE IMAGEN
+   VISTA PREVIA
 ========================================================= */
 
-function vistaPreviaImagen(event) {
+function vistaPreviaImagen(
+  event
+) {
 
   const archivo =
-    event.target.files?.[0];
+    event.target
+      .files?.[0];
 
   const preview =
     $("offerImagePreview");
 
-  if (!preview) return;
+  if (!preview) {
+    return;
+  }
 
   if (!archivo) {
 
-    preview.innerHTML = "";
+    preview.innerHTML =
+      "";
 
     return;
   }
@@ -2531,34 +3499,40 @@ function vistaPreviaImagen(event) {
    NAVEGACIÓN
 ========================================================= */
 
-function cambiarSeccion(seccion) {
+function cambiarSeccion(
+  seccion
+) {
 
   document
     .querySelectorAll(
       ".admin-section"
     )
-    .forEach(elemento => {
+    .forEach(
+      elemento => {
 
-      elemento.classList.toggle(
-        "active",
-        elemento.id ===
-          `section-${seccion}`
-      );
-    });
+        elemento.classList.toggle(
+          "active",
+          elemento.id ===
+            `section-${seccion}`
+        );
+      }
+    );
 
 
   document
     .querySelectorAll(
       ".menu-item"
     )
-    .forEach(boton => {
+    .forEach(
+      boton => {
 
-      boton.classList.toggle(
-        "active",
-        boton.dataset.section ===
-          seccion
-      );
-    });
+        boton.classList.toggle(
+          "active",
+          boton.dataset.section ===
+            seccion
+        );
+      }
+    );
 
 
   const titulos = {
@@ -2594,16 +3568,21 @@ function cambiarSeccion(seccion) {
     ]
   };
 
+
   const info =
     titulos[seccion] ||
     titulos.dashboard;
 
+
   if ($("pageTitle")) {
+
     $("pageTitle").textContent =
       info[0];
   }
 
+
   if ($("pageSubtitle")) {
+
     $("pageSubtitle").textContent =
       info[1];
   }
@@ -2612,17 +3591,24 @@ function cambiarSeccion(seccion) {
   const sidebar =
     $("sidebar");
 
+
   if (
     sidebar &&
-    window.innerWidth <= 900
+    window.innerWidth <=
+      900
   ) {
+
     sidebar.classList.remove(
       "open"
     );
   }
 
 
-  if (seccion === "estadisticas") {
+  if (
+    seccion ===
+    "estadisticas"
+  ) {
+
     cargarEstadisticas();
   }
 }
@@ -2635,6 +3621,7 @@ function cambiarSeccion(seccion) {
 document.addEventListener(
   "DOMContentLoaded",
   () => {
+
 
     /* LOGIN */
 
@@ -2664,20 +3651,25 @@ document.addEventListener(
           const input =
             $("loginPassword");
 
-          if (!input) return;
+          if (!input) {
+            return;
+          }
 
           if (
-            input.type === "password"
+            input.type ===
+            "password"
           ) {
 
-            input.type = "text";
+            input.type =
+              "text";
 
             togglePassword.textContent =
               "🙈";
 
           } else {
 
-            input.type = "password";
+            input.type =
+              "password";
 
             togglePassword.textContent =
               "👁️";
@@ -2757,7 +3749,7 @@ document.addEventListener(
     }
 
 
-    /* PREVIEW */
+    /* PREVIEW IMAGEN */
 
     const offerImage =
       $("offerImage");
@@ -2852,7 +3844,9 @@ document.addEventListener(
         "click",
         async () => {
 
-          if (!usuarioActual) {
+          if (
+            !esAdministrador()
+          ) {
 
             toast(
               "Inicia sesión primero.",
@@ -2866,15 +3860,20 @@ document.addEventListener(
             "rotating"
           );
 
-          await cargarTodo();
+          try {
 
-          refresh.classList.remove(
-            "rotating"
-          );
+            await cargarTodo();
 
-          toast(
-            "Panel actualizado."
-          );
+            toast(
+              "Panel actualizado."
+            );
+
+          } finally {
+
+            refresh.classList.remove(
+              "rotating"
+            );
+          }
         }
       );
     }
@@ -2916,12 +3915,16 @@ document.addEventListener(
             "[data-section]"
           );
 
-        if (!boton) return;
+        if (!boton) {
+          return;
+        }
 
         const seccion =
           boton.dataset.section;
 
-        if (!seccion) return;
+        if (!seccion) {
+          return;
+        }
 
         cambiarSeccion(
           seccion
@@ -2936,6 +3939,7 @@ document.addEventListener(
       "click",
       event => {
 
+
         const editOffer =
           event.target.closest(
             "[data-edit-offer]"
@@ -2944,7 +3948,8 @@ document.addEventListener(
         if (editOffer) {
 
           editarOferta(
-            editOffer.dataset.editOffer
+            editOffer.dataset
+              .editOffer
           );
 
           return;
@@ -2959,7 +3964,8 @@ document.addEventListener(
         if (deleteOffer) {
 
           eliminarOferta(
-            deleteOffer.dataset.deleteOffer
+            deleteOffer.dataset
+              .deleteOffer
           );
 
           return;
@@ -2974,7 +3980,8 @@ document.addEventListener(
         if (editCoupon) {
 
           editarCupon(
-            editCoupon.dataset.editCoupon
+            editCoupon.dataset
+              .editCoupon
           );
 
           return;
@@ -2989,7 +3996,8 @@ document.addEventListener(
         if (deleteCoupon) {
 
           eliminarCupon(
-            deleteCoupon.dataset.deleteCoupon
+            deleteCoupon.dataset
+              .deleteCoupon
           );
 
           return;
@@ -3019,6 +4027,7 @@ document.addEventListener(
           return;
         }
 
+
         if (
           event.target.classList.contains(
             "modal-overlay"
@@ -3040,7 +4049,10 @@ document.addEventListener(
       "keydown",
       event => {
 
-        if (event.key !== "Escape") {
+        if (
+          event.key !==
+          "Escape"
+        ) {
           return;
         }
 
@@ -3048,18 +4060,21 @@ document.addEventListener(
           .querySelectorAll(
             ".modal-overlay"
           )
-          .forEach(modal => {
+          .forEach(
+            modal => {
 
-            if (
-              modal.style.display ===
-              "flex"
-            ) {
+              if (
+                modal.style.display ===
+                "flex"
+              ) {
 
-              cerrarModal(
-                modal.id
-              );
+                cerrarModal(
+                  modal.id
+                );
+              }
+
             }
-          });
+          );
       }
     );
 
@@ -3110,13 +4125,31 @@ window.abrirModal =
 window.cerrarModal =
   cerrarModal;
 
+
+/* =========================================================
+   FIREBASE DISPONIBLE GLOBALMENTE
+========================================================= */
+
 window.adminFirebase = {
+
   app,
+
   auth,
+
   db
+
 };
 
 
+/* =========================================================
+   FINAL
+========================================================= */
+
 console.log(
   "⚡ ADMIN PRO Firebase cargado correctamente."
+);
+
+console.log(
+  "👤 Administrador autorizado:",
+  ADMIN_EMAIL
 );
