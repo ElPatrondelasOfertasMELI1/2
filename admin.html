@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>Panel Admin | El Patrón de las Ofertas</title>
+
+<link rel="stylesheet" href="css/style.css">
+
+</head>
+
+<body>
+
+<div class="admin-container">
+
+<h1 style="margin-bottom:20px;">
+⚡ Panel Admin
+</h1>
+
+<!-- =========================
+     CATEGORIAS
+========================= -->
+
+<div class="admin-card">
+
+<h3>Agregar Categoría</h3>
+
+<input
+id="catNombre"
+placeholder="Nombre categoría">
+
+<input
+id="catLink"
+placeholder="Link afiliado">
+
+<input
+type="file"
+id="catImagen"
+accept="image/*">
+
+<img
+id="catPreview"
+class="preview-image">
+
+<button onclick="guardarCategoria()">
+Guardar Categoría
+</button>
+
+</div>
+
+<!-- =========================
+     BANNER
+========================= -->
+
+<div class="admin-card">
+
+<h3>Agregar Banner</h3>
+
+<input
+id="bannerPrecioOriginal"
+placeholder="Precio original">
+
+<input
+id="bannerDescuento"
+placeholder="% descuento">
+
+<input
+id="bannerPrecioFinal"
+placeholder="Precio final">
+
+<input
+id="bannerLink"
+placeholder="Link afiliado">
+
+<input
+type="file"
+id="bannerImagen"
+accept="image/*">
+
+<img
+id="bannerPreview"
+class="preview-image">
+
+<button onclick="guardarBanner()">
+Guardar Banner
+</button>
+
+</div>
+
+<!-- =========================
+     MERCADO PAGO
+========================= -->
+
+<div class="admin-card">
+
+<h3>Tarjeta Mercado Pago</h3>
+
+<input
+id="mpTitulo"
+placeholder="Título">
+
+<textarea
+id="mpDescripcion"
+placeholder="Descripción">
+</textarea>
+
+<input
+id="mpLink"
+placeholder="Link">
+
+<input
+type="file"
+id="mpImagen"
+accept="image/*">
+
+<img
+id="mpPreview"
+class="preview-image">
+
+<button onclick="guardarMercadoPago()">
+Guardar Mercado Pago
+</button>
+
+</div>
+
+<!-- =========================
+     RELAMPAGO
+========================= -->
+
+<div class="admin-card">
+
+<h3>Cupones Relámpago</h3>
+
+<input id="rTitulo" placeholder="Título">
+<input id="rCodigo" placeholder="Código">
+<input id="rPorcentaje" placeholder="%">
+<input id="rMinimo" placeholder="Compra mínima">
+<input id="rMaximo" placeholder="Descuento máximo">
+<input id="rLink" placeholder="Link afiliado">
+
+<button onclick="guardarRelampago()">
+Guardar Cupón
+</button>
+
+</div>
+
+<!-- =========================
+     TIENDAS
+========================= -->
+
+<div class="admin-card">
+
+<h3>Cupones Exclusivos</h3>
+
+<input id="tTitulo" placeholder="Título">
+<input id="tCodigo" placeholder="Código">
+<input id="tPorcentaje" placeholder="%">
+<input id="tMinimo" placeholder="Compra mínima">
+<input id="tMaximo" placeholder="Descuento máximo">
+<input id="tLink" placeholder="Link afiliado">
+
+<button onclick="guardarTienda()">
+Guardar Cupón
+</button>
+
+</div>
+
+<!-- =========================
+     BANCARIOS
+========================= -->
+
+<div class="admin-card">
+
+<h3>Cupones Bancarios</h3>
+
+<input id="bTitulo" placeholder="Título">
+<input id="bCodigo" placeholder="Código">
+<input id="bPorcentaje" placeholder="%">
+<input id="bMinimo" placeholder="Compra mínima">
+<input id="bMaximo" placeholder="Descuento máximo">
+<input id="bLink" placeholder="Link afiliado">
+
+<button onclick="guardarBancario()">
+Guardar Cupón
+</button>
+
+</div>
+
+<!-- =========================
+     LISTADOS
+========================= -->
+
+<div class="admin-card">
+
+<h3>Categorías Registradas</h3>
+
+<div id="listaCategorias"></div>
+
+</div>
+
+<div class="admin-card">
+
+<h3>Banners Registrados</h3>
+
+<div id="listaBanners"></div>
+
+</div>
+
+<div class="admin-card">
+
+<h3>Cupones Relámpago</h3>
+
+<div id="listaRelampago"></div>
+
+</div>
+
+<div class="admin-card">
+
+<h3>Cupones Exclusivos</h3>
+
+<div id="listaTiendas"></div>
+
+</div>
+
+<div class="admin-card">
+
+<h3>Cupones Bancarios</h3>
+
+<div id="listaBancarios"></div>
+
+</div>
+
+</div>
+
+<script type="module" src="js/firebase.js"></script>
+<script type="module" src="js/admin.js"></script>
+
+</body>
+</html>
